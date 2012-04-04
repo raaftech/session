@@ -1,0 +1,6 @@
+* text=auto !eol
+/ChangeLog -text
+/LICENSE -text
+/session-linux.sh -text
+/session-windows.sh -text
+/session.conf -text
