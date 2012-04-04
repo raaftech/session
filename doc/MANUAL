@@ -1,0 +1,116 @@
+Session Manual
+
+History
+
+Purpose
+
+Contents
+
+Running Session
+reinit     - reinitializes session's required and detected tools.
+version    - show session version.
+--mode     - serial (default), stateful or parallel (experimental).
+--user     - run the command with user credentials (default).
+--admin    - run the command with admin credentials.
+--service  - run the command with service credentials.
+
+Storing Credentials and Sending Keys
+key        - send public key or store credentials for remote admin and user.
+
+Listing
+list       - list hosts, guests, services, groups, osmt, acmt, exmt or vrmt's
+Special parameters for list:
+all        - (list and check only) show or state all.
+mode       - (list) show all modes. --default for default only.
+host       - (list) show all hosts.
+guest      - (list) show all guests.
+group      - (list) show all groups.
+service    - (list) show all services.
+acmt       - (list) show all supported access methods.
+exmt       - (list) show all supported execute methods.
+svmt       - (list) show all supported service methods.
+vrmt       - (list) show all supported virtualization methods.
+osmt       - (list) show all supported operating environments.
+crmt       - (list) show all supported credential methods.
+
+Discovering
+discover   - scan an ip or an ip subnet.
+
+Checking State
+check      - (state, status) checks state of a host, guest, service or group.
+detail     - shows all known information about a host, guest or service.
+
+Adding, Modifying and Deleting
+addconf    - adds a host, guest, service or group to session.conf.
+modconf    - modify an existing host, guest, service or group in session.conf.
+delconf    - removes a host, guest, service or group from session.conf.
+--type     - the type of the added entry (host, guest, service or group).
+--osmt     - the operating system for the host or guest system
+--acmt     - the access method to be used.
+--exmt     - the execute method to be used.
+--addr     - the ip address for the host, guest or service.
+--port     - (services only) the port on which a service listens.
+--user     - the regular user account for the host, guest or service.
+--admin    - the administrative account for the host or guest.
+--vrmt     - (optional, hosts only) the virtualization method supported.
+--vmhome   - (optional, hosts only) where the host stores its vm executables.
+--vmdata   - (optional, hosts only) where the host stores its virtual machines.
+--svstatus - (optional, scripted services only) status command for a service.
+--svstart  - (optional, scripted services only)  start command for a service.
+--svstop   - (optional, scripted services only)   stop command for a service.
+--host     - (guests only) the parent host system.
+--members  - (groups only) a comma-separated list of hosts and/or guests.
+
+Starting Stopping and Restarting
+start      - attempts to start a host, guest, service or group.
+stop       - attempts to stop a host, guest, service or group.
+restart    - attempts to restart a host, guest, service or group.
+
+Creating and Destroying Virtual Machines
+create     - attempts to create a non-existing guest system.
+destroy    - attempts to destroy an existing guest system.
+--desc     - (optional) annotation (--desc="My description.").
+--numvcpu  - the virtual CPU count for guest system (--numvcpu=2).
+--memsize  - the virtual memory size in MB for guest system (--memsize=512).
+--dsksize  - the disk size in GB for guest system (--dsksize=4).
+--guestos  - the operating system for guest system (--guestos=other-64).
+
+Accessing Systems
+access     - access a host, guest, service or group using various methods.
+
+Sending Commands to Systems
+tell       - send a command to the host, guest, service or group.
+
+Sending Files and Directories to Systems
+send       - send a directory to the host, guest, service or group.
+--source   - the source directory on the local system to send from.
+--target   - the target directory on the remote system to send to.
+
+Main Options File
+terminal='putty'
+desktop='mstsc'
+browser='windows'
+smbtell='psexec'
+sshtell='plink'
+smbsend='robocopy'
+sshsend='pscp'
+execute='1'
+access='1'
+create='1'
+destroy='0'
+send='1'
+resilient='0'
+timeout='1501'
+titling='1'
+color='1'
+agent='1'
+privy='0'
+debug='0'
+
+Configuration Files and Directories
+cfg: options.conf  session.conf  tools.found  tools.required
+log: session.log
+sys: cwnp1dc1  helpsvc  ntlm  pc05262  rpcbind  sw0001  vmtools  wilco
+tmp: session.conf.active session.ssh-agent.out
+tpl:
+
