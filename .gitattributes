@@ -1,0 +1,22 @@
+* text=auto !eol
+cfg/session.conf -text
+doc/ChangeLog -text
+doc/ISSUES -text
+doc/LICENSE -text
+doc/example-esx4.vmx -text
+doc/example-qemu010.xml -text
+doc/example-qemu012.xml -text
+doc/install-linux.txt -text
+doc/install-macosx.txt -text
+doc/install-windows.txt -text
+src/release-maker.sh -text
+src/session-linux.sh -text
+src/session-macosx.sh -text
+src/session-windows.sh -text
+sys/example/admin.pwd -text
+sys/example/options.conf -text
+sys/example/user.pwd -text
+tpl/esx.stf -text
+tpl/kvm.stf -text
+tpl/vmf.stf -text
+tpl/vmw.stf -text
