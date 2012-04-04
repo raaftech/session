@@ -1,0 +1,130 @@
+rubin (2010-12-31)
+	* session.sh: version 0.7.1 for public release.
+	* session.sh: cleaned up help/usage text.
+	* session.sh: implemented colorized state checks.
+	* session.sh: replaced ad-hoc parameter parsers with parseParameters.
+	* session.sh: fixed various indentation issues.
+	* session.sh: changed pse exec handler's name to smb.
+	* session.sh: new functionality: added telnet access handler.
+	* session.sh: new functionality: added http(s) access handler.
+	* session.sh: new functionality: discover.
+	* session.sh: new functionality: modconf.
+
+rubin (2010-12-17)
+	* session.sh: version 0.7.0 for internal release.
+	* session.sh: made addConf much more strict with sanity checking.
+	* session.sh: added none handlers for access and execute.
+
+rubin (2010-12-15)
+	* session.sh: version 0.6.6 for public release.
+	* session.sh: fixed bug in sshExecHandler command writers for linux and macosx.
+
+rubin (2010-12-15)
+	* session.sh: version 0.6.5 for public release.
+	* session.sh: fixed bug in esxVirtHandler command calls.
+	* session.sh: removed portqry dependency for session-windows, replaced with nmap.
+
+rubin (2010-12-13)
+	* session.sh: version 0.6.4 for public release.
+	* session.sh: new functionality: implemented create and destroy for kvm vrmt's.
+	* session.sh: fixed bug in addConf and delConf entry parsing (sed with g).
+
+rubin (2010-12-12)
+	* session.sh: version 0.6.3 for public release.
+	* session.sh: fixed bug in remote execution for windows (pse) hosts.
+	* session.sh: disabled localhost privilege escalation for pse exmt (psexec/winexe).
+	* session.sh: made command execution method consistent over all client platforms.
+	* release.sh: created release-maker.sh.
+
+rubin (2010-12-07)
+	* session.sh: version 0.6.2 for public release.
+	* session.sh: tested on windows 7, mac os x 10.6, fedora 13 and ubuntu 10.04 clients.
+	* session.sh: supports VMware ESX(i) 4.x, Workstation 7.x and Fusion 3.x hypervisors.
+	* session.sh: supports KVM, Xen and HPVM hypervisors (except for new create functionality).
+	* session.sh: added support for robocopy when sending from windows clients.
+	* session.sh: made configuration user specific under ~/.session
+	* session.sh: fixed putty key file extension mistake (.pkk -> ppk).
+	* session.sh: added many more known_osses for target platforms.
+	* session.sh: made known_os-specific command handling smarter.
+	* session.sh: made capsFirst a fully-inline function.
+	* session.sh: added a MAC address generation function.
+	* session.sh: removed silly script-writer for portState function.
+	* session.sh: implemented more neccessary script-writer for send and local command.
+	* session.sh: new functionality: addconf and delconf commands for editing live config.
+	* session.sh: made options-per-system smarter in ~/.session/sys/$systemname
+	* session.sh: new functionality: reboot for rebooting systems.
+	* session.sh: new functionality: create for creating non-existing guest systems!
+	* session.sh: new functionality: destroy for removing and deleting guest systems!
+	* session.sh: added support for vmdata and vmhome paths with spaces and special characters.
+	* session.sh: new functionality: added version command.
+
+thomas (2010-12-06)
+	* session.sh: version 0.6.1 for internal release.
+	* session.sh: added mac os x as a suported client platform.
+	* session.sh: made error messages more consistent.
+	* session.sh: removed unneccessary ";" after loop closures.
+
+rubin (2010-10-21)
+	* session.sh: version 0.6.0 for internal release.
+	* session.sh: branched to 0.6.
+	* session.sh: first prototype for create, VMware Workstation only.
+
+rubin (2010-07-11)
+	* session.sh: version 0.5.0 for public release.
+	* session.sh: tested on windows 7, ubuntu 10.04 and fedora 13.
+	* session.sh: cleaned up required tools list.
+	* session.sh: changed generic bsd known_os to netbsd.
+	* session.sh: changed generic linux known_os to various distro versions.
+	* session.sh: added major version to known_os identifiers.
+	* session.sh: added vmf vrmt for vmware fusion support (untested).
+	* session.sh: added debug logging feature.
+	* session.sh: added ~/.session directory for storing host specific information.
+	* session.sh: moved a host's vmstore and vmhome to specific ~/.session/$host.opts.
+	* session.sh: support for storing a host's user and admin credentials in ~/.session.
+	* session.sh: renamed to session-linux.sh.
+	* session.sh: optimized $member checking by avoiding forks (5sec -> 4.0sec) 
+	* session.sh: optimized $member parsing by eliminating cut (4sec -> 1.6sec).
+	* session.sh: removed fork-heavy $all in to all-specific case statement in parseEntry.
+	* session.sh: removed recall to checkSystem when checksystem is given a guest.
+	* session.sh: removed functionExists checker.
+	* session.sh: fixed .ssh directory ownership issue.
+	* session-linux.sh: adapted to changes in session-windows.sh.
+	* session-windows.sh: created session-windows.sh.
+	* session-windows.sh: replaced nmap with portqry for faster portstate detection.
+	* session-windows.sh: rdp (mststc) access now works with dynamically created rdp file.
+	* session-windows.sh: created rdp file handles rdp5 crypt hashing of stored credentials.
+
+rubin (2010-01-05)
+	* session.sh: version 0.4.3 for public release.
+	* session.sh: added macosx os type.
+
+rubin (2010-01-03)
+	* session.sh: version 0.4.2 for public release.
+	* session.sh: removed automatic sshSendKey from access and state commands.
+	* session.sh: added "key" command to facilitate sshSendKey.
+	* session.sh: various minor cleanups.
+
+rubin (2009-12-31)
+	* session.sh: version 0.4.1 for public release.
+	* session.sh: clarified various *AsAdmin functions.
+	* session.sh: added send file or directory support.
+
+rubin (2009-12-23)
+	* session.sh: version 0.4.0 for public release.
+	* session.sh: added support for vmware workstation (vmw).
+	* session.sh: corrected port number for psexec.
+
+rubin (2009-12-23)
+	* session.sh: version 0.3.0 for internal testing purposes.
+
+rubin (2009-11-27)
+	* session.sh: version 0.2.0 for public release. 
+	* session.sh: grouping of hosts and guests (group)
+	* session.sh: supports physical (host) and virtual (guest) systems
+	* session.sh: supports none, xen, kvm and hpvm virtualization methods
+	* session.sh: supports accessing systems through rdp and ssh
+	* session.sh: supports commanding systems with psexec or winexe and ssh
+	* LICENSE: licenced under GPLv3.
+
+rubin (2009-10-10)
+	* session.sh: initial version 0.1.0.
