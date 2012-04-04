@@ -1,0 +1,154 @@
+.TH SESSION "1" "8 Dec 2011" "session" "User Commands"
+.SH NAME
+session \- access and control groups of machines and services
+.SH SYNOPSIS
+.B session
+\fBCOMMAND\fR
+[\fBOPTION\fR[\fB=\fR\fIARG\fR]...]
+.SH DESCRIPTION
+Session is a command-line tool that can help systems administrators
+to access and control heterogeneous groups of machines and services.
+.PP
+Run
+.B session help
+to see a list of commands.
+.SH EXAMPLE
+.EX
+    $ session discover 192.168.0.0/24
+    Session: Info: Successfully added entry host unknown-0-2(embedded-like,tel,none,unknown,unknown,192.168.0.2,none).
+    Session: Info: Successfully added entry host unknown-0-3(unix-like,ssh,ssh,alfred,root,192.168.0.3,none).
+    $ session addconf localhost --type=host --osmt=ubuntu11 --acmt=ssh --exmt=ssh --addr=127.0.0.1 --user=jdthood --admin=root --vrmt=virtualbox --vmhome=/usr/bin --vmdata=/mnt/sda5/virtualbox
+    $ session addconf myvrtmchn --type=guest --osmt=winxp --acmt=ssh --exmt=ssh --addr=192.168.10.108 --user=Test --admin=User --host=localhost
+    $ session start myvrtmchn
+    Waiting for VM "myvrtmchn" to power on...
+    VM "myvrtmchn" has been successfully started.
+    myvrtmchn: booting
+.EE
+.SH COMMANDS
+.TP
+\fBaddconf\fR    - adds a host, guest, service or group to session.conf.
+.TP
+\fBmodconf\fR    - modify an existing host, guest, service or group in session.conf.
+.TP
+\fBdelconf\fR    - removes a host, guest, service or group from session.conf.
+.TP
+\fBdiscover\fR   - scan an ip or an ip subnet.
+.TP
+\fBcheck\fR      - (state, status) checks state of a host, guest, service or group.
+.TP
+\fBdetail\fR     - shows all known information about a host, guest or service.
+.TP
+\fBstart\fR      - attempts to start a host, guest, service or group.
+.TP
+\fBstop\fR       - attempts to stop a host, guest, service or group.
+.TP
+\fBrestart\fR    - attempts to restart a host, guest, service or group.
+.TP
+\fBcreate\fR     - attempts to create a non-existing guest system.
+.TP
+\fBdestroy\fR    - attempts to destroy an existing guest system.
+.TP
+\fBaccess\fR     - access a host, guest, service or group using various methods.
+.TP
+\fBtell\fR       - send a command to the host, guest, service or group.
+.TP
+\fBsend\fR       - send a directory to the host, guest, service or group.
+.TP
+\fBkey\fR        - send public key or store credentials for remote admin and user.
+.TP
+\fBlist\fR       - list hosts, guests, services, groups, osmt, acmt, exmt or vrmt's
+.TP
+\fBreinit\fR     - reinitializes session's required and detected tools.
+.TP
+\fBversion\fR    - show session version.
+.SH OPTIONS
+.TP
+\fB--type=\fR\fITYPE\fR
+the type of the added entry (host, guest, service or group).
+.TP
+\fB--osmt=\fR\fIOSMT\fR
+the operating system for the host or guest system
+.TP
+\fB--acmt=\fR\fIACMT\fR
+the access method to be used.
+.TP
+\fB--exmt=\fR\fIEXMT\fR
+the execute method to be used.
+.TP
+\fB--addr=\fR\fIIPADDR\fR
+the IP address for the host, guest or service.
+.TP
+\fB--port=\fR\fIPORT\fR
+(services only) the port on which a service listens.
+.TP
+\fB--user=\fR\fINAME\fR
+the regular user account for the host, guest or service.
+.TP
+\fB--admin=\fR\fINAME\fR
+the administrative account for the host or guest.
+.TP
+\fB--vrmt=\fR\fIVRMT\fR
+(optional, hosts only) the virtualization method supported.
+.TP
+\fB--vmhome=\fR\fIDIR\fR
+(optional, hosts only) where the host stores its vm executables.
+.TP
+\fB--vmdata=\fR\fIMACHINE\fR
+(optional, hosts only) where the host stores its virtual machines.
+.TP
+\fB--svstatus=\fR\fICMD\fR
+(optional, scripted services only) status command for a service.
+.TP
+\fB--svstart=\fR\fICMD\fR
+(optional, scripted services only)  start command for a service.
+.TP
+\fB--svstop=\fR\fICMD\fR
+(optional, scripted services only)   stop command for a service.
+.TP
+\fB--host=\fR\fIMACHINE\fR
+(guests only) the parent host system.
+.TP
+\fB--members=\fR\fIITEM[,ITEM...]\fR
+(groups only) a comma-separated list of hosts and/or guests.
+
+Arguments for privilege specification in access, tell and send:
+.TP
+\fB--user
+run the command with user credentials (default).
+.TP
+\fB--admin
+run the command with admin credentials.
+.TP
+\fB--service
+run the command with service credentials.
+
+Arguments for create and destroy:
+.TP
+\fB--desc=\fR\fIDESCRIPTION\fR
+(optional) annotation (--desc="My description.").
+.TP
+\fB--numvcpu=\fR\fINUM\fR
+the virtual CPU count for guest system (--numvcpu=2).
+.TP
+\fB--memsize=\fR\fISIZE\fR
+the virtual memory size in MB for guest system (--memsize=512).
+.TP
+\fB--dsksize=\fR\fISIZE\fR
+the disk size in GB for guest system (--dsksize=4).
+.TP
+\fB--guestos=\fR\fIOS\fR
+the operating system for guest system (--guestos=other-64).
+
+Arguments for send:
+.TP
+\fB--source=\fR\fIDIR\fR
+the source directory on the local system to send from.
+.TP
+\fB--target=\fR\fIDIR\fR
+the target directory on the remote system to send to.
+.SH COPYRIGHT
+Copyright © 2011 Rubin Simons.
+This manual is part of Session.
+.SH "SEE ALSO"
+.BR ssh (1),
+.BR nmap (1).
