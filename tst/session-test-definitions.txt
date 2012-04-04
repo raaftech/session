@@ -1,0 +1,140 @@
+# Preparation
+TST001: remove ~/.session directory
+TST002: run session, verify ~./session/cfg -> tools.* session.conf
+TST003: place session.conf for testing purposes
+
+# Verify sanity checking
+TST004: add a host system with an invalid name, should fail
+TST005: add a host system with a non-valid osmt, should fail
+TST006: add a host system with a non-valid acmt, should fail
+TST007: add a host system with a non-valid exmt, should fail
+TST008: add a host system with a non-valid ip address, should fail
+TST009: add a host system with a non-valid short hostname, should fail
+TST010: add a host system with a non-valid fqdn, should fail
+TST011: add a host system with a non-valid vrmt, should fail
+TST012: add a guest with a non-existing host, should fail
+TST013: add a guest with an existing host with a none vrmt, should fail
+TST014: add a group with non-existing members, should fail
+TST015: add a group with identical members, should fail
+
+# Add test data
+TST016: add an existing host with none vrmt, verify vmdata and vmhome are not required
+TST017: add an existing host with a vrmt, verify vmdata and vmhome are required
+TST018: add a guest with the previous host as its parent
+TST019: add another guest with the previous host as its parent
+TST020: add a service with none svmt with the previous guest as its parent
+TST021: add a service with scripted svmt with the previous guest as its parent
+TST022: add a group with the two previous hosts
+TST023: add a group with the two previous guests
+TST024: add a group with the two previous services
+
+# Modification tests
+TST025: modify a host, change any setting except vrmt, verify
+TST026: modify a host with none vrmt, change to some vrmt, verify vmhome and vmdata are required
+TST027: modify a host and change vmhome and vmdata, verify options.conf is changed
+TST028: modify a guest, change host to other host, verify
+TST029: modify a guest, change host to non-existing host, should fail
+TST030: modify a service, change host to other host, verify
+TST031: modify a service, change host to non-existing host, should fail
+TST032: modify a service and change svstate, svstart and svstop, verify options.conf is changed
+TST033: modify a group, change order, same items, verify
+TST034: modify a group, remove one item, verify
+TST035: modify a group, re-add item, verify
+
+# Deletion tests
+TST036: delete all previous groups, verify
+TST037: delete all previous services, verify
+TST038: delete all previous guests, verify
+TST039: delete all previous hosts, verify
+TST040: delete a non-existing entity, should fail
+
+# Discovery tests
+TST041: discover a host by valid resolvable shortname, verify
+TST042: discover a host by valid ip address, verify
+TST043: discover a host by subnet address, verify
+
+# State tests
+TST044: check a host that does not exist. state should be unreachable
+TST045: check a guest that does not exist. state should be non-existing
+TST046: check a service that does not exist. state should be unreachable
+TST047: check a host that is not on. state should be unreachable
+TST048: check a guest that is not on. state should be off
+TST049: check a service that is not on. state should be off
+TST050: check a host with a disabled acmt or exmt. state should be busy
+TST051: check a guest with a disabled acmt or exmt. state should be busy
+TST052: check a service with a running process but disabled port. state should be busy
+TST053: check a host that is on. state should be on
+TST054: check a guest that is on. state should be on
+TST055: check a service that has an ip address and port that is on. state should be on
+TST056: check a service that has no ip address and port with a valid svstatus. state should be on
+
+# Detail output
+TST057: check a host without vmdata and vmhome settings. should be excluded from output
+TST058: check a host with vmdata and vmhome settings. should be displayed
+TST059: check a host which has a guest. verify it shows under guests
+TST060: check a guest which is in a group. verify it has a parent host. verify it displays groups
+TST061: check a host or guest with services. verify it displays services.
+TST062: check a service without options.conf. verify it does not display svstate, svstart, svstop
+TST063: check a service with scripted svmt. verify it displays svstate, svstart, svstop
+TST064: check a group. verify detail displays details for each member of the group
+
+# Start and stop commands
+TST065: start a host or guest that is in the on state, should fail
+TST066: start a service that is in the on state, should fail
+TST067: start a host or guest that is in busy state, should fail
+TST068: start a service that is in the busy state; should fail
+TST069: start a host that is unreachable, should fail
+TST069: start a guest that is off, verify state will be on
+TST070: start a service that is off, verify state will be on
+TST071: stop a host or guest that is off or unreachable, should fail
+TST072: stop a service that is off, busy or unreachable, should fail
+TST073: stop a host or guest that is on, verify state will be off
+TST074: stop a service that is on, verify state will be off
+
+# Restart tests
+TST075: restart a host or guest, should send osreboot
+TST076: restart a service, should send svrestart or stop then start
+
+# Create tests
+TST077: create a guest on a unix-like host with any vrmt
+TST078: create a guest on a windows-like host with any vrmt
+
+# Destroy tests
+TST079: destroy a guest on a unix-like host with any vrmt
+TST080: destroy a guest on a windows-like host any vrmt
+
+# Access tests
+TST081: access a host or guest with a none acmt, should fail
+TST083: access a host or guest using ssh acmt
+TST084: access a host or guest using tel acmt
+TST085: access a host or guest using rdp acmt
+TST086: access a host or guest using http acmt
+TST087: access a group using any combination of acmts
+
+# Tell (command) tests
+TST088: tell a unix-like system with ssh exmt with user permissions
+TST089: tell a unix-like system with ssh exmt with admin permissions
+TST090: tell a service with any exmt with service permissions
+TST091: tell a windows-like system with smb exmt with admin permissions
+
+# Send (copy) tests
+TST092: send a directory to a system with ssh exmt
+TST093: send a directory to a system with smb exmt
+
+# Key (credentials) tests
+TST094: key a system with ssh acmt and exmt
+TST095: key a system with rdp acmt and smb exmt
+TST096: key a system with ssh/smb combination
+
+# Recheck, list and version
+TST097: run recheck, verify tools.found and tools.required are recreated
+TST098: run any list command
+TST099: run version
+
+# Mode tests
+TST100: start or stop a host or guest with mode serial
+TST101: start or stop a service with mode serial
+TST102: start or stop a host or guest with mode stateful
+TST103: start or stop a service with mode stateful
+TST104: start or stop a group with mode serial
+TST105: start or stop a group with mode stateful

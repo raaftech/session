@@ -1,0 +1,52 @@
+* Known issue 1: PsExec and Windows Vista or Windows 7:
+If you want to use the command, start and stop session commands to control a
+remote Windows Vista or Windows 7 system, you need to run the following two
+commands on that system first (run from a console with elevated/administrator
+privileges, on one line):
+
+reg delete "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System" /v LocalAccountTokenFilterPolicy
+
+reg add "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System" /v LocalAccountTokenFilterPolicy /t REG_DWORD /d 1
+
+
+* Known Issue 2: Make sure regular user is logged in when using vmw vrmt:
+When you're commanding Windows systems which have VMware Workstation as its
+virtualization software, make sure that the user you're usually running VMware
+as is logged into the system, all the way to a visible desktop. We've seen
+issues where the vmrun command does not correctly list and start virtual
+machines if the login screen is currently visible on the console. The regular
+user mentioned above should also be the user you've defined as the "user" in
+the session line decribing your host.
+
+
+* Known Issue 3: Windows Live ID Sign-In Assistant conflicts with smbclient:
+When trying to use session send from a unix-like machine to a remote Windows 
+Vista or Windows 7 system, the smbclient command is used. 
+When the remote Windows Vista or Windows 7 system has "Windows Live ID Sign-In
+Assistant" installed, the smbclient command will fail. Make sure you uninstall
+the "Windows Live ID Sign-In Assistant" from the remote system you want to 
+use as a target with session send. For more information:
+
+http://social.technet.microsoft.com/Forums/en/w7itpronetworking/thread/9c6f1d74-f7f0-4503-94fa-0d79a5597527
+
+* Known Issue 4: Windows Vista and Windows 7 UAC one-time UAC pop-up for nmap:
+When using session on a Windows Vista or Windows 7 machine, you might encounter
+a UAC pop-up the first time session invokes a state check.
+This will fail the first state check but all subsequent state checks will work
+for as long as the logon session remains active. This happens because nmap 
+requests elevated privileges. 
+
+* Known Issue 5: Windows XP updates change default sharing security and psexec:
+Updates released after Windows XP SP2 change the default sharing security
+model for local accounts. The updates to Windows XP now sets this security 
+option to "Guest only – local users authenticate as Guest". This denies the 
+ability to implicitly or explicitly use of a specific user name/password
+combination when interacting with the machine remotely using smb/cifs.
+To fix, you have to set the "Network Access: Sharing and security model for 
+local accounts" to "Classic – local users authenticate as themselves".
+Access it via Start > Run > secpol.msc > Local Policies > Security Options,
+and change "Network Access: Sharing and security model for local accounts" 
+to "Classic - local users authenticate as themselves". For more information:
+
+http://itbin.blogspot.com/2010/10/psexec-logon-failure-and-access-denied.html
+

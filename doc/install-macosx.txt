@@ -1,0 +1,58 @@
+Installing Session on Mac OS X systems
+
+Session has a couple of dependencies which need to be available on the system
+on which you want to run the main "session" command. Session supports Windows, 
+Mac OS X and Linux as a client platform and these platforms have varying 
+dependencies for session. In the instructions below, we will describe the 
+installation steps and dependencies for the Mac OS X platform. If you follow 
+these steps, you should have no troubles with running session!
+
+NOTE! On the website (http://www.raaftech.nl/session) we've also listed the
+dependencies described below, with links to where to get them! Make sure to
+check it out!
+
+1: Make sure you have a Mac OS X 10.4, 10.5 or 10.6 system. We've tested mostly
+   on 10.6, but older versions of Mac OS X should not pose a great problem.
+
+2: Session's access command opens new Terminal windows when something has
+   an ssh access method. The Terminal.app application is standard in all
+   versions of Mac OS X that we know about.
+
+3: To test for open ports on a system when determining a system's state, the
+   program uses nmap. Make sure you have nmap installed.
+
+4: When session accesses systems which have an rdp access method, it uses the
+   Microsoft Remote Desktop Connection application to facilitate the 
+   connection. Make sure you have it installed on your system.
+
+5: The session command functionality, when talking to a windows box, uses the
+   winexe program to do so. The winexe command is the equivalent of psexec on 
+   windows platforms. Make sure you have winexe installed! 
+
+6: The session send functionality, when talking to a windows box, uses the
+   smbclient program to do so. Make sure you have the smbclient command 
+   installed on your system. At least on 10.6, we've seen that the smbclient
+   command is installed by default.
+
+7: Install the session command somewhere in your path, like /usr/local/bin or
+   anywhere else you prefer. You are now ready to run session for the first
+   time!
+
+8: Type 'session' at the command prompt. The session command will detect that
+   it's being run for the first time and will do a search for all its needed
+   dependencies. Next to that, it will create a default ~/.session directory
+   layout with an empty session.conf (under ~/.session/cfg/session.conf).
+
+9: Copy the template files in the distibution archive's 'tpl' directory to
+   your personal template directory under ~/.session/tpl . These files use
+   the .stf (session template file) extention.
+
+
+If session did not give an error about not being able to find any of its 
+dependencies, the above run of the session command will show you the standard
+help output. You are now ready to add systems to your session.conf! You can
+use the "session addconf" and "session delconf" commands to do so (see the
+standard session help output for addconf and delconf examples). Ofcourse, you
+can also edit the ~/.session/cfg/session.conf file directly.
+
+ 
