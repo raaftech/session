@@ -1,0 +1,29 @@
+* Known issue 1: PsExec and Windows Vista or Windows 7:
+If you want to use the command, start and stop session commands to control a
+remote Windows Vista or Windows 7 system, you need to run the following two
+commands on that system first (run from a console with elevated/administrator
+privileges, on one line):
+
+reg delete "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System" /v LocalAccountTokenFilterPolicy
+
+reg add "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System" /v LocalAccountTokenFilterPolicy /t REG_DWORD /d 1
+
+
+* Known Issue 2: Make sure regular user is logged in when using vmw vrmt:
+When you're commanding Windows systems which have VMware Workstation as its
+virtualization software, make sure that the user you're usually running VMware
+as is logged into the system, all the way to a visible desktop. We've seen
+issues where the vmrun command does not correctly list and start virtual
+machines if the login screen is currently visible on the console. The regular
+user mentioned above should also be the user you've defined as the "user" in
+the session line decribing your host.
+
+
+* Known Issue 3: When trying to use session send from a unix-like machine to
+a remote Windows Vista or Windows 7 system, the smbclient command is used. 
+When the remote Windows Vista or Windows 7 system has "Windows Live ID Sign-In
+Assistant" installed, the smbclient command will fail. Make sure you uninstall
+the "Windows Live ID Sign-In Assistant" from the remote system you want to 
+use as a target with session send. For more information:
+
+http://social.technet.microsoft.com/Forums/en/w7itpronetworking/thread/9c6f1d74-f7f0-4503-94fa-0d79a5597527
