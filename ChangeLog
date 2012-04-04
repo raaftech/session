@@ -1,0 +1,34 @@
+rubin (2010-01-05)
+	* session.sh: version 0.4.3 for public release.
+	* session.sh: added macosx os type.
+
+rubin (2010-01-03)
+	* session.sh: version 0.4.2 for public release.
+	* session.sh: removed automatic sshSendKey from access and state commands.
+	* session.sh: added "key" command to facilitate sshSendKey.
+	* session.sh: various minor cleanups.
+
+rubin (2009-12-31)
+	* session.sh: version 0.4.1 for public release.
+	* session.sh: clarified various *AsAdmin functions.
+	* session.sh: added send file or directory support.
+
+rubin (2009-12-23)
+	* session.sh: version 0.4 for public release.
+	* session.sh: added support for vmware workstation (vmw).
+	* session.sh: corrected port number for psexec.
+
+rubin (2009-12-23)
+	* session.sh: version 0.3 for internal testing purposes.
+
+rubin (2009-11-27)
+	* session.sh: version 0.2 for public release. 
+	* session.sh: grouping of hosts and guests (group)
+	* session.sh: supports physical (host) and virtual (guest) systems
+	* session.sh: supports none, xen, kvm and hpvm virtualization methods
+	* session.sh: supports accessing systems through rdp and ssh
+	* session.sh: supports commanding systems with psexec or winexe and ssh
+	* LICENSE: licenced under GPLv3.
+
+rubin (2009-10-10)
+	* session.sh: initial version 0.1.
