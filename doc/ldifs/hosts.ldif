@@ -1,0 +1,10 @@
+# Example session host entry for foohost
+dn: hostName=foohost,ou=Hosts,dc=rfblx,dc=local
+objectClass: top
+objectClass: sessionHost
+hostName: foohost
+ipAddress: 192.168.1.1
+capability: os.windows
+credential: rubin
+parent: barhost
+parent: bazhost

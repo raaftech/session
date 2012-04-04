@@ -1,0 +1,6 @@
+# Example session group entry for foogroup
+dn: groupName=foogroup,ou=Groups,dc=rfblx,dc=local
+objectClass: top
+objectClass: sessionGroup
+groupName: foogroup
+memberHost: foohost

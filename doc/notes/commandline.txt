@@ -1,0 +1,42 @@
+# This file shows various wanted commandline interactions with session.
+
+# Selection syntax, first selection argument
+session list hosts
+session list groups
+session list capabilities
+session list credentials
+
+# Selection syntax, with a reduction statement
+session list hosts(attribute=value)
+session list groups(attribute=value or attribute=value)
+session list capabilities(attribute=value and attribute=value, attribute=value)
+session list credentials(attribute=value)
+
+# Selection syntax, value can be wildcarded
+session list hosts(attribute=*)
+session list hosts(attribute=*value*)
+
+# Main session commands
+session list
+session status
+session authenticate
+session execute
+session access
+session start
+session stop
+session reset
+session restart
+session send
+session receive
+
+# Complex send or receive example
+session send hosts(attribute=value and attribute=value) <source> <target>
+
+# Doing something with alternate credentials
+session access hosts(attribute=value) as role=administrator
+session access hosts(attribute=value) as user=rubin
+
+# Doing something explicitly in parallel or serial
+session execute hosts(attribute=value) <command> in serial
+session stop hosts(attribute=value) in parallel
+
