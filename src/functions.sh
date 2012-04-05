@@ -44,7 +44,7 @@ function reportDebug {
     reportSession "Debug: ${FUNCNAME[1]}(): $*" >&2
 }
 
-# reportDebugFuncEntry(<function_name> <argument_name_vector> <environment_variable_name_vector> <additional_message>)
+# reportDebugFuncEntry(<argument_name_vector> <environment_variable_name_vector> <additional_message>)
 # Prints, Writes to log file.
 #
 # Report a debugging message containing:
