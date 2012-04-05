@@ -106,7 +106,7 @@ function isLocal {
 # toWindowsPath(<path>)
 # Prints.
 #
-# Convert path from *nix-style to Windows-style.
+# Convert path from *nix-style to Windows-style but with forward slashes.
 # Inspired by Cygwin's cygpath.
 #
 function toWindowsPath {
