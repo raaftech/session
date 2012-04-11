@@ -103,13 +103,15 @@ function isLocal {
     [[ "$1" =~ "$hostname" ]]
 }
 
-# toWindowsPath(<path>)
+# toLocalWindowsPath(<path>)
 # Prints.
 #
-# Convert path from *nix-style to Windows-style but with forward slashes.
+# Convert path to Windows-style but with forward slashes.
 # Inspired by Cygwin's cygpath.
 #
-function toWindowsPath {
+# Should only be used on the Windows platform.
+#
+function toLocalWindowsPath {
     reportDebugFuncEntry "$*"
 
     typeset input="$1"
@@ -148,6 +150,34 @@ function toWindowsPath {
     return 0
 }
 
+
+# toRemoteWindowsPath(<path>)
+# Prints.
+#
+# Convert path to Windows-style but with forward slashes.
+#
+function toRemoteWindowsPath {
+    reportDebugFuncEntry "$*"
+
+    typeset input="$1"
+
+    if [ ! "$input" ]; then
+        reportError "No input given"
+        return 1
+    fi
+
+    if [[ "$input" =~ : ]]; then
+        output="$(printf "$input\n" | sed 's|\\|/|g')"
+    else
+        output="$(printf "C:$input\n" | sed 's|\\|/|g' )"
+    fi
+
+    reportDebug "Incoming: $input"
+    reportDebug "Outgoing: $output"
+    report "$output"
+    return 0
+}
+
 # viaScript(<command>)
 # Writes a shell or batch script, executes and cleans up.
 #
@@ -176,7 +206,7 @@ function viaScript {
         printf '%s\n' "$command" | sed 's/^[[:space:]]*//' 2> /dev/null >> "$usrcfd/tmp/session.tell.$name.bat.unix"
         sed 's/$/\r/' "$usrcfd/tmp/session.tell.$name.bat.unix" > "$usrcfd/tmp/session.tell.$name.bat"
         rm "$usrcfd/tmp/session.tell.$name.bat.unix"
-        cmd.exe /c "$(toWindowsPath "$usrcfd/tmp/session.tell.$name.bat")"
+        cmd.exe /c "$(toLocalWindowsPath "$usrcfd/tmp/session.tell.$name.bat")"
         retval="$?"
         if [ "$debug" ]; then
             reportDebug "Not removing $usrcfd/tmp/session.tell.$name.bat"
@@ -286,8 +316,8 @@ function localSendCommandWriter {
         target="$2"
         printf "cp -Rpd \"$source\" \"$target\" >/dev/null 2>&1 </dev/null\n"
     elif [ "$platform" = "windows" ]; then
-        source="$(toWindowsPath "$1")"
-        target="$(toWindowsPath "$2")"
+        source="$(toLocalWindowsPath "$1")"
+        target="$(toLocalWindowsPath "$2")"
         printf "robocopy /e \"$source\" \"$target\" >nul 2>&1\n"
     else
         reportError "Unknown platform specified: $platform"
@@ -308,8 +338,8 @@ function robocopySendCommandWriter {
     typeset addr="$1"
     typeset user="$2"
     typeset pass="$3"
-    typeset source="$(toWindowsPath "$4")"
-    typeset target="$(toWindowsPath "$5")"
+    typeset source="$(toLocalWindowsPath "$4")"
+    typeset target="$(toLocalWindowsPath "$5")"
     typeset driveLetter
 
     driveLetter="$(printf "$target\n" | cut -d ':' -f 1)"
@@ -338,7 +368,7 @@ function smbclientSendCommandWriter {
     typeset user="$2"
     typeset pass="$3"
     typeset source="$4"
-    typeset target="$(toWindowsPath "$5")"
+    typeset target="$(toRemoteWindowsPath "$5")"
     typeset share
     typeset smbcommand
 
@@ -360,7 +390,7 @@ function pscpSendCommandWriter {
 
     typeset addr="$1"
     typeset uopts="$2"
-    typeset source="$(toWindowsPath "$3")"
+    typeset source="$(toLocalWindowsPath "$3")"
     typeset target="$4"
 
     printf "pscp $sshopts -scp -p -q -r -l \"$uopts\" \"$source\" $addr:\"$target\"\n"
@@ -565,12 +595,12 @@ function handleSshPrivateKeys {
     elif [ "$platform" = "windows" ]; then
         # Look for PuTTY style public/private keypair.
         if [ -e "$HOME/.ssh/id_dsa.ppk" ]; then
-            sshkey="$(toWindowsPath "$HOME/.ssh/id_dsa.ppk")"
-            sshpub="$(toWindowsPath "$HOME/.ssh/id_dsa.pub")"
+            sshkey="$(toLocalWindowsPath "$HOME/.ssh/id_dsa.ppk")"
+            sshpub="$(toLocalWindowsPath "$HOME/.ssh/id_dsa.pub")"
             sshopts="-i \"$sshkey\""
         elif [ -e "$HOME/.ssh/id_rsa.ppk" ]; then
-            sshkey="$(toWindowsPath "$HOME/.ssh/id_rsa.ppk")"
-            sshpub="$(toWindowsPath "$HOME/.ssh/id_rsa.pub")"
+            sshkey="$(toLocalWindowsPath "$HOME/.ssh/id_rsa.ppk")"
+            sshpub="$(toLocalWindowsPath "$HOME/.ssh/id_rsa.pub")"
             sshopts="-i \"$sshkey\""
         fi
 
@@ -1346,7 +1376,7 @@ function discoveryHelper {
     if [ "$platform" = "linux" -o "$platform" = "macosx" ]; then
         file="$usrcfd/tmp/session.discover.out"
     elif [ "$platform" = "windows" ]; then
-        file="$(toWindowsPath "$usrcfd/tmp/session.discover.out")"
+        file="$(toLocalWindowsPath "$usrcfd/tmp/session.discover.out")"
     fi
 
     $privy nmap -n -T5 -PE -oG "$file" -sP $range >/dev/null 2>&1 </dev/null
@@ -3485,7 +3515,7 @@ function mstscDesktopHandler {
     reportDebugFuncEntry "$*"
 
     rdpFileWriter
-    mstsc "$(toWindowsPath "$rdpfile")" 2>/dev/null &
+    mstsc "$(toLocalWindowsPath "$rdpfile")" 2>/dev/null &
 }
 
 # amsrdcDesktopHandler()
