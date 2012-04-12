@@ -80,7 +80,7 @@ function reportDebugFuncEntry {
 }
 
 # isLoopback(<domain_name_or_address>)
-# Returns exit code.
+# Returns truth value.
 #
 # Return 0 if address is loopback domain name or address; non-zero otherwise.
 #
@@ -92,7 +92,7 @@ function isLoopback {
 }
 
 # isLocal(<name>)
-# Returns exit code.
+# Returns truth value.
 #
 # Return 0 if name matches non-null short local hostname, 1 otherwise.
 #
@@ -109,7 +109,7 @@ function isLocal {
 # Convert path to Windows-style but with forward slashes.
 # Inspired by Cygwin's cygpath.
 #
-# Should only be used on the Windows platform.
+# Should only be used to generate path (string) arguments for local Windows commands.
 #
 function toLocalWindowsPath {
     reportDebugFuncEntry "$*"
@@ -188,30 +188,31 @@ function viaScript {
 
     typeset command="$*"
     typeset retval
+    typeset nametmp="$name"
 
-    [ "$name" ] || typeset name=local
+    [ "$nametmp" ] || nametmp=local
     
     if [ "$platform" = "linux" -o "$platform" = "macosx" ]; then
-        printf "#!/bin/sh\n" > "$usrcfd/tmp/session.tell.$name.sh"
-        printf '%s\n '"$command" | sed 's/^[[:space:]]*//' 2> /dev/null >> "$usrcfd/tmp/session.tell.$name.sh"
-        sh "$usrcfd/tmp/session.tell.$name.sh"
+        printf "#!/bin/sh\n" > "$usrcfd/tmp/session.tell.$nametmp.sh"
+        printf '%s\n '"$command" | sed 's/^[[:space:]]*//' 2> /dev/null >> "$usrcfd/tmp/session.tell.$nametmp.sh"
+        sh "$usrcfd/tmp/session.tell.$nametmp.sh"
         retval="$?"
         if [ "$debug" ]; then
-            reportDebug "Not removing $usrcfd/tmp/session.tell.$name.sh"
+            reportDebug "Not removing $usrcfd/tmp/session.tell.$nametmp.sh"
         else
-            rm "$usrcfd/tmp/session.tell.$name.sh"
+            rm "$usrcfd/tmp/session.tell.$nametmp.sh"
         fi
     elif [ "$platform" = "windows" ]; then
-        printf "@echo off\n" > "$usrcfd/tmp/session.tell.$name.bat.unix"
-        printf '%s\n' "$command" | sed 's/^[[:space:]]*//' 2> /dev/null >> "$usrcfd/tmp/session.tell.$name.bat.unix"
-        sed 's/$/\r/' "$usrcfd/tmp/session.tell.$name.bat.unix" > "$usrcfd/tmp/session.tell.$name.bat"
-        rm "$usrcfd/tmp/session.tell.$name.bat.unix"
-        cmd.exe /c "$(toLocalWindowsPath "$usrcfd/tmp/session.tell.$name.bat")"
+        printf "@echo off\n" > "$usrcfd/tmp/session.tell.$nametmp.bat.unix"
+        printf '%s\n' "$command" | sed 's/^[[:space:]]*//' 2> /dev/null >> "$usrcfd/tmp/session.tell.$nametmp.bat.unix"
+        sed 's/$/\r/' "$usrcfd/tmp/session.tell.$nametmp.bat.unix" > "$usrcfd/tmp/session.tell.$nametmp.bat"
+        rm "$usrcfd/tmp/session.tell.$nametmp.bat.unix"
+        cmd.exe /c "$(toLocalWindowsPath "$usrcfd/tmp/session.tell.$nametmp.bat")"
         retval="$?"
         if [ "$debug" ]; then
-            reportDebug "Not removing $usrcfd/tmp/session.tell.$name.bat"
+            reportDebug "Not removing $usrcfd/tmp/session.tell.$nametmp.bat"
         else
-            rm "$usrcfd/tmp/session.tell.$name.bat"
+            rm "$usrcfd/tmp/session.tell.$nametmp.bat"
         fi
     else
         reportError "Unknown platform specified: $platform"
@@ -618,7 +619,7 @@ function handleSshPrivateKeys {
 }
 
 # handleQuotedRegExpBehaviour()
-# Returns exit code and/or makes sure quoted regexp matching is available and enabled.
+# Sets shell options.
 #
 # Check quoted regexp behaviour and take appropriate action.
 #
@@ -1208,10 +1209,10 @@ function delConf {
 }
 
 # checkNameOrAddress(<nameOrAddress>)
-# Returns exit code.
+# Returns truth value.
 #
 # Check the syntax of a given host name or IP address.
-# Return if it's OK; exit with error message if it's not OK.
+# Return 0 if it's OK, 1 if it's not OK.
 #
 function checkNameOrAddress {
     reportDebugFuncEntry "$*"
@@ -1584,9 +1585,10 @@ function tokenReader {
 }
 
 # tokenValidator(<keys>)
-# Returns exit code.
+# Returns truth value.
 #
 # Checks if tokens contain valid values.
+# Returns 0 if valid, 1 if invalid.
 #
 function tokenValidator {
     reportDebugFuncEntry "$*" 
@@ -1644,6 +1646,8 @@ function tokenValidator {
             return 1
         esac
     done
+
+    return 0
 }
 
 # parseParameters(<parameters>)
