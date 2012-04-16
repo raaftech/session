@@ -3330,7 +3330,7 @@ function gnomeTerminalHandler {
 
 
     if [ "$protocol" = "ssh" ]; then
-        command="ssh $sshopts -Y $xsasuser@$addr"
+        command="ssh $sshopts -A -Y $xsasuser@$addr"
     elif [ "$protocol" = "tel" ]; then
         command="telnet $addr"
     else
