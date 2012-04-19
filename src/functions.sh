@@ -346,7 +346,7 @@ function robocopySendCommandWriter {
     driveLetter="$(printf "$target\n" | cut -d ':' -f 1)"
     reportDebug "Extracted drive letter $driveLetter from $target"
 
-    target="$(printf "$target\n" | sed "s|$driveLetter:|//${addr}/${driveLetter}\$|g" | sed 's|/|\\|g')"
+    target="$(printf "$target\n" | sed "s|$driveLetter:|//${addr}/${driveLetter}\$|" | sed 's|/|\\|g')"
     reportDebug  "Target is now $target"
 
     if [ "$pass" ]; then pass="\"$pass\"" ; fi
