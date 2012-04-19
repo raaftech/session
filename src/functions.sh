@@ -351,9 +351,9 @@ function robocopySendCommandWriter {
 
     if [ "$pass" ]; then pass="\"$pass\"" ; fi
     printf %s "
-    net use \\\\$addr\\$driveLetter\$ /user:\"${user}\" ${pass} 2>nul
-    robocopy /e \"$source\" \"$target\" >nul 2>&1
-    net use \\\\$addr\\$driveLetter\$ /delete >nul 2>&1
+        net use \\\\$addr\\$driveLetter\$ /user:\"${user}\" ${pass} 2>nul
+        robocopy /e \"$source\" \"$target\" >nul 2>&1
+        net use \\\\$addr\\$driveLetter\$ /delete >nul 2>&1
     " | sed 's/^[[:space:]]*//'
 }
 
