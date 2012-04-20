@@ -1,0 +1,2 @@
+#!/bin/sh
+nosetests session_test.py session.py --with-doctest
