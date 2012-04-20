@@ -374,7 +374,7 @@ function smbclientSendCommandWriter {
     typeset smbcommand
 
     share="$(printf "$target\n" | sed "s|:|$|" | cut -d/ -f 1 | sed 's|"||g')"
-    target="$(printf "$target\n" | sed 's|/|\\\\|g' | cut -d: -f2 | sed 's|"||g')"
+    target="$(printf "$target\n" | sed 's|/|\\\\|g' | cut -d: -f2- | sed 's|"||g')"
     smbcommand="mkdir \"$target\";cd \"$target\";lcd \"$source\";prompt off;recurse on;mput *;quit"
 
     if [ "$pass" ]; then pass="%$pass" ; fi
