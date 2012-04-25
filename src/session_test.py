@@ -244,9 +244,29 @@ net use \\addrie\C$ /delete >nul 2>&1
 def test_smbclientSendCommand():
     bckp = session.platform_
     session.platform_ = session.Platforms.linux
-    r = session.smbclientSendCommand('addrie', 'userie', 'passie', r'/foo/sourcie', r'C:\targie')
+    r = session.smbclientSendCommand('addrie', 'userie', 'passie', '/foo/sourcie', r'C:\targie')
     mtch = r"""smbclient '//addrie/C$' -U "userie%passie" -c 'mkdir "\targie";cd "\targie";lcd "/foo/sourcie";prompt off;recurse on;mput *;quit' 2>/dev/null
 """
+    assert r == mtch
+    session.platform_ = bckp
+
+def test_pscpSendCommand():
+    bckp = session.platform_
+    session.platform_ = session.Platforms.windows
+    r = session.pscpSendCommand('addrie', '-o1 one -o2 two', 'usroptie', '/foo/sourcie', r'C:\targie')
+    mtch = r"""pscp -o1 one -o2 two -scp -p -q -r -l "usroptie" "/foo/sourcie" addrie:"C:\targie"
+"""
+    assert r == mtch
+    session.platform_ = bckp
+
+def test_scpSendCommand():
+    bckp = session.platform_
+    session.platform_ = session.Platforms.linux
+    r = session.scpSendCommand('addrie', '-o1 one -o2 two', r'\\usr\opt\ ', '/foo/sourcie', '/targie')
+    mtch = r"""scp -q -o1 one -o2 two -r "/foo/sourcie" \\\\usr\opt\\\\ @addrie:"/targie"
+"""
+    session.reportDebugUnconditionally(r)
+    session.reportDebugUnconditionally(mtch)
     assert r == mtch
     session.platform_ = bckp
 

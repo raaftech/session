@@ -20,8 +20,8 @@
 
 # Notes
 # -----
-# Don't use % formatting because it's going to disappear
-# Don't use str formatting because it's not present before Python 2.6
+# We sometimes use "%" formatting even though it may eventually disappear;
+# we don't use str formatting because it's not available before Python 2.6.
 #
 # TODO
 # ----
@@ -84,8 +84,8 @@ if session_home is None:
 ######## version="1.0.0"
 ######## tag="devel"
 
-version = "2.0"
-tag = "devel"
+version = '2.0'
+tag = 'devel'
 
 
 ######## # Terminal escape sequences to set text colors.
@@ -96,11 +96,11 @@ tag = "devel"
 ######## color_end="\x1b[0m"       #color_end="$(tput sgr0)"
 
 terminal_color_escape_sequences = dict()
-terminal_color_escape_sequences['red'] ="\x1b[31m"      # $(tput setaf 1)"
-terminal_color_escape_sequences['green'] ="\x1b[32m"    # "$(tput setaf 2)"
-terminal_color_escape_sequences['yellow'] ="\x1b[33m"   # "$(tput setaf 3)"
-terminal_color_escape_sequences['blue'] ="\x1b[34m"     # "$(tput setaf 4)"
-terminal_color_escape_sequences['end'] ="\x1b[0m"       # "$(tput sgr0)"
+terminal_color_escape_sequences['red'] = '\x1b[31m'      # $(tput setaf 1)"
+terminal_color_escape_sequences['green'] = '\x1b[32m'    # "$(tput setaf 2)"
+terminal_color_escape_sequences['yellow'] = '\x1b[33m'   # "$(tput setaf 3)"
+terminal_color_escape_sequences['blue'] = '\x1b[34m'     # "$(tput setaf 4)"
+terminal_color_escape_sequences['end'] = '\x1b[0m'       # "$(tput sgr0)"
 
 
 ######## # Space-separated lists of keywords for known modes, os, virtualization, credential, service, execute and access methods.
@@ -484,7 +484,7 @@ else:
 #### fi
 
 backslash_char = '\\'
-two_backslash_chars = backslash_char + backslash_char
+two_backslash_chars = 2 * backslash_char
 
 user = os.environ.get('user') 
 if user is None:
@@ -900,7 +900,7 @@ def psexecTellCommand(addr, usr, pwd, cmd):
         raise ValueError('Password argument may not contain spaces')
     if '"' in cmd:
         raise ValueError('Command argument may not contain double quotation marks')
-    return 'psexec ' + two_backslash_chars + addr + ' -h ' + usr + ' ' + pwd + ' cmd.exe /c ' + '"' + cmd + '"' + ' 2>nul\n'
+    return 'psexec %s%s -h %s %s cmd.exe /c "%s" 2>nul\n' % (two_backslash_chars, addr, usr, pwd, cmd)
     
 
 #### # winexeTellCommandWriter(<addr> <user> <pass> <command>)
@@ -935,7 +935,7 @@ def winexeTellCommand(addr, usr, pwd, cmd):
         raise ValueError('Command argument may not contain single quotation marks')
     if '"' in cmd:
         raise ValueError('Command argument may not contain double quotation marks')
-    return 'winexe --debug-stderr --user ' + "'" + usr + "'" + ' --password=' + "'" + pwd + "'" + ' //' + addr + ' ' +  "'" + 'cmd.exe /c ' + '"' + cmd + '"' + "'" + ' 2>/dev/null\n'
+    return '''winexe --debug-stderr --user '%s' --password='%s' //%s 'cmd.exe /c "%s"' 2>/dev/null\n''' % (usr, pwd, addr, cmd)
 
 
 #### # plinkTellCommandWriter(<addr> <user> <command>)
@@ -964,7 +964,7 @@ def plinkTellCommand(addr, usr, sshopts, cmd):
         raise ValueError('User argument may not contain double quotation marks')
     if '"' in cmd:
         raise ValueError('Command argument may not contain double quotation marks')
-    return 'plink -batch -x ' + sshopts + ' -l ' + '"' + usr + '"' + ' ' + addr + ' ' + '"' + cmd + '"' + '\n'
+    return 'plink -batch -x %s -l "%s" %s "%s"\n' % (sshopts, usr, addr, cmd)
 
 
 #### # sshTellCommandWriter(<host> <user> <command>)
@@ -993,7 +993,7 @@ def sshTellCommand(addr, usr, sshopts, cmd):
         raise ValueError('User argument may not contain single quotation marks')
     if "'" in cmd:
         raise ValueError('Command argument may not contain single quotation marks')
-    return 'ssh ' + sshopts + ' -l ' + "'" + usr + "'" + ' ' + "'" + addr + "'" + ' ' + "'" + cmd + "'" + '\n'
+    return "ssh %s -l '%s' '%s' '%s'\n" % (sshopts, usr, addr, cmd)
 
 
 #### # localSendCommandWriter(<source> <target>)
@@ -1033,7 +1033,7 @@ def localSendCommand(src, trg):
     elif platform_ == Platforms.windows:
         src = toLocalWindowsPath(src)
         trg = toLocalWindowsPath(trg)
-        return 'robocopy /e ' + '"' + src + '"' + ' ' + '"' + trg + '"' + ' >nul 2>&1\n'
+        return 'robocopy /e "%s" "%s" >nul 2>&1\n' % (src, trg)
     else:
         raise ValueError
 
@@ -1082,9 +1082,9 @@ def robocopySendCommand(addr, usr, pwd, src, trg):
         raise ValueError()
     trg_smbpathroot = two_backslash_chars + addr + backslash_char + trg_drv_letter + '$'
     trg_smbpath     = trg_smbpathroot + backwardizePath(trg_rst)
-    r  = 'net use ' + trg_smbpathroot + ' /user:' + '"' + usr + '"' + ' ' + ('"' + pwd + '"' if len(pwd)>0 else '') + ' 2>nul\n'
-    r += 'robocopy /e ' + '"' + src + '"' + ' ' + '"' + trg_smbpath + '"' + ' >nul 2>&1\n'
-    r += 'net use ' + trg_smbpathroot + ' /delete >nul 2>&1\n'
+    r  = 'net use %s /user:"%s" ' % (trg_smbpathroot, usr) + ('"' + pwd + '"' if len(pwd)>0 else '') + ' 2>nul\n'
+    r += 'robocopy /e "%s" "%s" >nul 2>&1\n' % (src, trg_smbpath)
+    r += 'net use %s /delete >nul 2>&1\n' % trg_smbpathroot
     return r
 
 #### # smbclientSendCommandWriter(<addr> <user> <pass> <source> <target>)
@@ -1127,14 +1127,14 @@ def smbclientSendCommand(addr, usr, pwd, src, trg):
         raise ValueError('Target argument may not contain more than one foreslash')
     share = trg.replace(':', '$', 1).split('/', 1)[0]
     target = trg.replace('/', backslash_char).split(':', 1)[1]  # DIFF: One backslash char should suffice
-    smbcommand =  'mkdir ' + '"' + target + '"' + ';'
-    smbcommand += 'cd '    + '"' + target + '"' + ';'
-    smbcommand += 'lcd '   + '"' + src    + '"' + ';'
+    smbcommand  = 'mkdir "%s";' % target
+    smbcommand += 'cd "%s";' % target
+    smbcommand += 'lcd "%s";' % src
     smbcommand += 'prompt off;'
     smbcommand += 'recurse on;'
     smbcommand += 'mput *;'
     smbcommand += 'quit'
-    return 'smbclient ' + "'" + '//' + addr + '/' + share + "'" + ' -U ' + '"' + usr + ('%' + pwd if len(pwd)>0 else '') + '"' + ' -c ' + "'" + smbcommand + "'" + ' 2>/dev/null\n'
+    return '''smbclient '//%s/%s' -U "%s" -c '%s' 2>/dev/null\n''' % (addr, share, usr + ('%' + pwd if len(pwd)>0 else ''), smbcommand)
 
 
 #### # pscpSendCommandWriter(<addr> <uopts> <source> <target>)
@@ -1152,7 +1152,20 @@ def smbclientSendCommand(addr, usr, pwd, src, trg):
 #### 
 ####     printf "pscp $sshopts -scp -p -q -r -l \"$uopts\" \"$source\" $addr:\"$target\"\n"
 #### }
-#### 
+
+# DIFF: Return path as string instead of echoing it.
+def pscpSendCommand(addr, sshopts, usr, src, trg):
+    reportDebugFuncEntry((addr, sshopts, usr, src, trg))
+    src = toLocalWindowsPath(src)
+    if '"' in usr:
+        raise ValueError('User argument may not contain double quotation marks')
+    if '"' in src:
+        raise ValueError('Source argument may not contain double quotation marks')
+    if '"' in trg:
+        raise ValueError('Target argument may not contain double quotation marks')
+    return 'pscp %s -scp -p -q -r -l "%s" "%s" %s:"%s"\n' % (sshopts, usr, src, addr, trg)
+
+
 #### # scpSendCommandWriter(<addr> <uopts> <source> <target>)
 #### # Prints.
 #### #
@@ -1170,7 +1183,18 @@ def smbclientSendCommand(addr, usr, pwd, src, trg):
 ####     sshuser="$(printf "$uopts\n" | sed 's|\ |\\ |g'| sed 's|\\|\\\\|g')"
 ####     printf "scp -q $sshopts -r \"$source\" $sshuser@$addr:\"$target\"\n"
 #### }
-#### 
+
+# DIFF: Return path as string instead of echoing it.
+def scpSendCommand(addr, sshopts, usr, src, trg):
+    reportDebugFuncEntry((addr, sshopts, usr, src, trg))
+    if '"' in src:
+        raise ValueError('Source argument may not contain double quotation marks')
+    if '"' in trg:
+        raise ValueError('Target argument may not contain double quotation marks')
+    u = usr.replace(backslash_char + ' ', two_backslash_chars + ' ').replace(two_backslash_chars, 2 * two_backslash_chars)
+    return 'scp -q %s -r "%s" %s@%s:"%s"\n' % (sshopts, src, u, addr, trg)
+
+
 #### # toolFinder()
 #### # Writes $usrcfd/cfg/tools.required and $usrcfd/cfg/tools.found.
 #### #
