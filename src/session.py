@@ -20,7 +20,7 @@
 
 # Notes
 # -----
-# We sometimes use "%" formatting even though it may eventually disappear;
+# We (sometimes) use "%" formatting even though it may eventually disappear;
 # we don't use str formatting because it's not available before Python 2.6.
 #
 # TODO
@@ -40,6 +40,7 @@ from enum import Enum
 import inspect
 import re
 import subprocess
+import psutil
 
 
 #### # Determine where $SESSION_HOME is.
@@ -133,8 +134,8 @@ KnownAcMts = Enum(['none', 'ssh', 'tel', 'rdp', 'http'])
 ######## config="$usrcfd/tmp/session.conf.active"
 ######## # Location of log file.
 ######## logfile="$usrcfd/log/session.log"
-# DIFF: Don't create active-config file
 
+# DIFF: Don't create active-config file
 cfg_dirname = os.path.normcase('cfg')
 tmp_dirname = os.path.normcase('tmp')
 log_dirname = os.path.normcase('log')
@@ -196,8 +197,8 @@ hostname = socket.gethostname().split('.')[0].lower()
 ########     environment="unknown"
 ########     platform="unknown"
 ######## fi
-# DIFF: No variable named "environment" (since it's always Python!)
 
+# DIFF: No variable named "environment" (since it's always Python!)
 Platforms = Enum(['unknown', 'linux', 'macosx', 'windows'])
 try:
     platform_ = {
@@ -515,6 +516,7 @@ else:
 ####         :> "$config"
 ####     fi
 #### fi
+
 # DIFF: Don't create active-config file
 
 
@@ -770,7 +772,7 @@ def backwardizePath(pth):
     # N.B. A backslash in the replacement string is expanded, so a backslash must be represented as two backslashes.
     return re.sub('/', two_backslash_chars, pth)
 
-# DIFF: Return path as string instead of echoing it.
+# DIFF: Return string instead of echoing it.
 def toLocalWindowsPath(pth):
     """Return the Windows-syntax version of the (local) path (with foreslashes).
 
@@ -781,7 +783,7 @@ def toLocalWindowsPath(pth):
     reportDebug('Outgoing: ' + o)
     return o
 
-# DIFF: Return path as string instead of echoing it.
+# DIFF: Return string instead of echoing it.
 def toRemoteWindowsPath(pth):
     """Return the Windows-syntax version of the (remote) path (with foreslashes).
     """
@@ -860,8 +862,8 @@ def viaScript(cmd, name):
 ####     printf '%s\n' "$command"
 #### }
 
-# DIFF: Return path as string instead of echoing it.
-def toLocalTellCommand(cmd):
+# DIFF: Return string instead of echoing it.
+def localTellCommand(cmd):
     """Return command for executing <cmd> locally.
     """
     reportDebugFuncEntry((cmd,))
@@ -887,7 +889,7 @@ def toLocalTellCommand(cmd):
 ####     printf "psexec \\\\$addr -h $user $pass cmd.exe /c \"$command\" 2>nul\n"
 #### }
 
-# DIFF: Return path as string instead of echoing it.
+# DIFF: Return string instead of echoing it.
 def psexecTellCommand(addr, usr, pwd, cmd):
     """Return command for executing <cmd> on <addr> as <usr> with <pwd> using psexec.
     """
@@ -920,7 +922,7 @@ def psexecTellCommand(addr, usr, pwd, cmd):
 ####     printf "winexe --debug-stderr -U '${user}${pass}' //$addr 'cmd.exe /c \"$command\"' 2>/dev/null\n"
 #### }
 
-# DIFF: Return path as string instead of echoing it.
+# DIFF: Return string instead of echoing it.
 def winexeTellCommand(addr, usr, pwd, cmd):
     """Return command for executing <cmd> on <addr> as <usr> with <pwd> using winexe.
     """
@@ -953,7 +955,7 @@ def winexeTellCommand(addr, usr, pwd, cmd):
 ####     printf "plink -batch -x $sshopts -l \"$user\" $addr \"$command\"\n"
 #### }
 
-# DIFF: Return path as string instead of echoing it.
+# DIFF: Return string instead of echoing it.
 def plinkTellCommand(addr, usr, sshopts, cmd):
     """Return command for executing <cmd> on <addr> as <usr> using plink.
     """
@@ -982,7 +984,7 @@ def plinkTellCommand(addr, usr, sshopts, cmd):
 ####     printf "ssh $sshopts -l '$user' '$host' '$command'\n"
 #### }
 
-# DIFF: Return path as string instead of echoing it.
+# DIFF: Return string instead of echoing it.
 def sshTellCommand(addr, usr, sshopts, cmd):
     """Return command for executing <cmd> on <addr> as <usr> using ssh.
     """
@@ -1023,7 +1025,7 @@ def sshTellCommand(addr, usr, sshopts, cmd):
 ####     return 0
 #### }
 
-# DIFF: Return path as string instead of echoing it.
+# DIFF: Return string instead of echoing it.
 def localSendCommand(src, trg):
     """Return command for locally copying directory <src> to directory <trg>.
     """
@@ -1067,7 +1069,7 @@ def localSendCommand(src, trg):
 ####     " | sed 's/^[[:space:]]*//'
 #### }
 
-# DIFF: Return path as string instead of echoing it.
+# DIFF: Return string instead of echoing it.
 def robocopySendCommand(addr, usr, pwd, src, trg):
     """Return command for copying directory <src> to remote directory <trg> as <usr> with <pwd> using robocopy and SMB.
     """
@@ -1111,7 +1113,7 @@ def robocopySendCommand(addr, usr, pwd, src, trg):
 ####     printf "smbclient //$addr/$share -U \"${user}${pass}\" -c '$smbcommand' 2>/dev/null\n"
 #### }
 
-# DIFF: Return path as string instead of echoing it.
+# DIFF: Return string instead of echoing it.
 def smbclientSendCommand(addr, usr, pwd, src, trg):
     """Return command for copying directory <src> to remote directory <trg> as <usr> with <pwd> using smbclient.
     """
@@ -1153,7 +1155,7 @@ def smbclientSendCommand(addr, usr, pwd, src, trg):
 ####     printf "pscp $sshopts -scp -p -q -r -l \"$uopts\" \"$source\" $addr:\"$target\"\n"
 #### }
 
-# DIFF: Return path as string instead of echoing it.
+# DIFF: Return string instead of echoing it.
 def pscpSendCommand(addr, sshopts, usr, src, trg):
     reportDebugFuncEntry((addr, sshopts, usr, src, trg))
     src = toLocalWindowsPath(src)
@@ -1184,7 +1186,7 @@ def pscpSendCommand(addr, sshopts, usr, src, trg):
 ####     printf "scp -q $sshopts -r \"$source\" $sshuser@$addr:\"$target\"\n"
 #### }
 
-# DIFF: Return path as string instead of echoing it.
+# DIFF: Return string instead of echoing it.
 def scpSendCommand(addr, sshopts, usr, src, trg):
     reportDebugFuncEntry((addr, sshopts, usr, src, trg))
     if '"' in src:
@@ -1304,7 +1306,41 @@ def scpSendCommand(addr, sshopts, usr, src, trg):
 ####     sed -e "s|,'$|'|" "$usrcfd/cfg/tools.found" > "$usrcfd/tmp/tools.found" 2>/dev/null
 ####     mv "$usrcfd/tmp/tools.found" "$usrcfd/cfg/tools.found"
 #### }
-#### 
+
+# DIFF: Don't generate tools.found and tools.required
+
+
+def sshKeyPaths():
+    reportDebugFuncEntry(())
+    ssh_root = os.path.join(os.environ.get('HOME'), '.ssh')
+    if platform_ == Platforms.linux or platform_ == Platforms.macosx:
+        filename_pairs_to_try = [('id_dsa', 'id_dsa.pub'), ('id_rsa', 'id_rsa.pub')]
+    elif platform_ == Platforms.windows:
+        filename_pairs_to_try = [('id_dsa.ppk', 'id_dsa.pub'), ('id_rsa.ppk', 'id_rsa.pub')]
+    # Look for a key pair.
+    for pr in filename_pairs_to_try:
+        (private_key_filename, public_key_filename) = pr
+        private_key_path = os.path.join(ssh_root, private_key_filename)
+        public_key_path = os.path.join(ssh_root, public_key_filename)
+        if os.path.exists(private_key_path) and os.path.exists(public_key_path):
+            return (private_key_path, public_key_path)
+    # No pair found. Look for private key.
+    for pr in filename_pairs_to_try:
+        (private_key_filename, _) = pr
+        private_key_path = os.path.join(ssh_root, private_key_filename)
+        if os.path.exists(private_key_path):
+            return (private_key_path, None)
+    return None
+ 
+def programIsRunning(program_name):
+    for p in psutil.process_iter():
+        if len(p.cmdline) == 0:
+            continue
+        if os.path.basename(p.cmdline[0]) == program_name:
+            return True
+    return False
+    
+
 #### # handleSshPrivateKeys()
 #### # Detects private keys, handles automatic agent starting when needed.
 #### #
@@ -1358,6 +1394,22 @@ def scpSendCommand(addr, sshopts, usr, src, trg):
 ####                 exit 1
 ####             fi
 ####         fi
+
+def handleSshPrivateKeys():
+    reportDebugFuncEntry(())
+    if options['agent'] != '1':
+        return
+    pr =  sshKeyPaths()
+    if pr is None:
+        return
+    (private_key_path, _)  = pr
+    if platform_ == Platforms.linux or platform_ == Platforms.macosx:
+        pass
+    elif platform_ == Platforms.windows:
+        if not programIsRunning('pageant'):
+            reportInfo('You have a private key; loading into ssh agent')
+            viaScript('start /b pageant "%s"' % private_key_path)
+
 #### 
 ####         # Disable strict host and reverse mapping checks if not already set.
 ####         if [ -e "$HOME/.ssh/config" ]; then
@@ -1372,6 +1424,7 @@ def scpSendCommand(addr, sshopts, usr, src, trg):
 ####             printf "GSSAPIAuthentication no\n"   > "$HOME/.ssh/config"
 ####             printf "StrictHostKeyChecking no\n" >> "$HOME/.ssh/config"
 ####         fi
+
 #### 
 ####     elif [ "$platform" = "windows" ]; then
 ####         # Look for PuTTY style public/private keypair.
@@ -1397,6 +1450,10 @@ def scpSendCommand(addr, sshopts, usr, src, trg):
 ####         fi
 ####     fi
 #### }
+
+#xyzzy
+
+
 #### 
 #### # handleQuotedRegExpBehaviour()
 #### # Sets shell options.

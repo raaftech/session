@@ -200,8 +200,8 @@ def test_viaScript():
     c.finalize(0)
     assert c.buffer == 'STUFFSTUFF\n'  # We don't capture the subprocess's output
 
-def test_toLocalTellCommand():
-    r = session.toLocalTellCommand('scuba')
+def test_localTellCommand():
+    r = session.localTellCommand('scuba')
     assert r == 'scuba\n' or c == '@echo off\nscuba\n'
 
 def test_psexecTellCommand():
@@ -265,10 +265,26 @@ def test_scpSendCommand():
     r = session.scpSendCommand('addrie', '-o1 one -o2 two', r'\\usr\opt\ ', '/foo/sourcie', '/targie')
     mtch = r"""scp -q -o1 one -o2 two -r "/foo/sourcie" \\\\usr\opt\\\\ @addrie:"/targie"
 """
-    session.reportDebugUnconditionally(r)
-    session.reportDebugUnconditionally(mtch)
     assert r == mtch
     session.platform_ = bckp
+
+def test_sshKeyPaths():
+    r = session.sshKeyPaths()
+    if r is None:
+        return
+    assert len(r) == 2
+    (priv, pub) = r
+    assert os.path.exists(priv)
+    assert pub is None or os.path.exists(pub)
+    # FIXME: Test more thoroughly
+ 
+def test_programIsRunning():
+    assert session.programIsRunning('python')  # We know that this program is running, at least
+    assert not session.programIsRunning('bogusmcbogusjfsdiruw8eo')
+
+def test_handleSshPrivateKeys():
+    # FIXME: Do some testing
+    pass
 
 def test_write_settings_to_options_file():
     # Corrupts session.options
