@@ -116,7 +116,7 @@ terminal_color_escape_sequences['end'] = '\x1b[0m'       # "$(tput sgr0)"
 
 KnownTypes = Enum(['host', 'guest', 'service', 'group'])
 KnownModes = Enum(['serial', 'parallel', 'stateful'])
-KnownOsMts = Enum(['embedded-like', 'unix-like', 'windows-like', 'aix5', 'aix6', 'aix7', 'arch2kx', 'debian4', 'debian5', 'debian6', 'dfbsd2', 'esx4', 'esxi4', 'esxi5', 'fbsd7', 'fbsd8', 'fedora12', 'fedora13', 'fedora14', 'fedora15', 'fedora16', 'hpux1123', 'hpux1131', 'macosx3', 'macosx4', 'macosx5', 'macosx6', 'macosx7', 'nbsd4', 'nbsd5', 'obsd4', 'obsd5', 'osuse11', 'osuse12', 'rhel3', 'rhel4', 'rhel5', 'rhel6', 'sles9', 'sles10', 'sles11', 'sol10', 'sol11', 'ubuntu8', 'ubuntu10', 'ubuntu11', 'win2k3', 'win2k8', 'win7', 'win8', 'wins8', 'winxp'])
+KnownOsMts = Enum(['embedded-like', 'unix-like', 'windows-like', 'aix5', 'aix6', 'aix7', 'arch2kx', 'debian4', 'debian5', 'debian6', 'dfbsd2', 'esx4', 'esxi4', 'esxi5', 'fbsd7', 'fbsd8', 'fedora12', 'fedora13', 'fedora14', 'fedora15', 'fedora16', 'hpux1123', 'hpux1131', 'macosx3', 'macosx4', 'macosx5', 'macosx6', 'macosx7', 'nbsd4', 'nbsd5', 'obsd4', 'obsd5', 'osuse11', 'osuse12', 'rhel3', 'rhel4', 'rhel5', 'rhel6', 'sles9', 'sles10', 'sles11', 'sol10', 'sol11', 'ubuntu8', 'ubuntu10', 'ubuntu11', 'ubuntu12', 'win2k3', 'win2k8', 'win7', 'win8', 'wins8', 'winxp'])
 KnownVrMts = Enum(['none', 'hpvm', 'kvm', 'xen', 'vbox', 'vmw', 'vmf', 'pvm', 'esx'])
 KnownCrMts = Enum(['none', 'ssh', 'win'])
 KnownSvMts = Enum(['none', 'scripted'])
