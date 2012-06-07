@@ -18,16 +18,29 @@
 # You should have received a copy of the GNU General Public License
 # along with Session. If not, see <http://www.gnu.org/licenses/>.
 
+
+#
+#
 # Notes
 # -----
-# We (sometimes) use "%" formatting even though it may eventually disappear;
-# we don't use str formatting because it's not available before Python 2.6.
+# * For compatibility with early versions of Python We (sometimes)
+#   use "%" formatting even though it may eventually disappear;
+#   we'll worry about that when it happens.  We don't use str
+#   formatting because it's not available before Python 2.6.
+#
+#
+
+
+#
 #
 # TODO
 # ----
 # * Make sure that everything works on all platforms
 # * Make sure that everything works on Python 2.4.3
 # * Make sure that pslist is done Pythonically
+#
+#
+
 
 import sys
 import os
@@ -72,11 +85,6 @@ import psutil
 ####     fi
 #### fi
 
-session_home = os.environ.get('SESSION_HOME') 
-if session_home is None:
-    session_home = os.path.realpath(os.path.join(os.path.dirname( os.path.realpath( __file__ ) ), '..'))
-
-
 
 #### # Initialize globals.
 #### source "$SESSION_HOME/src/globals.sh"
@@ -85,8 +93,26 @@ if session_home is None:
 ######## version="1.0.0"
 ######## tag="devel"
 
+#
+#
+# Initialize globals
+#
+#
+
+#
+# Version
+#
+
 version = '2.0'
 tag = 'devel'
+
+#
+# The SESSION_HOME environment variable can be used to override
+# the default value which is the directory of the session.py executable.
+#
+session_home = os.environ.get('SESSION_HOME') 
+if session_home is None:
+    session_home = os.path.realpath(os.path.join(os.path.dirname( os.path.realpath( __file__ ) ), '..'))
 
 
 ######## # Terminal escape sequences to set text colors.
@@ -95,6 +121,10 @@ tag = 'devel'
 ######## color_yellow="\x1b[33m"   #color_yellow="$(tput setaf 3)"
 ######## color_blue="\x1b[34m"     #color_blue="$(tput setaf 4)"
 ######## color_end="\x1b[0m"       #color_end="$(tput sgr0)"
+
+#
+# Terminal escape sequences
+#
 
 terminal_color_escape_sequences = dict()
 terminal_color_escape_sequences['red'] = '\x1b[31m'      # $(tput setaf 1)"
@@ -113,6 +143,10 @@ terminal_color_escape_sequences['end'] = '\x1b[0m'       # "$(tput sgr0)"
 ######## known_svmts="none scripted"
 ######## known_exmts="none ssh smb"
 ######## known_acmts="none ssh tel rdp http"
+
+#
+# Known types, etc.
+#
 
 KnownTypes = Enum(['host', 'guest', 'service', 'group'])
 KnownModes = Enum(['serial', 'parallel', 'stateful'])
@@ -136,6 +170,10 @@ KnownAcMts = Enum(['none', 'ssh', 'tel', 'rdp', 'http'])
 ######## logfile="$usrcfd/log/session.log"
 
 # DIFF: Don't create active-config file
+#
+# File locations
+#
+
 cfg_dirname = os.path.normcase('cfg')
 tmp_dirname = os.path.normcase('tmp')
 log_dirname = os.path.normcase('log')
@@ -157,6 +195,7 @@ sysopt = os.path.join(syscfd_cfg, opt_filename)
 usrcff = os.path.join(usrcfd_cfg, cff_filename)
 usropt = os.path.join(usrcfd_cfg, opt_filename)
 logfile = os.path.join(usrcfd_log, log_filename)
+
 
 
 ######## # Default session execution mode.
@@ -199,6 +238,10 @@ hostname = socket.gethostname().split('.')[0].lower()
 ######## fi
 
 # DIFF: No variable named "environment" (since it's always Python!)
+#
+# Figure out what platform we are running on
+#
+
 Platforms = Enum(['unknown', 'linux', 'macosx', 'windows'])
 try:
     platform_ = {
@@ -217,6 +260,7 @@ except KeyError:
 ######## else
 ########     pslist="unknown"
 ######## fi
+
 # TODO -- probably will do this differently
 
 
@@ -269,6 +313,8 @@ Sshsends  = Enum(['none', 'scp', 'pscp'])
 Privescs  = Enum(['none', 'sudo', 'runas'])
 
 class Options(dict):
+    """Options dictionary capable of writing self to or reading from a file
+    """
     def ass_repr(self):
         """Return shell-variable-assignment representation of self.
         """
@@ -289,8 +335,8 @@ class Options(dict):
                         ln = ln[:ln.index('\n')]  # Remove terminal newline
                     if '#' in ln:
                         ln = ln[:ln.index('#')]  # Remove comments
-                    ln = ln.strip()  # Remove initial and terminal whitespace
-                    ln = ln.lstrip() # Remove initial and terminal whitespace
+                    ln = ln.strip()  # Remove terminal whitespace
+                    ln = ln.lstrip() # Remove initial whitespace
                     if not ln:
                         continue
                     (pre, sep, post) = ln.partition('=')
@@ -302,6 +348,10 @@ class Options(dict):
         except IOError:
             # Ignore non-existent file
             pass
+
+#
+# Initialize options dictionary
+#
 
 options = Options()
 
@@ -402,6 +452,7 @@ options['debug'] = '0'
 ######## typeset -r syntax_group_type=1
 ######## typeset -r syntax_group_name=2
 ######## typeset -r syntax_group_members=3
+
 #TODO -- probably won't need these
 
 
@@ -412,7 +463,9 @@ options['debug'] = '0'
 #### mkdir -p  "$usrcfd" "$usrcfd/cfg" "$usrcfd/log" "$usrcfd/sys" "$usrcfd/tmp" "$usrcfd/tpl"
 #### chmod 700 "$usrcfd" "$usrcfd/cfg" "$usrcfd/log" "$usrcfd/sys" "$usrcfd/tmp" "$usrcfd/tpl"
 
+#
 # Make sure directories exist and have correct perms.
+#
 if __name__ == '__main__':
     try:
         for pth in [usrcfd_cfg, usrcfd_tmp, usrcfd_log]:
@@ -461,6 +514,10 @@ if __name__ == '__main__':
 ####     . "$usropt"
 #### fi
 
+#
+# Initialize options and options files
+#
+
 options.read_settings_from_file(sysopt)
 
 if os.path.isfile(usropt):
@@ -483,6 +540,10 @@ else:
 ####     # If all else fails you get this.
 ####     userDblBacksl="unknown"
 #### fi
+
+#
+# Figure out user name
+#
 
 backslash_char = '\\'
 two_backslash_chars = 2 * backslash_char
@@ -586,6 +647,10 @@ else:
 #### 
 ####     return
 #### }
+
+#
+# Reporting functions
+#
   
 def report(msg, to_stderr=False):
     if to_stderr:
@@ -1187,6 +1252,7 @@ def pscpSendCommand(addr, sshopts, usr, src, trg):
 #### }
 
 # DIFF: Return string instead of echoing it.
+#
 def scpSendCommand(addr, sshopts, usr, src, trg):
     reportDebugFuncEntry((addr, sshopts, usr, src, trg))
     if '"' in src:
@@ -1311,6 +1377,8 @@ def scpSendCommand(addr, sshopts, usr, src, trg):
 
 
 def sshKeyPaths():
+    """Return pair of paths for the best available ssh keypair.
+    """
     reportDebugFuncEntry(())
     ssh_root = os.path.join(os.environ.get('HOME'), '.ssh')
     if platform_ == Platforms.linux or platform_ == Platforms.macosx:
@@ -1333,6 +1401,8 @@ def sshKeyPaths():
     return None
  
 def programIsRunning(program_name):
+    """Return whether the named program is currently running.
+    """
     for p in psutil.process_iter():
         if len(p.cmdline) == 0:
             continue
@@ -1349,6 +1419,43 @@ def programIsRunning(program_name):
 #### function handleSshPrivateKeys {
 ####     reportDebugFuncEntry "$*"
 #### 
+
+# DIFF: Don't keep paths and sshopts in a global variable but calculate them as needed.
+#
+def handleSshPrivateKeys():
+    reportDebugFuncEntry(())
+    if options['agent'] != '1':
+        return
+    pr =  sshKeyPaths()
+    if pr is None:
+        return
+    (private_key_path, _)  = pr
+    if platform_ == Platforms.linux or platform_ == Platforms.macosx:
+        if os.environ.get('SSH_AUTH_SOCK') is not None:
+            reportDebug("Using running ssh-agent")
+            # DIFF: It shouldn't be necessary to re-set and re-export the variables
+        else:
+            if programIsRunning('ssh-agent'):  # TODO: Constrain to processes running as current user?
+                reportDebug("Ssh-agent running but environment values not set; trying to get values using lsof")
+                # TODO
+            else:
+                reportDebug("Starting ssh-agent")
+                assignment_regexp = re.compile("(\S+)\=(\S+);")
+                for ln in subprocess.check_output(['ssh-agent', '-s']).splitlines():
+                    mtch = assignment_regexp.search(ln)
+                    if mtch is not None:
+                        varname = mtch.group(1)
+                        varval = mtch.group(2)
+                        reportDebug('Setting ' + varname + '=' + varval)
+                        os.environ[varname]=varval
+    elif platform_ == Platforms.windows:
+        if not programIsRunning('pageant'):
+            reportInfo('You have a private key; loading into ssh agent')
+            viaScript('start /b pageant "%s"' % private_key_path)
+            # The bash version had a sleep here
+
+#xyzzy
+
 ####     # Set private key option when private key found.
 ####     if [ "$platform" = "linux" -o "$platform" = "macosx" ]; then
 ####         # Look for OpenSSH style public/private keypair.
@@ -1395,21 +1502,6 @@ def programIsRunning(program_name):
 ####             fi
 ####         fi
 
-def handleSshPrivateKeys():
-    reportDebugFuncEntry(())
-    if options['agent'] != '1':
-        return
-    pr =  sshKeyPaths()
-    if pr is None:
-        return
-    (private_key_path, _)  = pr
-    if platform_ == Platforms.linux or platform_ == Platforms.macosx:
-        pass
-    elif platform_ == Platforms.windows:
-        if not programIsRunning('pageant'):
-            reportInfo('You have a private key; loading into ssh agent')
-            viaScript('start /b pageant "%s"' % private_key_path)
-
 #### 
 ####         # Disable strict host and reverse mapping checks if not already set.
 ####         if [ -e "$HOME/.ssh/config" ]; then
@@ -1450,8 +1542,6 @@ def handleSshPrivateKeys():
 ####         fi
 ####     fi
 #### }
-
-#xyzzy
 
 
 #### 
