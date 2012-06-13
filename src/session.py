@@ -1435,10 +1435,7 @@ def handleSshPrivateKeys():
             reportDebug("Using running ssh-agent")
             # DIFF: It shouldn't be necessary to re-set and re-export the variables
         else:
-            if programIsRunning('ssh-agent'):  # TODO: Constrain to processes running as current user?
-                reportDebug("Ssh-agent running but environment values not set; trying to get values using lsof")
-                # TODO
-            else:
+            if not programIsRunning('ssh-agent'):  # TODO: Constrain to processes running as current user?
                 reportDebug("Starting ssh-agent")
                 assignment_regexp = re.compile("(\S+)\=(\S+);")
                 for ln in subprocess.check_output(['ssh-agent', '-s']).splitlines():
@@ -1448,6 +1445,15 @@ def handleSshPrivateKeys():
                         varval = mtch.group(2)
                         reportDebug('Setting ' + varname + '=' + varval)
                         os.environ[varname]=varval
+            else:
+                for p in psutil.process_iter():
+                    if len(p.cmdline) == 0:
+                        continue
+                    if os.path.basename(p.cmdline[0]) == 'ssh-agent':
+                        # SSH_AGENT_PID is p.pid
+                        for f in p.get_open_files():
+                            # if f.path == '/tmp/*'
+                                # SSH_AUTH_SOCK is f.path
     elif platform_ == Platforms.windows:
         if not programIsRunning('pageant'):
             reportInfo('You have a private key; loading into ssh agent')
