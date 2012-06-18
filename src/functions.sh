@@ -776,6 +776,7 @@ function osGlobals {
         ;;
       windows-like|win2k3|win2k8|wins8|winxp|win7|win8)
         osstop="shutdown -s -t 01"
+        osreboot="shutdown -r -t 01"
         oslisten="netstat -na|findstr \"LISTEN\"|findstr \"\<0\.0\.0\.0:$port\> \<$addr:$port\>\" "
         ;;
     esac
