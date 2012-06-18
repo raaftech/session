@@ -283,7 +283,7 @@ function plinkTellCommandWriter {
     typeset user="$2"
     typeset command="$3"
 
-    printf "plink -batch -x $sshopts -l \"$user\" $addr \"$command\"\n"
+    printf "plink -x $sshopts -l \"$user\" $addr \"$command\"\n"
 }
 
 # sshTellCommandWriter(<host> <user> <command>)
