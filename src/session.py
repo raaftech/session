@@ -523,6 +523,12 @@ options.read_settings_from_file(sysopt)
 if os.path.isfile(usropt):
     options.read_settings_from_file(usropt)
 else:
+    if not os.path.isdir(usrcfd_cfg):
+        try:
+            os.makedirs(usrcfd_cfg)
+        except IOError:
+            reportError('Could not create directory ' + usrcfd_cfg)
+            raise
     options.write_settings_to_file(usropt)
 
 
@@ -1017,7 +1023,7 @@ def winexeTellCommand(addr, usr, pwd, cmd):
 ####     typeset user="$2"
 ####     typeset command="$3"
 #### 
-####     printf "plink -batch -x $sshopts -l \"$user\" $addr \"$command\"\n"
+####     printf "plink -x $sshopts -l \"$user\" $addr \"$command\"\n"
 #### }
 
 # DIFF: Return string instead of echoing it.
@@ -1399,17 +1405,26 @@ def sshKeyPaths():
         if os.path.exists(private_key_path):
             return (private_key_path, None)
     return None
- 
-def programIsRunning(program_name):
-    """Return whether the named program is currently running.
+
+def runningProcessOfProgram(prgm):
+    """Return the first running process with the given command line string.
     """
     for p in psutil.process_iter():
         if len(p.cmdline) == 0:
             continue
-        if os.path.basename(p.cmdline[0]) == program_name:
+        if os.path.basename(p.cmdline[0]) == prgm:
+            return p
+    return None
+
+def grepq(string, f):
+    """Return True if the given string is in the given file.
+    Comparable with "grep -q" but takes a file object as argument, not a file name.
+    """
+    for ln in f:
+        if string in ln:
             return True
     return False
-    
+
 
 #### # handleSshPrivateKeys()
 #### # Detects private keys, handles automatic agent starting when needed.
@@ -1419,49 +1434,6 @@ def programIsRunning(program_name):
 #### function handleSshPrivateKeys {
 ####     reportDebugFuncEntry "$*"
 #### 
-
-# DIFF: Don't keep paths and sshopts in a global variable but calculate them as needed.
-#
-def handleSshPrivateKeys():
-    reportDebugFuncEntry(())
-    if options['agent'] != '1':
-        return
-    pr =  sshKeyPaths()
-    if pr is None:
-        return
-    (private_key_path, _)  = pr
-    if platform_ == Platforms.linux or platform_ == Platforms.macosx:
-        if os.environ.get('SSH_AUTH_SOCK') is not None:
-            reportDebug("Using running ssh-agent")
-            # DIFF: It shouldn't be necessary to re-set and re-export the variables
-        else:
-            if not programIsRunning('ssh-agent'):  # TODO: Constrain to processes running as current user?
-                reportDebug("Starting ssh-agent")
-                assignment_regexp = re.compile("(\S+)\=(\S+);")
-                for ln in subprocess.check_output(['ssh-agent', '-s']).splitlines():
-                    mtch = assignment_regexp.search(ln)
-                    if mtch is not None:
-                        varname = mtch.group(1)
-                        varval = mtch.group(2)
-                        reportDebug('Setting ' + varname + '=' + varval)
-                        os.environ[varname]=varval
-            else:
-                for p in psutil.process_iter():
-                    if len(p.cmdline) == 0:
-                        continue
-                    if os.path.basename(p.cmdline[0]) == 'ssh-agent':
-                        # SSH_AGENT_PID is p.pid
-                        for f in p.get_open_files():
-                            # if f.path == '/tmp/*'
-                                # SSH_AUTH_SOCK is f.path
-    elif platform_ == Platforms.windows:
-        if not programIsRunning('pageant'):
-            reportInfo('You have a private key; loading into ssh agent')
-            viaScript('start /b pageant "%s"' % private_key_path)
-            # The bash version had a sleep here
-
-#xyzzy
-
 ####     # Set private key option when private key found.
 ####     if [ "$platform" = "linux" -o "$platform" = "macosx" ]; then
 ####         # Look for OpenSSH style public/private keypair.
@@ -1507,7 +1479,6 @@ def handleSshPrivateKeys():
 ####                 exit 1
 ####             fi
 ####         fi
-
 #### 
 ####         # Disable strict host and reverse mapping checks if not already set.
 ####         if [ -e "$HOME/.ssh/config" ]; then
@@ -1522,7 +1493,6 @@ def handleSshPrivateKeys():
 ####             printf "GSSAPIAuthentication no\n"   > "$HOME/.ssh/config"
 ####             printf "StrictHostKeyChecking no\n" >> "$HOME/.ssh/config"
 ####         fi
-
 #### 
 ####     elif [ "$platform" = "windows" ]; then
 ####         # Look for PuTTY style public/private keypair.
@@ -1549,6 +1519,80 @@ def handleSshPrivateKeys():
 ####     fi
 #### }
 
+def configureSshDisableStrictHostKeyChecking(pth=None):
+    if pth is None:
+        pth = '~/.ssh'
+    ssh_config_dir = os.path.normcase(os.path.expanduser(pth))
+    ssh_config_filename = os.path.normcase('config')
+    ssh_config_filepath = os.path.join(ssh_config_dir, ssh_config_filename)
+    if os.path.isfile(ssh_config_filepath):
+        try:
+            with open(ssh_config_filepath, 'r') as f:
+                found = grepq('StrictHostKeyChecking', f)
+        except IOError:
+            found = False
+    else:
+        found = False
+        if not os.path.isdir(ssh_config_dir):
+            try:
+                os.makedirs(ssh_config_dir)
+            except IOError:
+                reportError('Could not create ~/.ssh/')
+                return
+        # Dir should (now) exist
+    if not found:
+        try:
+            with open(ssh_config_filepath, 'a') as f:
+                f.write('StrictHostKeyChecking no\n')
+        except:
+            reportError('Could not write to ~/.ssh/config')
+
+# DIFF: Bash version was "handleSshPrivateKeys"
+# DIFF: Don't keep paths and sshopts in a global variable but calculate them as needed.
+#
+def startSshAgent():
+    reportDebugFuncEntry(())
+    if options['agent'] != '1':
+        return
+    pr =  sshKeyPaths()
+    if pr is None:
+        return
+    (private_key_path, _)  = pr
+    if platform_ == Platforms.linux or platform_ == Platforms.macosx:
+        # Ensure ssh-agent is running
+        if os.environ.get('SSH_AUTH_SOCK') is not None:
+            reportDebug("Using running ssh-agent")
+            # DIFF: It shouldn't be necessary to re-set and re-export the variables
+        else:
+            # TODO: Constrain to processes running as current user?
+            prcss = runningProcessOfProgram('ssh-agent')
+            if prcss is None:
+                reportDebug("Starting ssh-agent")
+                assignment_regexp = re.compile("(\S+)\=(\S+);")
+                for ln in subprocess.check_output(['ssh-agent', '-s']).splitlines():
+                    mtch = assignment_regexp.search(ln)
+                    if mtch is not None:
+                        varname = mtch.group(1)
+                        varval = mtch.group(2)
+                        reportDebug('Setting ' + varname + '=' + varval)
+                        os.environ[varname] = varval
+            else:
+                # ssh-agent is running; get its info
+                os.environ['SSH_AGENT_PID'] = prcss.pid
+                tmpfilepath_regexp = re.compile("/tmp/.*")
+                for f in prcss.get_open_files():
+                    if tmpfilepath_regexp.match(f.path) is not None:
+                        os.environ['SSH_AGENT_SOCK'] = f.path
+                        break
+        configureSshDisableStrictHostKeyChecking()
+    elif platform_ == Platforms.windows:
+        if runningProcessOfProgram('pageant') is None:
+            reportInfo('Loading your private key into the pageant SSH agent')
+            viaScript('start /b pageant "%s"' % private_key_path)
+            # The bash version had a sleep 10 here
+
+
+#xyzzy
 
 #### 
 #### # handleQuotedRegExpBehaviour()
@@ -1709,6 +1753,7 @@ def handleSshPrivateKeys():
 ####         ;;
 ####       windows-like|win2k3|win2k8|wins8|winxp|win7|win8)
 ####         osstop="shutdown -s -t 01"
+####         osreboot="shutdown -r -t 01"
 ####         oslisten="netstat -na|findstr \"LISTEN\"|findstr \"\<0\.0\.0\.0:$port\> \<$addr:$port\>\" "
 ####         ;;
 ####     esac

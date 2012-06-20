@@ -278,12 +278,39 @@ def test_sshKeyPaths():
     assert pub is None or os.path.exists(pub)
     # FIXME: Test more thoroughly
  
-def test_programIsRunning():
-    assert session.programIsRunning('python')  # We know that this program is running, at least
-    assert not session.programIsRunning('bogusmcbogusjfsdiruw8eo')
+def test_runningProcessOfProgram():
+    assert session.runningProcessOfProgram('python') is not None  # We know that the Python interpreter is running, at least ;)
+    assert session.runningProcessOfProgram('bogusmcbogusjfsdiruw8eo') is None
 
-def test_handleSshPrivateKeys():
-    # FIXME: Do some testing
+def test_grepq():
+    (fd, pth) = tempfile.mkstemp()
+    f = os.fdopen(fd, 'r+')
+    f.write('foo\nbar\nbaz')
+    f.seek(0)
+    assert session.grepq('foo', f)
+    f.seek(0)
+    assert session.grepq('baz', f)
+    f.seek(0)
+    assert not session.grepq('glub', f)
+    f.close()
+    os.remove(pth)
+
+def test_configureSshDisableStrictHostKeyChecking():
+    drctr_path = tempfile.mkdtemp()
+    file_path = os.path.join(drctr_path,'config')
+    session.configureSshDisableStrictHostKeyChecking(drctr_path)
+    assert os.path.isfile(file_path)
+    old_size = os.path.getsize(file_path)
+    session.configureSshDisableStrictHostKeyChecking(drctr_path)
+    new_size = os.path.getsize(file_path)
+    assert old_size == new_size 
+    # Could check contents here too
+    os.remove(file_path)
+    os.rmdir(drctr_path)
+    assert not os.path.isfile(file_path)
+
+def test_startSshAgent():
+    # TODO
     pass
 
 def test_write_settings_to_options_file():
