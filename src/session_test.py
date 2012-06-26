@@ -323,6 +323,10 @@ def test_startSshAgent():
     # TODO
     pass
 
+#
+# Tests that make irreversible changes
+#
+
 def test_write_settings_to_options_file():
     # Corrupts session.options
     (fd, pth) = tempfile.mkstemp()

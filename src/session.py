@@ -933,12 +933,12 @@ def toRemoteWindowsPath(pth):
 
 # DIFF: Don't use script file; execute directly
 #
-def viaScript(cmd, name):
+def viaScript(cmd):
     """Execute command script in the local platform's native shell scripting language.
 
     Return the latter's return value.
     """
-    reportDebugFuncEntry((cmd, name))
+    reportDebugFuncEntry((cmd, ))
     if platform_ == Platforms.windows:
         cmd = '@echo off\r' + cmd
     return subprocess.call(cmd, shell=True)
@@ -1040,7 +1040,7 @@ def winexeSmbTellCommandString(addr, usr, pwd, cmd):
 def smbTellCommandString(addr, usr, pwd, cmd):
     """Call ${smbTell}SmbTellCommandString
     """
-    reportDebugFuncentry((addr, usr, pwd, cmd))
+    reportDebugFuncEntry((addr, usr, pwd, cmd))
     o = options['smbTell']
     if o == Smbtells.none:
         reportError('Cannot tell because no smbTell type set')
@@ -1125,7 +1125,7 @@ def sshSshTellCommandString(addr, usr, cmd):
 def sshTellCommandString(addr, usr, cmd):
     """Call ${sshTell}SshTellCommandString
     """
-    reportDebugFuncentry((addr, usr, cmd))
+    reportDebugFuncEntry((addr, usr, cmd))
     o = options['sshTell']
     if o == Sshtells.none:
         reportError('Cannot tell because no sshTell type set')
@@ -1365,7 +1365,7 @@ def scpSshSendCommandString(addr, usr, src, trg):
 def sshSendCommandString(addr, usr, src, trg):
     """Call ${sshSend}SshSendCommandString
     """
-    reportDebugFuncentry((addr, usr, src, trg))
+    reportDebugFuncEntry((addr, usr, src, trg))
     o = options['sshSend']
     if o == Sshsends.none:
         reportError('Cannot send command because no sshSend type set')
@@ -1801,12 +1801,11 @@ def sshSendKey(username, sshpub, addr):
     trg = '/tmp/pubkey'
     usr = username
     retval = viaScript(sshSendCommandString(addr, usr, src, trg))
-    if reval != 0:
+    if retval != 0:
         reportError('Failed to send public key with return code: %d' % retval)
         return 1
     reportInfo('Key sent successfully; will now attempt to install it')
-    # TODO: In this commandlist either wrap variable references in double quotes or make sure that they don't contain whitespace.
-    commandlist = """[ "$HOME" ] || exit 1 ; mkdir -p $HOME/.ssh ; touch $HOME/.ssh/authorized_keys ; cat $HOME/.ssh/authorized_keys /tmp/pubkey | sort | uniq > /tmp/authorized_keys ; mv /tmp/authorized_keys $HOME/.ssh/authorized_keys ; rm /tmp/pubkey ; chmod 755 $HOME ; chmod 755 $HOME/.ssh ; chmod 600 $HOME/.ssh/authorized_keys"""
+    commandlist = """case "$HOME" in (""|*" "*) exit 1 ;; esac ; mkdir -p $HOME/.ssh ; touch $HOME/.ssh/authorized_keys ; cat $HOME/.ssh/authorized_keys /tmp/pubkey | sort | uniq > /tmp/authorized_keys ; mv /tmp/authorized_keys $HOME/.ssh/authorized_keys ; rm /tmp/pubkey ; chmod 755 $HOME ; chmod 755 $HOME/.ssh ; chmod 600 $HOME/.ssh/authorized_keys"""
     retval = viaScript(sshTellCommandString(addr, usr, commandlist))
 
 
