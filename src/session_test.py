@@ -347,6 +347,9 @@ def test_sshSendKey():
     # TODO
     pass
 
+def test_Credtypes():
+    assert_is_sane_enum(session.Credtypes)
+
 def test_sshCredHandler():
     # TODO
     pass
