@@ -116,6 +116,9 @@ def test_hostname():
     assert str.islower(s)
     assert '.' not in s
 
+def test_Platforms():
+    assert_is_sane_enum(session.Platforms)
+
 def test_platform():
     s = session.platform_
     assert s in session.Platforms
@@ -130,17 +133,34 @@ def test_Options():
 bar=2
 """
 
+def test_option_enums():
+    for e in [session.Terminals, session.Desktops, session.Browsers, session.SmbTells, session.SshTells, session.SmbSends, session.SshSends, session.PrivEscs]:
+        assert_is_sane_enum(e)
+
 def test_options():
     o = session.options
     assert isinstance(o, session.Options)
+    assert 'terminal' in o
+    assert 'desktop' in o
+    assert 'browser' in o
+    assert 'smbtell' in o
+    assert 'smbTell' not in o
+    assert 'sshtell' in o
+    assert 'sshTell' not in o
+    assert 'smbsend' in o
+    assert 'smbSend' not in o
+    assert 'sshsend' in o
+    assert 'sshSend' not in o
+    assert 'privesc' in o
+    assert 'privEsc' not in o
     assert o['terminal'] in session.Terminals
     assert o['desktop'] in session.Desktops
     assert o['browser'] in session.Browsers
-    assert o['smbtell'] in session.Smbtells
-    assert o['sshtell'] in session.Sshtells
-    assert o['smbsend'] in session.Smbsends
-    assert o['sshsend'] in session.Sshsends
-    assert o['privesc'] in session.Privescs
+    assert o['smbtell'] in session.SmbTells
+    assert o['sshtell'] in session.SshTells
+    assert o['smbsend'] in session.SmbSends
+    assert o['sshsend'] in session.SshSends
+    assert o['privesc'] in session.PrivEscs
     assert o['debug'] == '1' or o['debug'] == '0'
 
 def test_read_settings_from_file():
@@ -204,7 +224,7 @@ def test_viaScript():
     c = nose.plugins.capture.Capture()
     c.begin()
     print 'STUFFSTUFF'
-    session.viaScript('echo "Ignore this test message content in test_viaScript()"', 'yowza')
+    session.viaScript('echo "Ignore this test message content in test_viaScript()"')
     c.finalize(0)
     assert c.buffer == 'STUFFSTUFF\n'  # We don't capture the subprocess's output
 
@@ -320,6 +340,14 @@ def test_configureSshDisableStrictHostKeyChecking():
     assert not os.path.isfile(file_path)
 
 def test_startSshAgent():
+    # TODO
+    pass
+
+def test_sshSendKey():
+    # TODO
+    pass
+
+def test_sshCredHandler():
     # TODO
     pass
 

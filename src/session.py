@@ -306,11 +306,11 @@ except KeyError:
 Terminals = Enum(['none', 'gnome', 'apple', 'putty'])
 Desktops  = Enum(['none', 'rdesktop', 'amsrdc', 'mstsc'])
 Browsers  = Enum(['none', 'gnome', 'macos', 'windows'])
-Smbtells  = Enum(['none', 'winexe', 'psexec'])
-Sshtells  = Enum(['none', 'ssh', 'plink'])
-Smbsends  = Enum(['none', 'smbclient', 'robocopy'])
-Sshsends  = Enum(['none', 'scp', 'pscp'])
-Privescs  = Enum(['none', 'sudo', 'runas'])
+SmbTells  = Enum(['none', 'winexe', 'psexec'])
+SshTells  = Enum(['none', 'ssh', 'plink'])
+SmbSends  = Enum(['none', 'smbclient', 'robocopy'])
+SshSends  = Enum(['none', 'scp', 'pscp'])
+PrivEscs  = Enum(['none', 'sudo', 'runas'])
 
 class Options(dict):
     """Options dictionary capable of writing self to or reading from a file
@@ -359,38 +359,38 @@ if platform_ == Platforms.linux:
     options['terminal'] = Terminals.gnome
     options['desktop'] = Desktops.rdesktop
     options['browser'] = Browsers.gnome
-    options['smbTell'] = Smbtells.winexe
-    options['sshTell'] = Sshtells.ssh
-    options['smbSend'] = Smbsends.smbclient
-    options['sshSend'] = Sshsends.scp
-    options['privesc'] = Privescs.sudo
+    options['smbtell'] = SmbTells.winexe
+    options['sshtell'] = SshTells.ssh
+    options['smbsend'] = SmbSends.smbclient
+    options['sshsend'] = SshSends.scp
+    options['privesc'] = PrivEscs.sudo
 elif platform_ == Platforms.macosx:
     options['terminal'] = Terminals.apple
     options['desktop'] = Desktops.amsrdc
     options['browser'] = Browsers.macos
-    options['smbTell'] = Smbtells.winexe
-    options['sshTell'] = Sshtells.ssh
-    options['smbSend'] = Smbsends.smbclient
-    options['sshSend'] = Sshsends.scp
-    options['privesc'] = Privescs.sudo
+    options['smbtell'] = SmbTells.winexe
+    options['sshtell'] = SshTells.ssh
+    options['smbsend'] = SmbSends.smbclient
+    options['sshsend'] = SshSends.scp
+    options['privesc'] = PrivEscs.sudo
 elif platform_ == Platforms.windows:
     options['terminal'] = Terminals.putty
     options['desktop'] = Desktops.mstsc
     options['browser'] = Browsers.windows
-    options['smbTell'] = Smbtells.psexec
-    options['sshTell'] = Sshtells.plink
-    options['smbSend'] = Smbsends.robocopy
-    options['sshSend'] = Sshsends.pscp
-    options['privesc'] = Privescs.runas
+    options['smbtell'] = SmbTells.psexec
+    options['sshtell'] = SshTells.plink
+    options['smbsend'] = SmbSends.robocopy
+    options['sshsend'] = SshSends.pscp
+    options['privesc'] = PrivEscs.runas
 else:
     options['terminal'] = Terminals.none
     options['desktop'] = Desktops.none
     options['browser'] = Browsers.none
-    options['smbTell'] = Smbtells.none
-    options['sshTell'] = Sshtells.none
-    options['smbSend'] = Smbsends.none
-    options['sshSend'] = Sshsends.none
-    options['privesc'] = Privescs.none
+    options['smbtell'] = SmbTells.none
+    options['sshtell'] = SshTells.none
+    options['smbsend'] = SmbSends.none
+    options['sshsend'] = SshSends.none
+    options['privesc'] = PrivEscs.none
 
 
 ######## # Static options.conf default settings.
@@ -1791,22 +1791,32 @@ def startSshAgent():
 ####     return 0
 #### }
 
-# DIFF: Feed sshpub, addr
+# DIFF: Feed addr
 #
-def sshSendKey(username, sshpub, addr):
-    """Send a given local public key <sshpub> to given remote account <username> on remote machine (addr).
+def sshSendKey(usr, addr):
+    """Add local public key to the authorized-keys list of a given account <usr> on remote machine <addr>.
     """
-    reportDebugFuncEntry((username, sshpub, addr))
-    src = sshpub
-    trg = '/tmp/pubkey'
-    usr = username
-    retval = viaScript(sshSendCommandString(addr, usr, src, trg))
+    reportDebugFuncEntry((usr, addr))
+    pr = sshKeyPaths()
+    if pr is None:
+        reportError('Public key file not found')
+        return 1
+    (_, public_key_path) = pr
+    if public_key_path is None or len(public_key_path) == 0:
+        reportError('Public key file not found')
+        return 1
+    retval = viaScript(sshSendCommandString(addr, usr, public_key_path, '/tmp/pubkey'))
     if retval != 0:
         reportError('Failed to send public key with return code: %d' % retval)
         return 1
     reportInfo('Key sent successfully; will now attempt to install it')
-    commandlist = """case "$HOME" in (""|*" "*) exit 1 ;; esac ; mkdir -p $HOME/.ssh ; touch $HOME/.ssh/authorized_keys ; cat $HOME/.ssh/authorized_keys /tmp/pubkey | sort | uniq > /tmp/authorized_keys ; mv /tmp/authorized_keys $HOME/.ssh/authorized_keys ; rm /tmp/pubkey ; chmod 755 $HOME ; chmod 755 $HOME/.ssh ; chmod 600 $HOME/.ssh/authorized_keys"""
-    retval = viaScript(sshTellCommandString(addr, usr, commandlist))
+    cmd = """case "$HOME" in (""|*" "*) exit 1 ;; esac ; mkdir -p $HOME/.ssh ; touch $HOME/.ssh/authorized_keys ; cat $HOME/.ssh/authorized_keys /tmp/pubkey | sort | uniq > /tmp/authorized_keys ; mv /tmp/authorized_keys $HOME/.ssh/authorized_keys ; rm /tmp/pubkey ; chmod 755 $HOME ; chmod 755 $HOME/.ssh ; chmod 600 $HOME/.ssh/authorized_keys"""
+    retval = viaScript(sshTellCommandString(addr, usr, cmd))
+    if retval != 0:
+        reportError('Failed to install public key with return code: %d' % retval)
+        return 1
+    reportInfo('Key installed')
+    return 0
 
 
 #### # sshCredHandler(ashost|asguest|asservice)
@@ -1839,23 +1849,21 @@ def sshSendKey(username, sshpub, addr):
 
 Credtypes  = Enum(['ashost', 'asguest', 'asservice'])
 
-# DIFF: Feed user, admin, name
+# DIFF: Feed usr, admin, addr
 #
-def sshCredHandler(cred_type, user, admin, name, host):
+def sshCredHandler(cred_type, usr, admin, name, host):
     if cred_type == Credtypes.ashost or cred_type == Credtypes.asguest:
-        if user != 'none':
-            reportInfo('Sending ssh key for defined user (' + user + ') to ' + name)
-            sshSendKey(user)
-        if admin != 'none' and admin != user:
-            reportInfo('Sending ssh key for defined admin (' + admin + ') to ' + name)
-            sshSendKey(admin)
+        if usr != 'none':
+            reportInfo('Sending public ssh key to user account ' + usr + ' on ' + addr)
+            sshSendKey(usr, addr)
+        if admin != 'none' and admin != usr:
+            reportInfo('Sending public ssh key to admin account ' + admin + ' on ' + addr)
+            sshSendKey(admin, addr)
     elif cred_type == Credtypes.asservice:
-        if user != 'none':
-            reportInfo('Sending ssh key for defined user (' + user + ') to ' + host)
-            sshSendKey(user)
+        if usr != 'none':
+            reportInfo('Sending public ssh key to user account ' + usr + ' on ' + addr)
+            sshSendKey(usr, addr)
     return
-
-#zzzz
 
 
 #### 
