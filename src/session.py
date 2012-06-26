@@ -23,7 +23,7 @@
 #
 # Notes
 # -----
-# * For compatibility with early versions of Python We (sometimes)
+# * For compatibility with early versions of Python we (sometimes)
 #   use "%" formatting even though it may eventually disappear;
 #   we'll worry about that when it happens.  We don't use str
 #   formatting because it's not available before Python 2.6.
@@ -359,37 +359,37 @@ if platform_ == Platforms.linux:
     options['terminal'] = Terminals.gnome
     options['desktop'] = Desktops.rdesktop
     options['browser'] = Browsers.gnome
-    options['smbtell'] = Smbtells.winexe
-    options['sshtell'] = Sshtells.ssh
-    options['smbsend'] = Smbsends.smbclient
-    options['sshsend'] = Sshsends.scp
+    options['smbTell'] = Smbtells.winexe
+    options['sshTell'] = Sshtells.ssh
+    options['smbSend'] = Smbsends.smbclient
+    options['sshSend'] = Sshsends.scp
     options['privesc'] = Privescs.sudo
 elif platform_ == Platforms.macosx:
     options['terminal'] = Terminals.apple
     options['desktop'] = Desktops.amsrdc
     options['browser'] = Browsers.macos
-    options['smbtell'] = Smbtells.winexe
-    options['sshtell'] = Sshtells.ssh
-    options['smbsend'] = Smbsends.smbclient
-    options['sshsend'] = Sshsends.scp
+    options['smbTell'] = Smbtells.winexe
+    options['sshTell'] = Sshtells.ssh
+    options['smbSend'] = Smbsends.smbclient
+    options['sshSend'] = Sshsends.scp
     options['privesc'] = Privescs.sudo
 elif platform_ == Platforms.windows:
     options['terminal'] = Terminals.putty
     options['desktop'] = Desktops.mstsc
     options['browser'] = Browsers.windows
-    options['smbtell'] = Smbtells.psexec
-    options['sshtell'] = Sshtells.plink
-    options['smbsend'] = Smbsends.robocopy
-    options['sshsend'] = Sshsends.pscp
+    options['smbTell'] = Smbtells.psexec
+    options['sshTell'] = Sshtells.plink
+    options['smbSend'] = Smbsends.robocopy
+    options['sshSend'] = Sshsends.pscp
     options['privesc'] = Privescs.runas
 else:
     options['terminal'] = Terminals.none
     options['desktop'] = Desktops.none
     options['browser'] = Browsers.none
-    options['smbtell'] = Smbtells.none
-    options['sshtell'] = Sshtells.none
-    options['smbsend'] = Smbsends.none
-    options['sshsend'] = Sshsends.none
+    options['smbTell'] = Smbtells.none
+    options['sshTell'] = Sshtells.none
+    options['smbSend'] = Smbsends.none
+    options['sshSend'] = Sshsends.none
     options['privesc'] = Privescs.none
 
 
@@ -552,7 +552,6 @@ else:
 #
 
 backslash_char = '\\'
-two_backslash_chars = 2 * backslash_char
 
 user = os.environ.get('user') 
 if user is None:
@@ -564,7 +563,7 @@ if user is None:
     user = 'unknown'
     userDblBacksl = 'unknown'
 else:
-    userDblBacksl = user.replace(backslash_char, two_backslash_chars)
+    userDblBacksl = user.replace(backslash_char, backslash_char*2) # Backslashes are not expanded
 
 
 #### # Construct current config from global and local session.conf. 
@@ -833,17 +832,32 @@ def isLocal(name):
 
 def forwardizePath(pth):
     """Return <pth> (a string) with backslashes replaced by foreslashes.
+
+    Note that in the following strings backslashes are double-expanded.
+    >>> forwardizePath('')
+    ''
+    >>> forwardizePath('C:\\\\foo')
+    'C:/foo'
+    >>> len(forwardizePath('C:\\\\foo')) == len('C:\\\\foo') == 6
+    True
     """
-    # N.B. A backslash is matched by a *pattern* string consisting of two backslashes.
-    return re.sub(two_backslash_chars, '/', pth)
+    return pth.replace(backslash_char, '/')
 
 def backwardizePath(pth):
     """Return <pth> (a string) with foreslashes replaced by backslashes.
+
+    Note that in the following strings backslashes are double-expanded.
+    >>> backwardizePath('')
+    ''
+    >>> backwardizePath('foo/bar')
+    'foo\\\\bar'
+    >>> len(backwardizePath('foo/bar')) == len('foo/bar') == 7
+    True
     """
-    # N.B. A backslash in the replacement string is expanded, so a backslash must be represented as two backslashes.
-    return re.sub('/', two_backslash_chars, pth)
+    return pth.replace('/', backslash_char)
 
 # DIFF: Return string instead of echoing it.
+#
 def toLocalWindowsPath(pth):
     """Return the Windows-syntax version of the (local) path (with foreslashes).
 
@@ -855,8 +869,16 @@ def toLocalWindowsPath(pth):
     return o
 
 # DIFF: Return string instead of echoing it.
+#
 def toRemoteWindowsPath(pth):
     """Return the Windows-syntax version of the (remote) path (with foreslashes).
+
+    >>> toRemoteWindowsPath('C:\\\\foo')
+    'C:/foo'
+    >>> len('C:\\\\foo') == len(toRemoteWindowsPath('C:\\\\foo')) == 6
+    True
+    >>> toRemoteWindowsPath('')
+    'C:'
     """
     reportDebug('Incoming: ' + pth)
     drv, rst = ntpath.splitdrive(pth)
@@ -909,8 +931,10 @@ def toRemoteWindowsPath(pth):
 ####     return $retval
 #### }
 
+# DIFF: Don't use script file; execute directly
+#
 def viaScript(cmd, name):
-    """Execute command via the platform's native scripting method.
+    """Execute command script in the local platform's native shell scripting language.
 
     Return the latter's return value.
     """
@@ -934,7 +958,8 @@ def viaScript(cmd, name):
 #### }
 
 # DIFF: Return string instead of echoing it.
-def localTellCommand(cmd):
+#
+def localTellCommandString(cmd):
     """Return command for executing <cmd> locally.
     """
     reportDebugFuncEntry((cmd,))
@@ -961,7 +986,8 @@ def localTellCommand(cmd):
 #### }
 
 # DIFF: Return string instead of echoing it.
-def psexecTellCommand(addr, usr, pwd, cmd):
+#
+def psexecSmbTellCommandString(addr, usr, pwd, cmd):
     """Return command for executing <cmd> on <addr> as <usr> with <pwd> using psexec.
     """
     reportDebugFuncEntry((addr, usr, pwd, cmd))
@@ -973,7 +999,7 @@ def psexecTellCommand(addr, usr, pwd, cmd):
         raise ValueError('Password argument may not contain spaces')
     if '"' in cmd:
         raise ValueError('Command argument may not contain double quotation marks')
-    return 'psexec %s%s -h %s %s cmd.exe /c "%s" 2>nul\n' % (two_backslash_chars, addr, usr, pwd, cmd)
+    return """psexec %s%s -h %s %s cmd.exe /c "%s" 2>nul\n""" % (backslash_char*2, addr, usr, pwd, cmd)
     
 
 #### # winexeTellCommandWriter(<addr> <user> <pass> <command>)
@@ -994,7 +1020,8 @@ def psexecTellCommand(addr, usr, pwd, cmd):
 #### }
 
 # DIFF: Return string instead of echoing it.
-def winexeTellCommand(addr, usr, pwd, cmd):
+#
+def winexeSmbTellCommandString(addr, usr, pwd, cmd):
     """Return command for executing <cmd> on <addr> as <usr> with <pwd> using winexe.
     """
     reportDebugFuncEntry((addr, usr, pwd, cmd))
@@ -1008,7 +1035,21 @@ def winexeTellCommand(addr, usr, pwd, cmd):
         raise ValueError('Command argument may not contain single quotation marks')
     if '"' in cmd:
         raise ValueError('Command argument may not contain double quotation marks')
-    return '''winexe --debug-stderr --user '%s' --password='%s' //%s 'cmd.exe /c "%s"' 2>/dev/null\n''' % (usr, pwd, addr, cmd)
+    return """winexe --debug-stderr --user '%s' --password='%s' //%s 'cmd.exe /c "%s"' 2>/dev/null\n""" % (usr, pwd, addr, cmd)
+
+def smbTellCommandString(addr, usr, pwd, cmd):
+    """Call ${smbTell}SmbTellCommandString
+    """
+    reportDebugFuncentry((addr, usr, pwd, cmd))
+    o = options['smbTell']
+    if o == Smbtells.none:
+        reportError('Cannot tell because no smbTell type set')
+        return None
+    elif o == Smbtells.psexec:
+        return psexecSmbTellCommandString(addr, usr, pwd, cmd)
+    elif o == Smbtells.winexe:
+        return winexeSmbTellCommandString(addr, usr, pwd, cmd)
+    raise
 
 
 #### # plinkTellCommandWriter(<addr> <user> <command>)
@@ -1027,17 +1068,23 @@ def winexeTellCommand(addr, usr, pwd, cmd):
 #### }
 
 # DIFF: Return string instead of echoing it.
-def plinkTellCommand(addr, usr, sshopts, cmd):
+#
+def plinkSshTellCommandString(addr, usr, cmd):
     """Return command for executing <cmd> on <addr> as <usr> using plink.
     """
-    reportDebugFuncEntry((addr, usr, sshopts, cmd))
+    reportDebugFuncEntry((addr, usr, cmd))
     if ' ' in addr:
         raise ValueError('Address argument may not contain spaces')
     if '"' in usr:
         raise ValueError('User argument may not contain double quotation marks')
     if '"' in cmd:
         raise ValueError('Command argument may not contain double quotation marks')
-    return 'plink -batch -x %s -l "%s" %s "%s"\n' % (sshopts, usr, addr, cmd)
+    pr = sshKeyPaths()
+    if pr is None:
+        reportError('Private key file not found')
+        return None
+    (private_key_path, _)  = pr
+    return """plink -batch -x -i %s -l "%s" %s "%s"\n""" % (private_key_path, usr, addr, cmd)
 
 
 #### # sshTellCommandWriter(<host> <user> <command>)
@@ -1056,17 +1103,38 @@ def plinkTellCommand(addr, usr, sshopts, cmd):
 #### }
 
 # DIFF: Return string instead of echoing it.
-def sshTellCommand(addr, usr, sshopts, cmd):
-    """Return command for executing <cmd> on <addr> as <usr> using ssh.
+# DIFF: Calculate sshopts here
+#
+def sshSshTellCommandString(addr, usr, cmd):
+    """Return command string for executing <cmd> on <addr> as <usr> using ssh.
     """
-    reportDebugFuncEntry((addr, usr, sshopts, cmd))
+    reportDebugFuncEntry((addr, usr, cmd))
     if "'" in addr:
         raise ValueError('Address argument may not contain single quotation marks')
     if "'" in usr:
         raise ValueError('User argument may not contain single quotation marks')
     if "'" in cmd:
         raise ValueError('Command argument may not contain single quotation marks')
-    return "ssh %s -l '%s' '%s' '%s'\n" % (sshopts, usr, addr, cmd)
+    pr = sshKeyPaths()
+    if pr is None:
+        reportError('Private key file not found')
+        return None
+    (private_key_path, _)  = pr
+    return """ssh -i '%s' -l '%s' '%s' '%s'\n""" % (private_key_path, usr, addr, cmd)
+
+def sshTellCommandString(addr, usr, cmd):
+    """Call ${sshTell}SshTellCommandString
+    """
+    reportDebugFuncentry((addr, usr, cmd))
+    o = options['sshTell']
+    if o == Sshtells.none:
+        reportError('Cannot tell because no sshTell type set')
+        return None
+    elif o == Sshtells.ssh:
+        return sshSshTellCommandString(addr, usr, cmd)
+    elif o == Sshtells.plink:
+        return plinkSshTellCommandString(addr, usr, cmd)
+    raise
 
 
 #### # localSendCommandWriter(<source> <target>)
@@ -1097,7 +1165,8 @@ def sshTellCommand(addr, usr, sshopts, cmd):
 #### }
 
 # DIFF: Return string instead of echoing it.
-def localSendCommand(src, trg):
+#
+def localSendCommandString(src, trg):
     """Return command for locally copying directory <src> to directory <trg>.
     """
     reportDebugFuncEntry((src, trg))
@@ -1106,7 +1175,7 @@ def localSendCommand(src, trg):
     elif platform_ == Platforms.windows:
         src = toLocalWindowsPath(src)
         trg = toLocalWindowsPath(trg)
-        return 'robocopy /e "%s" "%s" >nul 2>&1\n' % (src, trg)
+        return """robocopy /e "%s" "%s" >nul 2>&1\n""" % (src, trg)
     else:
         raise ValueError
 
@@ -1141,7 +1210,8 @@ def localSendCommand(src, trg):
 #### }
 
 # DIFF: Return string instead of echoing it.
-def robocopySendCommand(addr, usr, pwd, src, trg):
+#
+def robocopySmbSendCommandString(addr, usr, pwd, src, trg):
     """Return command for copying directory <src> to remote directory <trg> as <usr> with <pwd> using robocopy and SMB.
     """
     reportDebugFuncEntry((addr, usr, pwd, src, trg))
@@ -1153,11 +1223,11 @@ def robocopySendCommand(addr, usr, pwd, src, trg):
     trg_drv_letter = trg_drv[:-1]
     if len(trg_drv_letter) != 1:
         raise ValueError()
-    trg_smbpathroot = two_backslash_chars + addr + backslash_char + trg_drv_letter + '$'
+    trg_smbpathroot = backslash_char*2 + addr + backslash_char + trg_drv_letter + '$'
     trg_smbpath     = trg_smbpathroot + backwardizePath(trg_rst)
-    r  = 'net use %s /user:"%s" ' % (trg_smbpathroot, usr) + ('"' + pwd + '"' if len(pwd)>0 else '') + ' 2>nul\n'
-    r += 'robocopy /e "%s" "%s" >nul 2>&1\n' % (src, trg_smbpath)
-    r += 'net use %s /delete >nul 2>&1\n' % trg_smbpathroot
+    r  = """net use %s /user:"%s" """ % (trg_smbpathroot, usr) + ('"' + pwd + '"' if len(pwd)>0 else '') + ' 2>nul\n'
+    r += """robocopy /e "%s" "%s" >nul 2>&1\n""" % (src, trg_smbpath)
+    r += """net use %s /delete >nul 2>&1\n""" % trg_smbpathroot
     return r
 
 #### # smbclientSendCommandWriter(<addr> <user> <pass> <source> <target>)
@@ -1185,7 +1255,8 @@ def robocopySendCommand(addr, usr, pwd, src, trg):
 #### }
 
 # DIFF: Return string instead of echoing it.
-def smbclientSendCommand(addr, usr, pwd, src, trg):
+#
+def smbclientSmbSendCommandString(addr, usr, pwd, src, trg):
     """Return command for copying directory <src> to remote directory <trg> as <usr> with <pwd> using smbclient.
     """
     reportDebugFuncEntry((addr, usr, pwd, src, trg))
@@ -1207,8 +1278,20 @@ def smbclientSendCommand(addr, usr, pwd, src, trg):
     smbcommand += 'recurse on;'
     smbcommand += 'mput *;'
     smbcommand += 'quit'
-    return '''smbclient '//%s/%s' -U "%s" -c '%s' 2>/dev/null\n''' % (addr, share, usr + ('%' + pwd if len(pwd)>0 else ''), smbcommand)
+    return """smbclient '//%s/%s' -U "%s" -c '%s' 2>/dev/null\n""" % (addr, share, usr + ('%' + pwd if len(pwd)>0 else ''), smbcommand)
 
+def smbSendCommandString(addr, usr, pwd, src, trg):
+    """Call ${smbSend}SmbSendCommandString
+    """
+    o = options['smbSend']
+    if o == Smbsends.none:
+        reportError('Cannot send command because no smbSend type set')
+        return None
+    elif o == Smbsends.smbclient:
+        return smbclientSmbSendCommandString(addr, usr, pwd, src, trg)
+    elif o == Smbsends.robocopy:
+        return robocopySmbSendCommandString(addr, usr, pwd, src, trg)
+    raise
 
 #### # pscpSendCommandWriter(<addr> <uopts> <source> <target>)
 #### # Prints.
@@ -1227,8 +1310,9 @@ def smbclientSendCommand(addr, usr, pwd, src, trg):
 #### }
 
 # DIFF: Return string instead of echoing it.
-def pscpSendCommand(addr, sshopts, usr, src, trg):
-    reportDebugFuncEntry((addr, sshopts, usr, src, trg))
+#
+def pscpSshSendCommandString(addr, usr, src, trg):
+    reportDebugFuncEntry((addr, usr, src, trg))
     src = toLocalWindowsPath(src)
     if '"' in usr:
         raise ValueError('User argument may not contain double quotation marks')
@@ -1236,7 +1320,12 @@ def pscpSendCommand(addr, sshopts, usr, src, trg):
         raise ValueError('Source argument may not contain double quotation marks')
     if '"' in trg:
         raise ValueError('Target argument may not contain double quotation marks')
-    return 'pscp %s -scp -p -q -r -l "%s" "%s" %s:"%s"\n' % (sshopts, usr, src, addr, trg)
+    pr = sshKeyPaths()
+    if pr is None:
+        reportError('Private key file not found')
+        return None
+    (private_key_path, _)  = pr
+    return """pscp -i "%s" -scp -p -q -r -l "%s" "%s" %s:"%s"\n""" % (private_key_path, usr, src, addr, trg)
 
 
 #### # scpSendCommandWriter(<addr> <uopts> <source> <target>)
@@ -1259,14 +1348,33 @@ def pscpSendCommand(addr, sshopts, usr, src, trg):
 
 # DIFF: Return string instead of echoing it.
 #
-def scpSendCommand(addr, sshopts, usr, src, trg):
-    reportDebugFuncEntry((addr, sshopts, usr, src, trg))
+def scpSshSendCommandString(addr, usr, src, trg):
+    reportDebugFuncEntry((addr, usr, src, trg))
     if '"' in src:
         raise ValueError('Source argument may not contain double quotation marks')
     if '"' in trg:
         raise ValueError('Target argument may not contain double quotation marks')
-    u = usr.replace(backslash_char + ' ', two_backslash_chars + ' ').replace(two_backslash_chars, 2 * two_backslash_chars)
-    return 'scp -q %s -r "%s" %s@%s:"%s"\n' % (sshopts, src, u, addr, trg)
+    u = usr.replace(backslash_char + ' ', backslash_char*2 + ' ').replace(backslash_char*2, backslash_char*4)
+    pr = sshKeyPaths()
+    if pr is None:
+        reportError('Private key file not found')
+        return None
+    (private_key_path, _)  = pr
+    return """scp -q -i "%s" -r "%s" %s@%s:"%s"\n""" % (private_key_path, src, u, addr, trg)
+
+def sshSendCommandString(addr, usr, src, trg):
+    """Call ${sshSend}SshSendCommandString
+    """
+    reportDebugFuncentry((addr, usr, src, trg))
+    o = options['sshSend']
+    if o == Sshsends.none:
+        reportError('Cannot send command because no sshSend type set')
+        return None
+    elif o == Sshsends.scp:
+        return scpSshSendCommandString(addr, usr, src, trg)
+    elif o == Sshsends.pscp:
+        return pscpSshSendCommandString(addr, usr, src, trg)
+    raise
 
 
 #### # toolFinder()
@@ -1382,49 +1490,6 @@ def scpSendCommand(addr, sshopts, usr, src, trg):
 # DIFF: Don't generate tools.found and tools.required
 
 
-def sshKeyPaths():
-    """Return pair of paths for the best available ssh keypair.
-    """
-    reportDebugFuncEntry(())
-    ssh_root = os.path.join(os.environ.get('HOME'), '.ssh')
-    if platform_ == Platforms.linux or platform_ == Platforms.macosx:
-        filename_pairs_to_try = [('id_dsa', 'id_dsa.pub'), ('id_rsa', 'id_rsa.pub')]
-    elif platform_ == Platforms.windows:
-        filename_pairs_to_try = [('id_dsa.ppk', 'id_dsa.pub'), ('id_rsa.ppk', 'id_rsa.pub')]
-    # Look for a key pair.
-    for pr in filename_pairs_to_try:
-        (private_key_filename, public_key_filename) = pr
-        private_key_path = os.path.join(ssh_root, private_key_filename)
-        public_key_path = os.path.join(ssh_root, public_key_filename)
-        if os.path.exists(private_key_path) and os.path.exists(public_key_path):
-            return (private_key_path, public_key_path)
-    # No pair found. Look for private key.
-    for pr in filename_pairs_to_try:
-        (private_key_filename, _) = pr
-        private_key_path = os.path.join(ssh_root, private_key_filename)
-        if os.path.exists(private_key_path):
-            return (private_key_path, None)
-    return None
-
-def runningProcessOfProgram(prgm):
-    """Return the first running process with the given command line string.
-    """
-    for p in psutil.process_iter():
-        if len(p.cmdline) == 0:
-            continue
-        if os.path.basename(p.cmdline[0]) == prgm:
-            return p
-    return None
-
-def grepq(string, f):
-    """Return True if the given string is in the given file.
-    Comparable with "grep -q" but takes a file object as argument, not a file name.
-    """
-    for ln in f:
-        if string in ln:
-            return True
-    return False
-
 
 #### # handleSshPrivateKeys()
 #### # Detects private keys, handles automatic agent starting when needed.
@@ -1519,7 +1584,54 @@ def grepq(string, f):
 ####     fi
 #### }
 
+# DIFF: Don't keep paths and sshopts in a global variable but calculate them as needed.
+#
+def sshKeyPaths():
+    """Return pair of paths for the best available ssh keypair.
+    """
+    reportDebugFuncEntry(())
+    ssh_root = os.path.join(os.environ.get('HOME'), '.ssh')
+    if platform_ == Platforms.linux or platform_ == Platforms.macosx:
+        filename_pairs_to_try = [('id_dsa', 'id_dsa.pub'), ('id_rsa', 'id_rsa.pub')]
+    elif platform_ == Platforms.windows:
+        filename_pairs_to_try = [('id_dsa.ppk', 'id_dsa.pub'), ('id_rsa.ppk', 'id_rsa.pub')]
+    # Look for a key pair.
+    for pr in filename_pairs_to_try:
+        (private_key_filename, public_key_filename) = pr
+        private_key_path = os.path.join(ssh_root, private_key_filename)
+        public_key_path = os.path.join(ssh_root, public_key_filename)
+        if os.path.exists(private_key_path) and os.path.exists(public_key_path):
+            return (private_key_path, public_key_path)
+    # No pair found. Look for private key.
+    for pr in filename_pairs_to_try:
+        (private_key_filename, _) = pr
+        private_key_path = os.path.join(ssh_root, private_key_filename)
+        if os.path.exists(private_key_path):
+            return (private_key_path, None)
+    return None
+
+def runningProcessOfProgram(prgm):
+    """Return the first running process with the given command line string.
+    """
+    for p in psutil.process_iter():
+        if len(p.cmdline) == 0:
+            continue
+        if os.path.basename(p.cmdline[0]) == prgm:
+            return p
+    return None
+
+def grepq(string, f):
+    """Return True if the given string is in the given file.
+    Comparable with "grep -q" but takes a file object as argument, not a file name.
+    """
+    for ln in f:
+        if string in ln:
+            return True
+    return False
+
 def configureSshDisableStrictHostKeyChecking(pth=None):
+    """Ensure that ~/.ssh contains 'StrictHostKeyChecking no'.
+    """
     if pth is None:
         pth = '~/.ssh'
     ssh_config_dir = os.path.normcase(os.path.expanduser(pth))
@@ -1547,9 +1659,6 @@ def configureSshDisableStrictHostKeyChecking(pth=None):
         except:
             reportError('Could not write to ~/.ssh/config')
 
-# DIFF: Bash version was "handleSshPrivateKeys"
-# DIFF: Don't keep paths and sshopts in a global variable but calculate them as needed.
-#
 def startSshAgent():
     reportDebugFuncEntry(())
     if options['agent'] != '1':
@@ -1560,12 +1669,12 @@ def startSshAgent():
     (private_key_path, _)  = pr
     if platform_ == Platforms.linux or platform_ == Platforms.macosx:
         # Ensure ssh-agent is running
-        if os.environ.get('SSH_AUTH_SOCK') is not None:
+        prcss = runningProcessOfProgram('ssh-agent')
+        if os.environ.get('SSH_AUTH_SOCK') is not None and prcss is not None:
             reportDebug("Using running ssh-agent")
             # DIFF: It shouldn't be necessary to re-set and re-export the variables
         else:
             # TODO: Constrain to processes running as current user?
-            prcss = runningProcessOfProgram('ssh-agent')
             if prcss is None:
                 reportDebug("Starting ssh-agent")
                 assignment_regexp = re.compile("(\S+)\=(\S+);")
@@ -1591,8 +1700,6 @@ def startSshAgent():
             viaScript('start /b pageant "%s"' % private_key_path)
             # The bash version had a sleep 10 here
 
-
-#xyzzy
 
 #### 
 #### # handleQuotedRegExpBehaviour()
@@ -1636,6 +1743,10 @@ def startSshAgent():
 ####         shopt -s compat31
 ####     fi
 #### }
+
+# DIFF: We don't have to quote things in Python
+
+
 #### 
 #### # sshSendKey(<username>)
 #### # Sends a local public key to another machine.
@@ -1679,6 +1790,75 @@ def startSshAgent():
 ####     reportInfo "Key installed"
 ####     return 0
 #### }
+
+# DIFF: Feed sshpub, addr
+#
+def sshSendKey(username, sshpub, addr):
+    """Send a given local public key <sshpub> to given remote account <username> on remote machine (addr).
+    """
+    reportDebugFuncEntry((username, sshpub, addr))
+    src = sshpub
+    trg = '/tmp/pubkey'
+    usr = username
+    retval = viaScript(sshSendCommandString(addr, usr, src, trg))
+    if reval != 0:
+        reportError('Failed to send public key with return code: %d' % retval)
+        return 1
+    reportInfo('Key sent successfully; will now attempt to install it')
+    # TODO: In this commandlist either wrap variable references in double quotes or make sure that they don't contain whitespace.
+    commandlist = """[ "$HOME" ] || exit 1 ; mkdir -p $HOME/.ssh ; touch $HOME/.ssh/authorized_keys ; cat $HOME/.ssh/authorized_keys /tmp/pubkey | sort | uniq > /tmp/authorized_keys ; mv /tmp/authorized_keys $HOME/.ssh/authorized_keys ; rm /tmp/pubkey ; chmod 755 $HOME ; chmod 755 $HOME/.ssh ; chmod 600 $HOME/.ssh/authorized_keys"""
+    retval = viaScript(sshTellCommandString(addr, usr, commandlist))
+
+
+#### # sshCredHandler(ashost|asguest|asservice)
+#### # Runs commands.
+#### #
+#### # Handle calling sshSendKey with correct username.
+#### #
+#### function sshCredHandler {
+####     reportDebugFuncEntry "$*"
+#### 
+####     case "$1" in
+####       ashost|asguest)
+####         if [ "$user" != "none" ]; then
+####             reportInfo "Sending ssh key for defined user ($user) to $name"
+####             sshSendKey "$user"
+####         fi
+####         if [ "$admin" != "none" -a "$admin" != "$user" ]; then
+####             reportInfo "Sending ssh key for defined admin ($admin) to $name"
+####             sshSendKey "$admin"
+####         fi
+####         ;;
+####       asservice)
+####         if [ "$user" != "none" ]; then
+####             reportInfo "Sending ssh key for defined service user ($user) to $host"
+####             sshSendKey "$user"
+####         fi
+####         ;;
+####     esac
+#### }
+
+Credtypes  = Enum(['ashost', 'asguest', 'asservice'])
+
+# DIFF: Feed user, admin, name
+#
+def sshCredHandler(cred_type, user, admin, name, host):
+    if cred_type == Credtypes.ashost or cred_type == Credtypes.asguest:
+        if user != 'none':
+            reportInfo('Sending ssh key for defined user (' + user + ') to ' + name)
+            sshSendKey(user)
+        if admin != 'none' and admin != user:
+            reportInfo('Sending ssh key for defined admin (' + admin + ') to ' + name)
+            sshSendKey(admin)
+    elif cred_type == Credtypes.asservice:
+        if user != 'none':
+            reportInfo('Sending ssh key for defined user (' + user + ') to ' + host)
+            sshSendKey(user)
+    return
+
+#zzzz
+
+
 #### 
 #### # winStoreCreds(<type> <name>)
 #### # Writes pwd files.
@@ -4977,33 +5157,7 @@ def startSshAgent():
 ####     return 0
 #### }
 #### 
-#### # sshCredHandler(ashost|asguest|asservice)
-#### # Runs commands.
-#### #
-#### # Handle calling sshSendKey with correct username.
-#### #
-#### function sshCredHandler {
-####     reportDebugFuncEntry "$*"
-#### 
-####     case "$1" in
-####       ashost|asguest)
-####         if [ "$user" != "none" ]; then
-####             reportInfo "Sending ssh key for defined user ($user) to $name"
-####             sshSendKey "$user"
-####         fi
-####         if [ "$admin" != "none" -a "$admin" != "$user" ]; then
-####             reportInfo "Sending ssh key for defined admin ($admin) to $name"
-####             sshSendKey "$admin"
-####         fi
-####         ;;
-####       asservice)
-####         if [ "$user" != "none" ]; then
-####             reportInfo "Sending ssh key for defined service user ($user) to $host"
-####             sshSendKey "$user"
-####         fi
-####         ;;
-####     esac
-#### }
+
 #### 
 #### # winCredHandler(ashost|asguest|asservice)
 #### # Runs commands.
