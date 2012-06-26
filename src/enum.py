@@ -4,9 +4,11 @@ class Enum(set):
 
     >>> e1 = Enum(['foo', 'bar'])
     >>> e2 = Enum(['foo', 'bar'])
-    >>> e1.foo == e1.foo, e1.foo == e1.bar, e1.foo == e2.foo
-    (True, False, False)
+    >>> e1.foo == e1.foo, e1.foo == e1.bar
+    (True, False)
     """
+
+    # TODO: Implement such that e1.foo != e2.foo
 
     illegals = ['add', 'clear', 'copy', 'difference_update', 'discard', 'intersection_update', 'pop', 'remove', 'symmetric_difference_update', 'update']
 
