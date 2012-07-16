@@ -41,7 +41,10 @@ function reportWarning { reportSession "Warning: $*" >&2 ; }
 function reportError { reportSession "Error: ${FUNCNAME[1]}(): $*" >&2 ; }
 function reportDebug {
     [ ! "$debug" -o  "$debug" = 0 ] && return
-    reportSession "Debug: ${FUNCNAME[1]}(): $*" >&2
+    typeset msg
+    msg="Debug: ${FUNCNAME[1]}(): $*"
+    reportSession "$msg" >&2
+    [ ! "$logfile" ] || printf "%s\n" "$msg" >> "$logfile"
 }
 
 # reportDebugFuncEntry(<argument_name_vector> <environment_variable_name_vector> <additional_message>)

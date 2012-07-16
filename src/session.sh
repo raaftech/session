@@ -184,7 +184,9 @@ if [ "$privy" != 0 ]; then privy="$privesc" ; else unset privy ; fi
 # Enable (*) or disable (0) debug logging.
 # This makes all functions within session write about how they are
 # called including arguments and some environment variables.
-if [ "$debug" != 0 ]; then debug="true" ; else unset debug; fi
+# Notice that we check for "--debug" on cmdline too. This is cheaper
+# than calling parseParameters at this level. 
+if [ "$debug" != 0  ]; then debug="true" ; elif [[ "$*" =~ "--debug" ]]; then debug="true" ; else unset debug; fi
 
 # Detect and initialize private key usage.
 handleSshPrivateKeys
