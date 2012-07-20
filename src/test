@@ -1,2 +1,0 @@
-#!/bin/sh
-nosetests session_test.py enum.py session.py --with-doctest
