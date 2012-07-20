@@ -1,6 +1,7 @@
 * text=auto !eol
 /Session.pyproj -text
 /Session.sln -text
+/build.xml -text
 doc/ChangeLog -text
 doc/ISSUES -text
 doc/LICENSE -text
@@ -714,6 +715,7 @@ ext/win/setup/setup.isproj -text
 ext/win/setup/setup.sln -text
 /functions.sh -text
 /globals.sh -text
+/release.xml -text
 /session.bat -text
 /session.sh -text
 tst/tester.sh -text
