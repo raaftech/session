@@ -712,7 +712,6 @@ ext/win/setup/setup.isl -text
 ext/win/setup/setup.isproj -text
 ext/win/setup/setup.sln -text
 man/session.1 -text
-src/enum.py -text
 src/functions.sh -text
 src/globals.sh -text
 src/session.bat -text
