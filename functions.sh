@@ -1,4 +1,4 @@
-# Copyright © 2010, 2011, 2012 Rubin Simons
+# Copyright © 2008-2012 RAAF Technology bv
 #
 # This file is part of Session.
 #
@@ -4357,6 +4357,9 @@ function printUsageText {
 #
 function printVersion {
     reportDebugFuncEntry "$*"
-
-    report "${version}.${tag}"
+    echo "RELEASE.STRING.VERSION
+    RELEASE.STRING.COPYRIGHT
+    RELEASE.STRING.RELDATE
+    RELEASE.STRING.BUILT
+    RELEASE.STRING.LICENSE" | sed 's/^[ \t]*//;s/[ \t]*$//'
 }

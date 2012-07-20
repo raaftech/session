@@ -17,6 +17,7 @@ doc/install-macosx.txt -text
 doc/install-windows.txt -text
 doc/kvm.stf -text
 doc/options.conf.forhost -text
+doc/session.1 -text
 doc/session.conf.example -text
 doc/test-definitions.txt -text
 doc/user.pwd.example -text
@@ -711,11 +712,10 @@ ext/win/session/session.sh -text
 ext/win/setup/setup.isl -text
 ext/win/setup/setup.isproj -text
 ext/win/setup/setup.sln -text
-man/session.1 -text
-src/functions.sh -text
-src/globals.sh -text
-src/session.bat -text
-src/session.sh -text
+/functions.sh -text
+/globals.sh -text
+/session.bat -text
+/session.sh -text
 tst/tester.sh -text
 tst/tst001/tst001.sh -text
 tst/tst002/tst002.sh -text

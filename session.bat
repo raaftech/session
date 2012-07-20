@@ -32,7 +32,7 @@ set MSYS_EXECUTABLE=%MSYS_HOME%/bin/bash.exe
 set SESSION_HOME=%HOME%/Source/Projects/Session
 
 :: Set session EXECUTABLE.
-set SESSION_EXECUTABLE=%SESSION_HOME%/src/session.sh
+set SESSION_EXECUTABLE=%SESSION_HOME%/session.sh
 
 :: Determine which cmd.exe to use
 set SESSION_CMD=%COMSPEC%

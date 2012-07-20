@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright © 2010, 2011, 2012 Rubin Simons
+# Copyright © 2008-2012 RAAF Technology bv
 #
 # This file is part of Session.
 #
@@ -34,7 +34,7 @@ if [ ! "$SESSION_HOME" ]; then
     done
     unset DIR
     IFS="$ORIG_IFS"
-    OFFSET="/.."
+    OFFSET="/"
     if [ -e "$(dirname "$ABS")$OFFSET" ]; then
         # Found, probably called relatively.
         cd "$(dirname "$ABS")$OFFSET"
@@ -48,7 +48,7 @@ if [ ! "$SESSION_HOME" ]; then
 fi
 
 # Initialize globals.
-source "$SESSION_HOME/src/globals.sh"
+source "$SESSION_HOME/globals.sh"
 
 # Set default permission mask and make sure directories exist.
 umask 077
@@ -125,7 +125,7 @@ else
 fi
 
 # Initialize functions.
-source "$SESSION_HOME/src/functions.sh"
+source "$SESSION_HOME/functions.sh"
 
 # Initialize bash quoted regexp behaviour.
 if [ "$(echo "$SHELL" | grep -i "bash")" ]; then
