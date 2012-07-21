@@ -1,4 +1,5 @@
 * text=auto !eol
+/build.xml -text
 cfg/session.conf -text
 doc/ChangeLog -text
 doc/ISSUES -text
@@ -9,6 +10,7 @@ doc/example-qemu012.xml -text
 doc/install-linux.txt -text
 doc/install-macosx.txt -text
 doc/install-windows.txt -text
+/release.xml -text
 src/release-maker.sh -text
 src/session-linux.sh -text
 src/session-macosx.sh -text
