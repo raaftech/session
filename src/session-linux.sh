@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Version 0.8.4, released 12-05-2011.
+# RELEASE.STRING.VERSION
 #
 # Copyright © 2010,2011 Rubin Simons
 # This file is part of Session.
@@ -3527,8 +3527,11 @@ case "$main" in
         fi
     esac
     ;;
-    version)
-    cat $0 | grep "^# Version" | sed "s|^# ||g"
+    echo "RELEASE.STRING.VERSION
+    RELEASE.STRING.COPYRIGHT
+    RELEASE.STRING.RELDATE
+    RELEASE.STRING.BUILT
+    RELEASE.STRING.LICENSE" | sed 's/^[ \t]*//;s/[ \t]*$//'
     ;;
     *)
     echo $"Usage: $0 command {group, guest, host or special argument}"
