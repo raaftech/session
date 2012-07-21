@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Version 0.9.1, released 11-01-2012.
+# RELEASE.STRING.VERSION
 #
 # Copyright © 2010, 2011, 2012 Rubin Simons
 #
@@ -4453,7 +4453,11 @@ printUsageText() {
 printVersion() {
     reportDebugFuncEntry "$*"
 
-    cat "$0" | grep "^# Version" | sed "s|^# ||g"
+    echo "RELEASE.STRING.VERSION
+    RELEASE.STRING.COPYRIGHT
+    RELEASE.STRING.RELDATE
+    RELEASE.STRING.BUILT
+    RELEASE.STRING.LICENSE" | sed 's/^[ \t]*//;s/[ \t]*$//'
 }
 
 # Main case statement
