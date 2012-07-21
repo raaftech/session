@@ -1,6 +1,4 @@
 * text=auto !eol
-/Session.pyproj -text
-/Session.sln -text
 /build.xml -text
 doc/ChangeLog -text
 doc/ISSUES -text
