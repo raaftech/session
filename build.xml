@@ -62,7 +62,7 @@
         </tstamp>
 
         <!-- Create a few release properties. -->
-        <property name="release.string.number"    value="${release.version.major}.${release.version.minor}.${info.entry.commit.revision}"/>
+        <property name="release.string.number"    value="${release.version.major}.${release.version.minor}.${release.version.patch}.${info.entry.commit.revision}"/>
         <property name="release.string.version"   value="${release.name} version ${release.string.number} ${release.tag}"/> 
         <property name="release.string.copyright" value="Copyright © ${release.copyright.daterange} ${release.copyright.toname}"/>
         <property name="release.string.reldate"   value="Released ${release.date.commit}"/> 
