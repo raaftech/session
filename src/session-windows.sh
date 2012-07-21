@@ -3533,6 +3533,7 @@ case "$main" in
         fi
     esac
     ;;
+    version)
     echo "RELEASE.STRING.VERSION
     RELEASE.STRING.COPYRIGHT
     RELEASE.STRING.RELDATE
