@@ -1,5 +1,6 @@
 * text=auto !eol
 /LICENSE -text
+/build.xml -text
 doc/ldifs/capabilities.ldif -text
 doc/ldifs/credentials.ldif -text
 doc/ldifs/groups.ldif -text
@@ -33,6 +34,7 @@ doc/tryouts/myactions.py -text
 doc/tryouts/myclasses.py -text
 doc/tryouts/myinterfaces.py -text
 doc/tryouts/wolpython.py -text
+/release.xml -text
 src/access/__init__.py -text
 src/access/credential.py -text
 src/config.py -text
