@@ -1,6 +1,8 @@
 * text=auto !eol
 /ChangeLog -text
 /LICENSE -text
+/build.xml -text
+/release.xml -text
 /session-linux.sh -text
 /session-windows.sh -text
 /session.conf -text

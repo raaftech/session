@@ -1,6 +1,6 @@
 #!/bin/bash
  
-# Version 0.5.0, released 11-07-2010.
+# RELEASE.STRING.VERSION
 #
 # There are known speed issues with this script on Vista and 7.
 # These issues are related to cygwin's fork() performance which
@@ -1023,6 +1023,13 @@ case "$1" in
                 exit 1
         esac
     ;;
+    version)
+    echo "RELEASE.STRING.VERSION
+    RELEASE.STRING.COPYRIGHT
+    RELEASE.STRING.RELDATE
+    RELEASE.STRING.BUILT
+    RELEASE.STRING.LICENSE" | sed 's/^[ \t]*//;s/[ \t]*$//'
+    ;;
     *)
     echo $"Usage: $0 command {group, guest, host or special argument}"
     echo ""
@@ -1035,6 +1042,7 @@ case "$1" in
     echo "send      - send a file or directory to the host, guest or group."
     echo "key       - send public key to remote admin and user."
     echo "list      - list all hosts, guests or groups."
+    echo "version   - show session version."
     echo ""
     echo "Special arguments:"
     echo "all       - (check only) operate on all hosts, regardless of grouping."
