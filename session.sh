@@ -1,6 +1,6 @@
 #!/bin/bash
  
-# Version 0.4.4, released 22-01-2010.
+# RELEASE.STRING.VERSION
 
 # Copyright © 2009 Rubin Simons
 # This file is part of Session.
@@ -953,6 +953,13 @@ case "$1" in
                 exit 1
         esac
     ;;
+    version)
+    echo "RELEASE.STRING.VERSION
+    RELEASE.STRING.COPYRIGHT
+    RELEASE.STRING.RELDATE
+    RELEASE.STRING.BUILT
+    RELEASE.STRING.LICENSE" | sed 's/^[ \t]*//;s/[ \t]*$//'
+    ;;
     *)
     echo $"Usage: $0 command {group, guest, host or special argument}"
     echo ""
@@ -965,6 +972,7 @@ case "$1" in
     echo "send      - send a file or directory to the host, guest or group."
     echo "key       - send public key to remote admin and user."
     echo "list      - list all hosts, guests or groups."
+    echo "version   - show session version."
     echo ""
     echo "Special arguments:"
     echo "all       - (check only) operate on all hosts, regardless of grouping."
