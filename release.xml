@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<release name="Session">
+    <version major="0" minor="6" patch="4"/>
+    <copyright toname="RAAF Technology bv" daterange="2008-2012"/>
+    <license type="foss" name="GPLv3"/>
+    <description>
+        Session - A tool for checking the state of- and commanding systems and services.
+    </description>
+</release>
