@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Version 0.7.11, released 10-03-2011.
+# RELEASE.STRING.VERSION
 #
 # There are known speed issues with this script on Vista and 7.
 # These issues are related to cygwin's fork() performance which
@@ -2219,7 +2219,11 @@ case "$1" in
     esac
     ;;
     version)
-    cat $0 | grep "^# Version" | sed "s|^# ||g"
+    echo "RELEASE.STRING.VERSION
+    RELEASE.STRING.COPYRIGHT
+    RELEASE.STRING.RELDATE
+    RELEASE.STRING.BUILT
+    RELEASE.STRING.LICENSE" | sed 's/^[ \t]*//;s/[ \t]*$//'
     ;;
     *)
     echo $"Usage: $0 command {group, guest, host or special argument}"
