@@ -107,7 +107,7 @@ else
     userDblBacksl="unknown"
 fi
 
-# Construct current config from global and local session.conf. 
+# Construct current config from global and local session.conf.
 if [ -e "$syscff" ]; then
     if [ -e "$usrcff" ]; then
         sed "s|\$user|$userDblBacksl|g" "$syscff" "$usrcff" > "$config"
