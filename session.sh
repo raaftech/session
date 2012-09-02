@@ -167,7 +167,7 @@ if [ "$destroy" != 1 ]; then destroy="false" ; elif [ "$destroy" = 1 ]; then des
 # Enable (*) or disable (0) resilient (extremely high latency networks) mode.
 if [ "$resilient" != 0 ]; then resilient="true" ; else unset resilient ; fi
 
-# Enable (*) or disable (0) title setting for various access functions. 
+# Enable (*) or disable (0) title setting for various access functions.
 if [ "$titling" != 0 ]; then titling="true" ; else unset titling ; fi
 
 # Enable (*) or disable (0) color state output.
