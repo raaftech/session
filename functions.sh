@@ -482,7 +482,7 @@ function toolFinder {
     elif [ "$browser" = "gnome" ]; then
         tools_browser="open"
     fi
-    
+
     for tools_access_type in tools_terminal tools_desktop tools_browser; do
         typeset current="$(eval printf '%s\\n' "\$$tools_access_type")"
         if [ "$current" ]; then
