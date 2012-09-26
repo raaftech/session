@@ -196,7 +196,7 @@ function viaScript {
     typeset nametmp="$name"
 
     [ "$nametmp" ] || nametmp=local
-    
+
     if [ "$platform" = "linux" -o "$platform" = "macosx" ]; then
         printf "#!/bin/sh\n" > "$usrcfd/tmp/session.tell.$nametmp.sh"
         printf '%s\n '"$command" | sed 's/^[[:space:]]*//' 2> /dev/null >> "$usrcfd/tmp/session.tell.$nametmp.sh"
