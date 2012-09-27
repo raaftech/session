@@ -3079,7 +3079,7 @@ function esxVirtHandler {
     return 0
 }
 
-# noneServiceHandler(state|start|stop|restart) 
+# noneServiceHandler(state|start|stop|restart)
 # Sets svstate, runs commands.
 #
 # Handle services that are of type none.
