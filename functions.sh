@@ -1597,7 +1597,7 @@ function tokenReader {
 # Returns 0 if valid, 1 if invalid.
 #
 function tokenValidator {
-    reportDebugFuncEntry "$*" 
+    reportDebugFuncEntry "$*"
 
     typeset keys="$1"
     typeset varname
