@@ -3578,7 +3578,7 @@ function noneAccessHandler {
 # httpAccessHandler(state|access)
 # Sets acstate, runs commands.
 #
-# Either determine the state of, or access system using the http 
+# Either determine the state of, or access system using the http
 # protocol and the default web browser.
 #
 function httpAccessHandler {
