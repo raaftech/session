@@ -1509,7 +1509,7 @@ function entryReader {
 # in either the given <entry> if the <name> matches, otherwise
 # in the <config> file under that <name> and either print out
 # the values separated by spaces (if <function> is "printVals"),
-# or set global variables named like the keys to the looked-up 
+# or set global variables named like the keys to the looked-up
 # values (if <function> is "setVars").
 #
 function tokenReader {
