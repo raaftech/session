@@ -3663,7 +3663,7 @@ function telAccessHandler {
 # sshAccessHandler(state|access)
 # Sets acstate, runs commands.
 #
-# Either determine the state of, or access system using the ssh protocol 
+# Either determine the state of, or access system using the ssh protocol
 # and the terminal handler specified in options.conf.
 #
 function sshAccessHandler {
