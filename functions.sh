@@ -1190,7 +1190,7 @@ function addConf {
 }
 
 # delConf(<name>)
-# Deletes. 
+# Deletes.
 #
 # Remove the named configuration entry from session.conf.
 #
