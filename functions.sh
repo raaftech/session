@@ -1506,7 +1506,7 @@ function entryReader {
 # Prints, sets variables.
 #
 # Look up the values for the given comma-separated <keys>
-# in either the given <entry> if the <name> matches, otherwise 
+# in either the given <entry> if the <name> matches, otherwise
 # in the <config> file under that <name> and either print out 
 # the values separated by spaces (if <function> is "printVals"),
 # or set global variables named like the keys to the looked-up 
