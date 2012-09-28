@@ -3989,7 +3989,7 @@ function sshExecHandler {
         ;;
     esac
 
-    if [ "$platform" = "linux" ]; then 
+    if [ "$platform" = "linux" ]; then
         # If gnome-keyring-daemon is running, check to see if a prompt has started, wait for it to close.
         waitForDialog "gnome-keyring-daemon" "gnome-keyring-prompt"
     elif [ "$platform" = "macosx" ]; then
