@@ -3699,7 +3699,7 @@ function sshAccessHandler {
 # rdpAccessHandler(state|access)
 # Sets acstate, runs commands.
 #
-# Either determine the state of, or access system using the rdp protocol 
+# Either determine the state of, or access system using the rdp protocol
 # and the desktop handler specified in options.conf.
 #
 function rdpAccessHandler {
