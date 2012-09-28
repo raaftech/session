@@ -24,7 +24,7 @@ class HandyTestCase(TestCase):
     def divert_stdout(self):
         self.orig_stdout = sys.stdout
         sys.stdout = cStringIO.StringIO()
- 
+
     def undivert_stdout(self):
         strm = sys.stdout
         sys.stdout = self.orig_stdout
