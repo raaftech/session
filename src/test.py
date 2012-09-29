@@ -66,7 +66,7 @@ class TestMain(HandyTestCase):
 
 
 class LandscapeyCase(HandyTestCase):
-        
+
     def set_up_landscape(self):
         """Set up a simple landscape with two machines, lclhst and slvhst."""
         
