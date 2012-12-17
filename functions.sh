@@ -198,22 +198,32 @@ function viaScript {
     [ "$nametmp" ] || nametmp=local
 
     if [ "$platform" = "linux" -o "$platform" = "macosx" ]; then
+        reportDebug "Writing UNIX shell script"
         printf "#!/bin/sh\n" > "$usrcfd/tmp/session.tell.$nametmp.sh"
         printf '%s\n '"$command" | sed 's/^[[:space:]]*//' 2> /dev/null >> "$usrcfd/tmp/session.tell.$nametmp.sh"
+        
+        reportDebug "Executing $usrcfd/tmp/session.tell.$nametmp.sh"
         sh "$usrcfd/tmp/session.tell.$nametmp.sh"
         retval="$?"
+        
         if [ "$debug" ]; then
             reportDebug "Not removing $usrcfd/tmp/session.tell.$nametmp.sh"
         else
             rm "$usrcfd/tmp/session.tell.$nametmp.sh"
         fi
     elif [ "$platform" = "windows" ]; then
+        reportDebug "Writing DOS batch script"
         printf "@echo off\n" > "$usrcfd/tmp/session.tell.$nametmp.bat.unix"
         printf '%s\n' "$command" | sed 's/^[[:space:]]*//' 2> /dev/null >> "$usrcfd/tmp/session.tell.$nametmp.bat.unix"
+        
+        reportDebug "Correcting for DOS style line endings"
         sed 's/$/\r/' "$usrcfd/tmp/session.tell.$nametmp.bat.unix" > "$usrcfd/tmp/session.tell.$nametmp.bat"
         rm "$usrcfd/tmp/session.tell.$nametmp.bat.unix"
-        cmd.exe /c "$(toLocalWindowsPath "$usrcfd/tmp/session.tell.$nametmp.bat")"
+        
+        reportDebug "Executing $usrcfd/tmp/session.tell.$nametmp.bat"
+        cd "$usrcfd/tmp" ; cmd.exe /c session.tell.$nametmp.bat ; cd - > /dev/null
         retval="$?"
+        
         if [ "$debug" ]; then
             reportDebug "Not removing $usrcfd/tmp/session.tell.$nametmp.bat"
         else
@@ -615,7 +625,7 @@ function handleSshPrivateKeys {
             running="$($pslist | grep -i pageant | grep -v grep)"
             if [ ! "$running" ]; then
                 reportInfo "You have a private key; loading into ssh-agent"
-                typeset command="start /b pageant "$sshkey""
+                typeset command="start /b pageant \"$sshkey\""
                 viaScript "$(localTellCommandWriter "$command")" &
                 sleep 10
             fi
