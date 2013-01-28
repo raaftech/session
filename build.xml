@@ -93,35 +93,35 @@
         </copy>
         
         <!-- Replace version string name and number template stanza. -->
-        <replaceregexp byline="true">
+        <replaceregexp byline="true" encoding="UTF-8">
             <regexp pattern="RELEASE.STRING.VERSION"/>
             <substitution expression="${release.string.version}"/>
             <fileset dir="build" excludes="*.xml"/>
         </replaceregexp>
 
         <!-- Replace release copyright stanza. -->
-        <replaceregexp byline="true">
+        <replaceregexp byline="true" encoding="UTF-8">
             <regexp pattern="RELEASE.STRING.COPYRIGHT"/>
             <substitution expression="${release.string.copyright}"/>
             <fileset dir="build" excludes="*.xml"/>
         </replaceregexp>
 
         <!-- Replace release date stanza. -->
-        <replaceregexp byline="true">
+        <replaceregexp byline="true" encoding="UTF-8">
             <regexp pattern="RELEASE.STRING.RELDATE"/>
             <substitution expression="${release.string.reldate}"/>
             <fileset dir="build" excludes="*.xml"/>
         </replaceregexp>
 
         <!-- Replace release built date stanza. -->
-        <replaceregexp byline="true">
+        <replaceregexp byline="true" encoding="UTF-8">
             <regexp pattern="RELEASE.STRING.BUILT"/>
             <substitution expression="${release.string.built}"/>
             <fileset dir="build" excludes="*.xml"/>
         </replaceregexp>
 
         <!-- Replace release license stanza. -->
-        <replaceregexp byline="true">
+        <replaceregexp byline="true" encoding="UTF-8">
             <regexp pattern="RELEASE.STRING.LICENSE"/>
             <substitution expression="${release.string.license}"/>
             <fileset dir="build" excludes="*.xml"/>

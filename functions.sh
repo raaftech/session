@@ -1,6 +1,6 @@
 
 #
-# Copyright © 2008-2012 RAAF Technology bv
+# Copyright © 2008-2013 RAAF Technology bv
 #
 # This file is part of Session.
 #
