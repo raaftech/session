@@ -193,7 +193,7 @@ function viaScript {
 
     typeset command="$*"
     typeset retval
-    typeset nametmp="$name"
+    typeset nametmp="${name}.$$"
 
     [ "$nametmp" ] || nametmp=local
 
