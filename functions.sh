@@ -4096,12 +4096,20 @@ function dynamicHandler {
 
     typeset entity="$1"
     typeset dynamicGroups="all,host,hosts,guest,guests,service,services,group,groups"
+ 
+    # Sed statements in the member variables remove any whitespace around commas, then
+    # continue to remove a leading comma, and then finish with removal of trailing comma.
 
-    if [[ "$dynamicGroups" =~ "$entity" ]]; then
-        reportDebug "Dynamic group: $entity, initializing"
+    if [[ "$entity" =~ "," ]]; then
+        reportDebug "Dynamic group: comma detected on entity specification ($entity), initializing"
+        type="group"
+        name="comma-detected-dynamic-group"
+        members=$(echo $entity | sed -e 's/\s*,\s*/,/g' -e "s|^,||g" -e "s|,$||g")                                 
+    elif [[ "$dynamicGroups" =~ "$entity" ]]; then
+        reportDebug "Dynamic group: entity matched dynamic group name ($entity), initializing"
         type="group"
         name="$entity"
-        members=$(for item in $(listHelper $name); do printf "$item", ; done | sed "s|,$||g")
+        members=$(for item in $(listHelper $name); do printf "$item", ; done | sed -e "s|^,||g" -e "s|,$||g")
     else
         reportDebug "Not a dynamic group: $entity, passing to parseEntry"
         parseEntry "$entity"
