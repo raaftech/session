@@ -29,7 +29,7 @@ set MSYS_HOME=%ProgramFiles(x86)%/MinGW/msys/1.0
 set MSYS_EXECUTABLE=%MSYS_HOME%/bin/bash.exe
 
 :: Set session HOME.
-set SESSION_HOME=%HOME%/Source/Projects/Session
+set SESSION_HOME=/C/Data/Source/Projects/Maintenance/Session/build
 
 :: Set session EXECUTABLE.
 set SESSION_EXECUTABLE=%SESSION_HOME%/session.sh
