@@ -3592,18 +3592,18 @@ function noneAccessHandler {
 # protocol and the default web browser.
 #
 function httpAccessHandler {
-    reportDebugFuncEntry "$*" "name addr type acstate"
+    reportDebugFuncEntry "$*" "name addr port type acstate"
 
     typeset result
     typeset proto
-    typeset port
 
-    proto="https"
-    result="$(printPortState "$addr" 443)"
     if [ "$type" = "host" -o "$type" = "guest" ]; then
+        port=80
+        proto="http"
+        result="$(printPortState "$addr" "$port")"
         if [ "$result" = "closed" ]; then
-            port=80
-            proto="http"
+            port=443
+            proto="https"
             result="$(printPortState "$addr" "$port")"
         fi
     elif [ "$type" = "service" ]; then
