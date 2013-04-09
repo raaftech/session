@@ -3623,8 +3623,11 @@ function httpAccessHandler {
         fi
         ;;
       access)
-        if [ "$acstate" = "active" ]; then
+        if [ "$acstate" = "active" -a "$browser" != "none" ]; then
             ${browser}BrowserHandler "$proto://$addr:$port"
+        elif [ "$browser" = "none" ]; then
+            reportError "Browser handler was set to \"none\" in options.conf."
+            return 1
         else
             reportError "Failed to access $name on $addr over $acmt (acstate=$acstate)"
             return 1
@@ -3659,8 +3662,11 @@ function telAccessHandler {
         fi
         ;;
       access)
-        if [ "$acstate" = "active" ]; then
+        if [ "$acstate" = "active" -a "$terminal" != "none" ]; then
             ${terminal}TerminalHandler tel
+        elif [ "$terminal" = "none" ]; then
+            reportError "Terminal handler was set to \"none\" in options.conf."
+            return 1
         else
             reportError "Failed to access $name on $addr over $acmt (acstate=$acstate)"
             return 1
@@ -3697,6 +3703,9 @@ function sshAccessHandler {
       access)
         if [ "$acstate" = "active" ]; then
             ${terminal}TerminalHandler ssh
+         elif [ "$terminal" = "none" ]; then
+            reportError "Terminal handler was set to \"none\" in options.conf."
+            return 1
         else
             reportError "Failed to access $name on $addr over $acmt (acstate=$acstate)"
             return 1
@@ -3731,8 +3740,11 @@ function rdpAccessHandler {
         fi
         ;;
       access)
-        if [ "$acstate" = "active" ] && { ! isLoopback "$addr" || ! isLocal "$name" ; } ; then
+        if [ "$acstate" = "active" -a "$desktop" != "none" ] && { ! isLoopback "$addr" || ! isLocal "$name" ; } ; then
             ${desktop}DesktopHandler
+        elif [ "$desktop" = "none" ]; then
+            reportError "Desktop handler was set to \"none\" in options.conf."
+            return 1
         else
             reportError "Failed to access $name on $addr over $acmt (acstate=$acstate)"
             return 1
@@ -4382,11 +4394,19 @@ function printUsageText {
     Argument to control group execution mode (for state, start, stop, etc):
     --mode     - serial (default), stateful or parallel (experimental).
 
+    Argument to set resilient mode for (extremely) bad or slow networks:
+    --resilient - make checks for state assume the worst. Warning: slow.
+
+    Argument to make the detail command not check the current state:
+    --nocheck  - (nostate, nostatus) just return all detail info directly.
+
     Arguments for addconf, modconf and delconf:
     --type     - the type of the added entry (host, guest, service or group).
+    --name     - the name of the entry (can be used for renaming)
     --osmt     - the operating system for the host or guest system
     --acmt     - the access method to be used.
     --exmt     - the execute method to be used.
+    --svmt     - (services only) the service method to be used.
     --addr     - the ip address for the host, guest or service.
     --port     - (services only) the port on which a service listens.
     --user     - the regular user account for the host, guest or service.
@@ -4405,6 +4425,9 @@ function printUsageText {
     --admin    - run the command with admin credentials.
     --service  - run the command with service credentials.
 
+    Argument to talk to parent of guest or service  in access, tell and send:
+    --parent   - run the command on the parent of the guest or service.
+
     Arguments for create and destroy:
     --desc     - (optional) annotation (--desc=\"My description.\").
     --numvcpu  - the virtual CPU count for guest system (--numvcpu=2).
@@ -4418,6 +4441,9 @@ function printUsageText {
 
     Argument to control debug mode (can be passed to all commands):
     --debug    - pass this to enable debug mode. no value required
+
+    Argument to give verbose output (currently for list command only):
+    --verbose  - make output show entire entry instead of name only
 
     Special parameters for list:
     all        - (list and check only) show or state all.

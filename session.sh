@@ -185,7 +185,7 @@ if [ "$privy" != 0 ]; then privy="$privesc" ; else unset privy ; fi
 # This makes all functions within session write about how they are
 # called including arguments and some environment variables.
 # Notice that we check for "--debug" on cmdline too. This is cheaper
-# than calling parseParameters at this level. 
+# than calling parseParameters at this level.
 if [ "$debug" != 0  ]; then debug="true" ; elif [[ "$*" =~ "--debug" ]]; then debug="true" ; else unset debug; fi
 
 # Detect and initialize private key usage.
@@ -689,13 +689,8 @@ case "$main" in
     [ "$2" ] || { printUsageText ; exit 1 ; }
     name="$2"
 
-    # Tell about resilient mode if enabled.
-    if [ "$resilient" ]; then
-        reportInfo "Warning: Running in resilient mode, state checks will be slow"
-    fi
-
     shift 2
-    optionals="debug mode" silence="true" parseParameters "$@"
+    optionals="debug resilient mode" silence="true" parseParameters "$@"
 
     mapEntryPoint "$name" "checkState,printState"
     exit $?
@@ -705,7 +700,7 @@ case "$main" in
     name="$2"
 
     shift 2
-    optionals="debug nostate nocheck nostatus" silence="true" parseParameters "$@"
+    optionals="debug resilient nostate nocheck nostatus" silence="true" parseParameters "$@"
 
     parseEntry "$name" || exit 1
     if [ "$type" -a "$type" != "group" ]; then
@@ -723,7 +718,7 @@ case "$main" in
     name="$2"
 
     shift 2
-    optionals="debug mode" silence="true" parseParameters "$@"
+    optionals="debug resilient mode" silence="true" parseParameters "$@"
 
     mapEntryPoint "$name" "checkState,startEntity,printState"
     exit $?
@@ -733,7 +728,7 @@ case "$main" in
     name="$2"
 
     shift 2
-    optionals="debug mode" silence="true" parseParameters "$@"
+    optionals="debug resilient mode" silence="true" parseParameters "$@"
 
     mapEntryPoint "$name" "checkState,stopEntity,printState"
     exit $?
@@ -743,7 +738,7 @@ case "$main" in
     name="$2"
 
     shift 2
-    optionals="debug mode" silence="true" parseParameters "$@"
+    optionals="debug resilient mode" silence="true" parseParameters "$@"
 
     mapEntryPoint "$name" "checkState,restartEntity,printState"
     exit $?
@@ -753,7 +748,7 @@ case "$main" in
     name="$2"
 
     shift 2
-    mandatories="numvcpu memsize dsksize guestos" optionals="debug desc" parseParameters "$@"
+    mandatories="numvcpu memsize dsksize guestos" optionals="debug resilient desc" parseParameters "$@"
 
     if [ "$numvcpu" -lt 1 ]; then
         reportError "Not enough cpus specified: $numvcpu"
@@ -787,7 +782,7 @@ case "$main" in
     name="$2"
 
     shift 2
-    optionals="debug" silence="true" parseParameters "$@"
+    optionals="debug resilient" silence="true" parseParameters "$@"
 
     mapEntryPoint "$name" "checkState,destroyEntity,printState"
     exit $?
@@ -797,7 +792,7 @@ case "$main" in
     name="$2"
 
     shift 2
-    optionals="debug user admin service parent mode" silence="true" parseParameters "$@"
+    optionals="debug user admin service parent mode resilient" silence="true" parseParameters "$@"
 
     if [ "$parent" ]; then
         parent="true"
@@ -819,7 +814,7 @@ case "$main" in
     name="$2"
 
     shift 2
-    mandatories="command" optionals="debug user admin service parent mode" silence="true" parseParameters "$@"
+    mandatories="command" optionals="debug user admin service parent mode resilient" silence="true" parseParameters "$@"
 
     if [ "$parent" ]; then
         parent="true"
@@ -841,7 +836,7 @@ case "$main" in
     name="$2"
 
     shift 2
-    mandatories="source target" optionals="debug user admin service parent mode" silence="true" parseParameters "$@"
+    mandatories="source target" optionals="debug user admin service parent mode resilient" silence="true" parseParameters "$@"
 
     if [ "$parent" ]; then
         parent="true"
@@ -878,7 +873,7 @@ case "$main" in
     name="$2"
 
     shift 2
-    optionals="debug default verbose" silence="true" parseParameters "$@"
+    optionals="debug verbose" silence="true" parseParameters "$@"
 
     listHelper "$name"
     exit $?
