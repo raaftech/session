@@ -4372,92 +4372,92 @@ function printUsageText {
     Usage: $0 command {group, guest, host or special argument}
 
     Commands:
-    addconf    - adds a host, guest, service or group to session.conf.
-    modconf    - modify an existing host, guest, service or group in session.conf.
-    delconf    - removes a host, guest, service or group from session.conf.
-    discover   - scan an ip or an ip subnet.
-    check      - (state, status) checks state of a host, guest, service or group.
-    detail     - shows all known details for an entry, pass --nocheck optionally.
-    start      - attempts to start a host, guest, service or group.
-    stop       - attempts to stop a host, guest, service or group.
-    restart    - attempts to restart a host, guest, service or group.
-    create     - attempts to create a non-existing guest system.
-    destroy    - attempts to destroy an existing guest system.
-    access     - access a host, guest, service or group using various methods.
-    tell       - send a command to the host, guest, service or group.
-    send       - send a directory to the host, guest, service or group.
-    key        - send public key or store credentials for remote admin and user.
-    list       - list hosts, guests, services, groups, osmt, acmt, exmt or vrmts
-    reinit     - reinitializes session required and detected tools.
-    version    - show session version.
+    addconf     - adds a host, guest, service or group to session.conf.
+    modconf     - modify an existing host, guest, service or group in session.conf.
+    delconf     - removes a host, guest, service or group from session.conf.
+    discover    - scan an ip or an ip subnet.
+    check       - (state, status) checks state of a host, guest, service or group.
+    detail      - shows all known details for an entry, pass --nocheck optionally.
+    start       - attempts to start a host, guest, service or group.
+    stop        - attempts to stop a host, guest, service or group.
+    restart     - attempts to restart a host, guest, service or group.
+    create      - attempts to create a non-existing guest system.
+    destroy     - attempts to destroy an existing guest system.
+    access      - access a host, guest, service or group using various methods.
+    tell        - send a command to the host, guest, service or group.
+    send        - send a directory to the host, guest, service or group.
+    key         - send public key or store credentials for remote admin and user.
+    list        - list hosts, guests, services, groups, osmt, acmt, exmt or vrmts
+    reinit      - reinitializes session required and detected tools.
+    version     - show session version.
 
     Argument to control group execution mode (for state, start, stop, etc):
-    --mode     - serial (default), stateful or parallel (experimental).
+    --mode      - serial (default), stateful or parallel (experimental).
 
     Argument to set resilient mode for (extremely) bad or slow networks:
     --resilient - make checks for state assume the worst. Warning: slow.
 
     Argument to make the detail command not check the current state:
-    --nocheck  - (nostate, nostatus) just return all detail info directly.
+    --nocheck   - (nostate, nostatus) just return all detail info directly.
 
     Arguments for addconf, modconf and delconf:
-    --type     - the type of the added entry (host, guest, service or group).
-    --name     - the name of the entry (can be used for renaming)
-    --osmt     - the operating system for the host or guest system
-    --acmt     - the access method to be used.
-    --exmt     - the execute method to be used.
-    --svmt     - (services only) the service method to be used.
-    --addr     - the ip address for the host, guest or service.
-    --port     - (services only) the port on which a service listens.
-    --user     - the regular user account for the host, guest or service.
-    --admin    - the administrative account for the host or guest.
-    --vrmt     - (optional, hosts only) the virtualization method supported.
-    --vmhome   - (optional, hosts only) where the host stores its vm executables.
-    --vmdata   - (optional, hosts only) where the host stores its virtual machines.
-    --svstatus - (optional, scripted services only) status command for a service.
-    --svstart  - (optional, scripted services only)  start command for a service.
-    --svstop   - (optional, scripted services only)   stop command for a service.
-    --host     - (guests only) the parent host system.
-    --members  - (groups only) a comma-separated list of hosts and/or guests.
+    --type      - the type of the added entry (host, guest, service or group).
+    --name      - the name of the entry (can be used for renaming)
+    --osmt      - the operating system for the host or guest system
+    --acmt      - the access method to be used.
+    --exmt      - the execute method to be used.
+    --svmt      - (services only) the service method to be used.
+    --addr      - the ip address for the host, guest or service.
+    --port      - (services only) the port on which a service listens.
+    --user      - the regular user account for the host, guest or service.
+    --admin     - the administrative account for the host or guest.
+    --vrmt      - (optional, hosts only) the virtualization method supported.
+    --vmhome    - (optional, hosts only) where the host stores its vm executables.
+    --vmdata    - (optional, hosts only) where the host stores its virtual machines.
+    --svstatus  - (optional, scripted services only) status command for a service.
+    --svstart   - (optional, scripted services only)  start command for a service.
+    --svstop    - (optional, scripted services only)   stop command for a service.
+    --host      - (guests only) the parent host system.
+    --members   - (groups only) a comma-separated list of hosts and/or guests.
 
     Arguments for privilege specification in access, tell and send:
-    --user     - run the command with user credentials (default).
-    --admin    - run the command with admin credentials.
-    --service  - run the command with service credentials.
+    --user      - run the command with user credentials (default).
+    --admin     - run the command with admin credentials.
+    --service   - run the command with service credentials.
 
     Argument to talk to parent of guest or service  in access, tell and send:
-    --parent   - run the command on the parent of the guest or service.
+    --parent    - run the command on the parent of the guest or service.
 
     Arguments for create and destroy:
-    --desc     - (optional) annotation (--desc=\"My description.\").
-    --numvcpu  - the virtual CPU count for guest system (--numvcpu=2).
-    --memsize  - the virtual memory size in MB for guest system (--memsize=512).
-    --dsksize  - the disk size in GB for guest system (--dsksize=4).
-    --guestos  - the operating system for guest system (--guestos=other-64).
+    --desc      - (optional) annotation (--desc=\"My description.\").
+    --numvcpu   - the virtual CPU count for guest system (--numvcpu=2).
+    --memsize   - the virtual memory size in MB for guest system (--memsize=512).
+    --dsksize   - the disk size in GB for guest system (--dsksize=4).
+    --guestos   - the operating system for guest system (--guestos=other-64).
 
     Arguments for send:
-    --source   - the source directory on the local system to send from.
-    --target   - the target directory on the remote system to send to.
+    --source    - the source directory on the local system to send from.
+    --target    - the target directory on the remote system to send to.
 
     Argument to control debug mode (can be passed to all commands):
-    --debug    - pass this to enable debug mode. no value required
+    --debug     - pass this to enable debug mode. no value required
 
     Argument to give verbose output (currently for list command only):
-    --verbose  - make output show entire entry instead of name only
+    --verbose   - make output show entire entry instead of name only
 
     Special parameters for list:
-    all        - (list and check only) show or state all.
-    mode       - (list) show all modes. --default for default only.
-    host       - (list) show all hosts.
-    guest      - (list) show all guests.
-    group      - (list) show all groups.
-    service    - (list) show all services.
-    acmt       - (list) show all supported access methods.
-    exmt       - (list) show all supported execute methods.
-    svmt       - (list) show all supported service methods.
-    vrmt       - (list) show all supported virtualization methods.
-    osmt       - (list) show all supported operating environments.
-    crmt       - (list) show all supported credential methods.
+    all         - (list and check only) show or state all.
+    mode        - (list) show all modes. --default for default only.
+    host        - (list) show all hosts.
+    guest       - (list) show all guests.
+    group       - (list) show all groups.
+    service     - (list) show all services.
+    acmt        - (list) show all supported access methods.
+    exmt        - (list) show all supported execute methods.
+    svmt        - (list) show all supported service methods.
+    vrmt        - (list) show all supported virtualization methods.
+    osmt        - (list) show all supported operating environments.
+    crmt        - (list) show all supported credential methods.
     " | sed 's/^[[:space:]]*//'
 }
 
