@@ -4402,8 +4402,8 @@ function printUsageText {
 
     Arguments for addconf, modconf and delconf:
     --type      - the type of the added entry (host, guest, service or group).
-    --name      - the name of the entry (can be used for renaming)
-    --osmt      - the operating system for the host or guest system
+    --name      - the name of the entry (can be used for renaming).
+    --osmt      - the operating system for the host or guest system.
     --acmt      - the access method to be used.
     --exmt      - the execute method to be used.
     --svmt      - (services only) the service method to be used.
@@ -4417,8 +4417,8 @@ function printUsageText {
     --svstatus  - (optional, scripted services only) status command for a service.
     --svstart   - (optional, scripted services only)  start command for a service.
     --svstop    - (optional, scripted services only)   stop command for a service.
-    --host      - (guests only) the parent host system.
-    --members   - (groups only) a comma-separated list of hosts and/or guests.
+    --host      - (guests and services only) the parent host system.
+    --members   - (groups only) a comma-separated list of hosts/guests/services.
 
     Arguments for privilege specification in access, tell and send:
     --user      - run the command with user credentials (default).
@@ -4440,10 +4440,10 @@ function printUsageText {
     --target    - the target directory on the remote system to send to.
 
     Argument to control debug mode (can be passed to all commands):
-    --debug     - pass this to enable debug mode. no value required
+    --debug     - pass this to enable debug mode. no value required.
 
     Argument to give verbose output (currently for list command only):
-    --verbose   - make output show entire entry instead of name only
+    --verbose   - make output show entire entry instead of name only.
 
     Special parameters for list:
     all         - (list and check only) show or state all.
