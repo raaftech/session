@@ -797,7 +797,11 @@ case "$main" in
     name="$2"
 
     shift 2
-    optionals="debug user admin service mode" silence="true" parseParameters "$@"
+    optionals="debug user admin service parent mode" silence="true" parseParameters "$@"
+
+    if [ "$parent" ]; then
+        parent="true"
+    fi
 
     if [ "$admin" ]; then
         xsastype="admin"
@@ -815,7 +819,11 @@ case "$main" in
     name="$2"
 
     shift 2
-    mandatories="command" optionals="debug user admin service mode" silence="true" parseParameters "$@"
+    mandatories="command" optionals="debug user admin service parent mode" silence="true" parseParameters "$@"
+
+    if [ "$parent" ]; then
+        parent="true"
+    fi
 
     if [ "$admin" ]; then
         runastype="admin"
@@ -833,7 +841,11 @@ case "$main" in
     name="$2"
 
     shift 2
-    mandatories="source target" optionals="debug user admin service mode" silence="true" parseParameters "$@"
+    mandatories="source target" optionals="debug user admin service parent mode" silence="true" parseParameters "$@"
+
+    if [ "$parent" ]; then
+        parent="true"
+    fi
 
     if [ "$admin" ]; then
         sendastype="admin"

@@ -1,4 +1,5 @@
-
+#!/bin/sh
+#!/bin/bash
 #
 # Copyright © 2008-2013 RAAF Technology bv
 #
@@ -201,11 +202,11 @@ function viaScript {
         reportDebug "Writing UNIX shell script"
         printf "#!/bin/sh\n" > "$usrcfd/tmp/session.tell.$nametmp.sh"
         printf '%s\n '"$command" | sed 's/^[[:space:]]*//' 2> /dev/null >> "$usrcfd/tmp/session.tell.$nametmp.sh"
-        
+
         reportDebug "Executing $usrcfd/tmp/session.tell.$nametmp.sh"
         sh "$usrcfd/tmp/session.tell.$nametmp.sh"
         retval="$?"
-        
+
         if [ "$debug" ]; then
             reportDebug "Not removing $usrcfd/tmp/session.tell.$nametmp.sh"
         else
@@ -215,15 +216,15 @@ function viaScript {
         reportDebug "Writing DOS batch script"
         printf "@echo off\n" > "$usrcfd/tmp/session.tell.$nametmp.bat.unix"
         printf '%s\n' "$command" | sed 's/^[[:space:]]*//' 2> /dev/null >> "$usrcfd/tmp/session.tell.$nametmp.bat.unix"
-        
+
         reportDebug "Correcting for DOS style line endings"
         sed 's/$/\r/' "$usrcfd/tmp/session.tell.$nametmp.bat.unix" > "$usrcfd/tmp/session.tell.$nametmp.bat"
         rm "$usrcfd/tmp/session.tell.$nametmp.bat.unix"
-        
+
         reportDebug "Executing $usrcfd/tmp/session.tell.$nametmp.bat"
         cd "$usrcfd/tmp" ; cmd.exe /c session.tell.$nametmp.bat ; cd - > /dev/null
         retval="$?"
-        
+
         if [ "$debug" ]; then
             reportDebug "Not removing $usrcfd/tmp/session.tell.$nametmp.bat"
         else
@@ -4078,11 +4079,11 @@ function winCredHandler {
 # Call <function>
 #
 function doFunction {
-    typeset function="$1"
+    typeset runnable="$1"
     typeset retval
     shift
     typeset IFS=" "
-    $function "$@" || { retval="$?" ; reportDebug "Function $function returned status $retval" ; return $retval ; }
+    $runnable "$@" || { retval="$?" ; reportDebug "Function $runnable returned status $retval" ; return $retval ; }
     return 0
 }
 
@@ -4096,7 +4097,7 @@ function dynamicHandler {
 
     typeset entity="$1"
     typeset dynamicGroups="all,host,hosts,guest,guests,service,services,group,groups"
- 
+
     # Sed statements in the member variables remove any whitespace around commas, then
     # continue to remove a leading comma, and then finish with removal of trailing comma.
 
@@ -4104,7 +4105,7 @@ function dynamicHandler {
         reportDebug "Dynamic group: comma detected on entity specification ($entity), initializing"
         type="group"
         name="comma-detected-dynamic-group"
-        members=$(echo $entity | sed -e 's/\s*,\s*/,/g' -e "s|^,||g" -e "s|,$||g")                                 
+        members=$(echo $entity | sed -e 's/\s*,\s*/,/g' -e "s|^,||g" -e "s|,$||g")
     elif [[ "$dynamicGroups" =~ "$entity" ]]; then
         reportDebug "Dynamic group: entity matched dynamic group name ($entity), initializing"
         type="group"
@@ -4113,6 +4114,70 @@ function dynamicHandler {
     else
         reportDebug "Not a dynamic group: $entity, passing to parseEntry"
         parseEntry "$entity"
+    fi
+
+    # If parent is set, return a dynamic group with the parent host(s) as members.
+    if [ "$parent" = "true" ]; then
+        reportDebug "Dynamic group: parent(s) requested, creating dynamic group of parents"
+        parentHandler "$entity"
+    fi
+}
+
+function parentHandler {
+    reportDebugFuncEntry "$*"
+
+    # Avoid entering the loop twice (called from dynamicHandler).
+    unset parent
+
+    typeset entity="$1"
+    typeset parents
+    typeset memberType
+
+    if [ "$type" = "group" ]; then
+        # We're talking about a group, need to discover members and make a unique list of parents.
+
+        typeset IFS=","
+        for member in $members; do
+            memberType=$(tokenReader printVals "$member" "type")
+            if [ "$memberType" = "group" ]; then
+                # Tell the user we do not support nested groups for parent lookup.
+                reportError "Type of group member \"$member\" is \"group\"."
+                reportError "Group recursion for parents not supported yet."
+            elif [ "$memberType" = "host" ]; then
+                # Tell the user we encountered a host which by definition has no parent.
+                reportError "Type of group member \"$member\" is \"host\" so has no parent."
+            elif [ "$memberType" = "guest" -o "$memberType" = "service" ]; then
+                # We encountered a guest or service which has a parent.
+                parent=$(tokenReader printVals "$member" "host")
+            fi
+
+            if [[ ! "$parents" =~ "$parent" ]]; then
+                # Uniquely prepend the parent to the parents list.
+                parents="$parent,$parents"
+            fi
+        done
+
+        # The parents list becomes the new members list, set a name for this dynamic group.
+        name="parent-dynamic-group"
+        members=$(echo "$parents" | sed -e "s|^,||g" -e "s|,$||g")
+        if [ -z "$members" ]; then
+            reportError "No parents found for \"$entity\"."
+            return 1
+        fi
+
+    elif [ "$type" = "host" ]; then
+        # We're talking about a host, which has no parent. Error.
+        reportError "Type of  \"$entity\" is \"host\" so has no parent."
+    elif [ "$type" = "guest" -o "$type" = "service" ]; then
+        # We're talking about a guest or a service, lookup the parent.
+        type="group"
+        name="parent-dynamic-group"
+        members=$(tokenReader printVals "$entity" "host")
+    else
+        # Something weird happened, tell us about it.
+        reportError "Type not set or unknown: \"$type\""
+        reportError "This indicates we were called outside of dynamicHandler or parseEntry."
+        return 1
     fi
 }
 
@@ -4136,9 +4201,9 @@ function mapEntity {
 
     # Execute all requested functions.
     typeset IFS=","
-    for function in $functions ; do
-        reportDebug "Running function: $function"
-        doFunction "$function" "$entity"
+    for runnable in $functions ; do
+        reportDebug "Running function: $runnable"
+        doFunction "$runnable" "$entity"
         retval="$?"
     done
 
@@ -4237,10 +4302,10 @@ function mapEntryPoint {
     # See if entityOrigin was set, set only when mapEntryPoint runs for the first time.
     if [ ! "$entityOrigin" ]; then entityOrigin="$entity"; fi
 
-    # Reading in the entry is done via dynamicHandler.
+    # Reading in the entity entry is done via dynamicHandler. Here entity globals are set!
     dynamicHandler "$entity"
 
-    # If a group, call mapGroup (which will recurse to mapEntryPoint). Call mapEntity otherwise.
+    # If a group, call mapGroup (which will recurse back to us). Call mapEntity otherwise.
     if [ "$type" = "group" ]; then
         reportDebug "Received a group, passing on to mapGroup"
         mapGroup "$members" "$functions"
@@ -4250,7 +4315,7 @@ function mapEntryPoint {
         mapEntity "$entity" "$functions"
         retval="$?"
     fi
-    
+
     # Do certain access related things when mapEntryPoint loop exits.
     if [[ "$functions" =~ "accessEntity" ]]; then
         reportDebug "Function list contains access functions, calling terminal exit hooks."
@@ -4268,7 +4333,7 @@ function mapEntryPoint {
             xdotool type --clearmodifiers --delay=10 "PS1=\"[\\u@\\h \\W]\\$ \" ; PROMPT_COMMAND='echo -ne \"\\033]0;\"$title\"\\007\"'"
             xdotool key Return
         # Set the title of the local (first) window.
-        elif [ "$terminal" = "apple" -a "$titling" -a "$sshkey" -a "$agent" ]; then 
+        elif [ "$terminal" = "apple" -a "$titling" -a "$sshkey" -a "$agent" ]; then
             reportDebug "Terminal exit hook for apple: titling typeset terminal screen"
             typeset title="$(capsFirst "$hostname")"
             printf 'activate application "Terminal"'\n > "$usrcfd/tmp/session.title.$hostname.scpt"
@@ -4293,7 +4358,7 @@ function printUsageText {
 
     printf "%s\n" "\
     Usage: $0 command {group, guest, host or special argument}
-    
+
     Commands:
     addconf    - adds a host, guest, service or group to session.conf.
     modconf    - modify an existing host, guest, service or group in session.conf.
@@ -4313,10 +4378,10 @@ function printUsageText {
     list       - list hosts, guests, services, groups, osmt, acmt, exmt or vrmts
     reinit     - reinitializes session required and detected tools.
     version    - show session version.
-     
+
     Argument to control group execution mode (for state, start, stop, etc):
     --mode     - serial (default), stateful or parallel (experimental).
-     
+
     Arguments for addconf, modconf and delconf:
     --type     - the type of the added entry (host, guest, service or group).
     --osmt     - the operating system for the host or guest system
@@ -4334,26 +4399,26 @@ function printUsageText {
     --svstop   - (optional, scripted services only)   stop command for a service.
     --host     - (guests only) the parent host system.
     --members  - (groups only) a comma-separated list of hosts and/or guests.
-     
+
     Arguments for privilege specification in access, tell and send:
     --user     - run the command with user credentials (default).
     --admin    - run the command with admin credentials.
     --service  - run the command with service credentials.
-     
+
     Arguments for create and destroy:
     --desc     - (optional) annotation (--desc=\"My description.\").
     --numvcpu  - the virtual CPU count for guest system (--numvcpu=2).
     --memsize  - the virtual memory size in MB for guest system (--memsize=512).
     --dsksize  - the disk size in GB for guest system (--dsksize=4).
     --guestos  - the operating system for guest system (--guestos=other-64).
-     
+
     Arguments for send:
     --source   - the source directory on the local system to send from.
     --target   - the target directory on the remote system to send to.
-     
+
     Argument to control debug mode (can be passed to all commands):
     --debug    - pass this to enable debug mode. no value required
-     
+
     Special parameters for list:
     all        - (list and check only) show or state all.
     mode       - (list) show all modes. --default for default only.

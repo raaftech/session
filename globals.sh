@@ -1,4 +1,4 @@
-
+#!/bin/bash
 #
 # Copyright © 2008-2013 RAAF Technology bv
 #
