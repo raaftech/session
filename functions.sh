@@ -4412,8 +4412,8 @@ function printUsageText {
     --user      - the regular user account for the host, guest or service.
     --admin     - the administrative account for the host or guest.
     --vrmt      - (optional, hosts only) the virtualization method supported.
-    --vmhome    - (optional, hosts only) where the host stores its vm executables.
-    --vmdata    - (optional, hosts only) where the host stores its virtual machines.
+    --vmhome    - (optional, hosts only) where the host stores vm executables.
+    --vmdata    - (optional, hosts only) where the host stores virtual machines.
     --svstatus  - (optional, scripted services only) status command for a service.
     --svstart   - (optional, scripted services only)  start command for a service.
     --svstop    - (optional, scripted services only)   stop command for a service.
@@ -4458,6 +4458,12 @@ function printUsageText {
     vrmt        - (list) show all supported virtualization methods.
     osmt        - (list) show all supported operating environments.
     crmt        - (list) show all supported credential methods.
+
+    Notes:
+    Arguments starting with a double dash sign (--) can either be without a value
+    (like --nocheck) or with a value (like --mode=stateful). Session will tell you
+    when arguments are mandatory or optional. Use the special paramenters for the
+    list command to find out which values can be passed to certain arguments.
     " | sed 's/^[[:space:]]*//'
 }
 
