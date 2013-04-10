@@ -4134,6 +4134,12 @@ function dynamicHandler {
     fi
 }
 
+# parentHandler(<name>)
+# Calls functions, sets variables.
+#
+# parentHandler is called by dynamicHandler to delegate the creation of a group of parent hosts
+# for a given entity.
+#
 function parentHandler {
     reportDebugFuncEntry "$*"
 
