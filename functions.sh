@@ -2014,6 +2014,10 @@ function parseService {
             tokenReader setVars "$host" "$key" || return 1
         elif [ "$value" = "none" -a "$key" != "vrmt" ]; then
             tokenReader setVars "$host" "$key" || return 1
+        elif [ "$console" = "true" -a "$key" = "acmt" ]; then
+            tokenReader setVars "$host" "$key" || return 1
+        elif [ "$console" = "true" -a "$key" = "exmt" ]; then
+            tokenReader setVars "$host" "$key" || return 1
         fi
     done
 
@@ -4430,8 +4434,11 @@ function printUsageText {
     --admin     - run the command with admin credentials.
     --service   - run the command with service credentials.
 
-    Argument to talk to parent of guest or service  in access, tell and send:
+    Argument to talk to parent of guest or service in access, tell and send:
     --parent    - run the command on the parent of the guest or service.
+
+    Argument to explicitly use access method of the parent to access a service:
+    --console   - (services only) explicitly use the parent access method.
 
     Arguments for create and destroy:
     --desc      - (optional) annotation (--desc=\"My description.\").

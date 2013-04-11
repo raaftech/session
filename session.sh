@@ -792,10 +792,16 @@ case "$main" in
     name="$2"
 
     shift 2
-    optionals="debug user admin service parent mode resilient" silence="true" parseParameters "$@"
+    optionals="debug user admin service console parent mode resilient" silence="true" parseParameters "$@"
 
+    # Set parent mode, for guests and services.
     if [ "$parent" ]; then
         parent="true"
+    fi
+
+    # Set console mode, for services.
+    if [ "$console" ]; then
+        console="true"
     fi
 
     if [ "$admin" ]; then
