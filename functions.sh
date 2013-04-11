@@ -3263,7 +3263,7 @@ function puttyTerminalHandler {
         reportDebug "Command passed: $command"
         reportDebug "Writing to PuTTY command file for execution"
         printf '%s\n '"$command" | sed 's/^[[:space:]]*//' 2> /dev/null >> "$usrcfd/tmp/session.access.$nametmp.sh"
-        append="-m \"$(toLocalWindowsPath "$usrcfd/tmp/session.access.$nametmp.sh")\""
+        append="-t -m \"$(toLocalWindowsPath "$usrcfd/tmp/session.access.$nametmp.sh")\""
     fi
 
     if [ "$protocol" = "ssh" ]; then
