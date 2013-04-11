@@ -3246,21 +3246,30 @@ function waitForDialog {
 }
 
 # puttyTerminalHandler(<protocol>)
-# Writes command string, runs command.
+# Writes command line, runs command line.
 #
 # Handle PuTTY terminal parameterization.
 #
 function puttyTerminalHandler {
     reportDebugFuncEntry "$*" "name addr sshopts xsasuser"
 
+    typeset nametmp="${name}.$$"
     typeset protocol="$1"
-    typeset command
     typeset wrapped
+    typeset append
+    typeset line
+
+    if [ "$command" ]; then
+        reportDebug "Command passed: $command"
+        reportDebug "Writing to PuTTY command file for execution"
+        printf '%s\n '"$command" | sed 's/^[[:space:]]*//' 2> /dev/null >> "$usrcfd/tmp/session.access.$nametmp.sh"
+        append="-m \"$(toLocalWindowsPath "$usrcfd/tmp/session.access.$nametmp.sh")\""
+    fi
 
     if [ "$protocol" = "ssh" ]; then
-        command="putty $sshopts $xsasuser@$addr"
+        line="putty $sshopts $xsasuser@$addr $append"
     elif [ "$protocol" = "tel" ]; then
-        command="putty -telnet $addr"
+        line="putty -telnet $addr $append"
     else
         reportError "Invalid protocol type passed: $protocol; valid types are: tel ssh"
         return 1
@@ -3270,7 +3279,7 @@ function puttyTerminalHandler {
         wrapped="\
         reg delete \"HKEY_CURRENT_USER\\Software\\SimonTatham\\PuTTY\\Sessions\\Default%%20Settings\" /v \"WinTitle\" /f > nul 2>&1
         reg add \"HKEY_CURRENT_USER\\Software\\SimonTatham\\PuTTY\\Sessions\\Default%%20Settings\" /t REG_SZ /v \"WinTitle\" /d \"$(capsFirst "$name")\" > nul 2>&1
-        start /b $command
+        start /b $line
         echo wscript.sleep 1000 > \"%TEMP%\\wait.vbs\"
         wscript.exe \"%TEMP%\\wait.vbs\"
         del \"%TEMP%\\wait.vbs\"
@@ -3278,7 +3287,7 @@ function puttyTerminalHandler {
         reg add \"HKEY_CURRENT_USER\\Software\\SimonTatham\\PuTTY\\Sessions\\Default%%20Settings\" /t REG_SZ /v \"WinTitle\" > nul 2>&1
         "
     else
-        wrapped="start /b $command"
+        wrapped="start /b $line"
     fi
 
     viaScript "$(localTellCommandWriter "$wrapped")"
@@ -3287,7 +3296,7 @@ function puttyTerminalHandler {
 }
 
 # appleTerminalHandler(<protocol>)
-# Runs command.
+# Writes command line, runs command line.
 #
 # Handle Apple Terminal parameterization.
 #
@@ -3295,13 +3304,19 @@ function appleTerminalHandler {
     reportDebugFuncEntry "$*" "name addr sshopts xsasuser"
 
     typeset protocol="$1"
-    typeset command
+    typeset append
     typeset title="$(capsFirst "$name")"
+    typeset line
+
+    if [ "$command" ]; then
+        reportDebug "Command passed: $command"
+        append="$command"
+    fi
 
     if [ "$protocol" = "ssh" ]; then
-        command="ssh $sshopts -Y $xsasuser@$addr"
+        line="ssh $sshopts -Y $xsasuser@$addr $append"
     elif [ "$protocol" = "tel" ]; then
-        command="telnet $addr"
+        line="telnet $addr $append"
     else
         reportError "Invalid protocol type passed: $protocol; valid types are: tel ssh"
         return 1
@@ -3311,7 +3326,7 @@ function appleTerminalHandler {
     printf "activate application \"Terminal\"\n" > "$usrcfd/tmp/session.access.$name.scpt"
     printf "tell application \"Terminal\"\n" >> "$usrcfd/tmp/session.access.$name.scpt"
     printf "tell application \"System Events\" to tell process \"Terminal\" to keystroke \"t\" using command down\n" >> "$usrcfd/tmp/session.access.$name.scpt"
-    printf "do script \"$command\" in last tab of front window\n" >> "$usrcfd/tmp/session.access.$name.scpt"
+    printf "do script \"$line\" in last tab of front window\n" >> "$usrcfd/tmp/session.access.$name.scpt"
     printf "end tell\n" >> "$usrcfd/tmp/session.access.$name.scpt"
     osascript "$usrcfd/tmp/session.access.$name.scpt"
     rm "$usrcfd/tmp/session.access.$name.scpt"
@@ -3334,7 +3349,7 @@ function appleTerminalHandler {
 }
 
 # gnomeTerminalHandler(<protocol>)
-# Runs command.
+# Writes command line, runs command line.
 #
 # Handle Gnome Terminal parameterization.
 #
@@ -3342,17 +3357,22 @@ function gnomeTerminalHandler {
     reportDebugFuncEntry "$*" "name addr sshopts xsasuser"
 
     typeset protocol="$1"
+    typeset append
     typeset title="$(capsFirst "$name")"
     typeset windowId
     typeset keyringDetected
     typeset keyringPromptActive
-    typeset command
+    typeset line
 
+    if [ "$command" ]; then
+        reportDebug "Command passed: $command"
+        append="$command"
+    fi
 
     if [ "$protocol" = "ssh" ]; then
-        command="ssh $sshopts -A -Y $xsasuser@$addr"
+        line="ssh $sshopts -A -Y $xsasuser@$addr $append"
     elif [ "$protocol" = "tel" ]; then
-        command="telnet $addr"
+        line="telnet $addr $append"
     else
         reportError "Invalid protocol type passed: $protocol; valid types are: tel ssh"
         return 1
@@ -3365,7 +3385,7 @@ function gnomeTerminalHandler {
         xdotool windowfocus "$windowId" 2>/dev/null
         xdotool key ctrl+shift+t
         sleep 0.2
-        xdotool type --clearmodifiers --delay=10 "$command"
+        xdotool type --clearmodifiers --delay=10 "$line"
         xdotool key Return
 
         # If gnome-keyring-daemon is running, check to see if a prompt has started, wait for it to close.
@@ -3380,14 +3400,14 @@ function gnomeTerminalHandler {
         # Return to first tab.
         xdotool key ctrl+Next
     else
-        gnome-terminal --command="$command" &
+        gnome-terminal --command="$line" &
     fi
 
     return 0
 }
 
 # screenTerminalHandler(<protocol>)
-# Runs command.
+# Writes command line, runs command line.
 #
 # Handle Screen Terminal parameterization.
 #
@@ -3395,14 +3415,20 @@ function screenTerminalHandler {
     reportDebugFuncEntry "$*" "name addr sshopts xsasuser userDblBacksl TERM"
 
     typeset protocol="$1"
+    typeset append
     typeset keyringDetected
     typeset keyringPromptActive
-    typeset command
+    typeset line
+
+    if [ "$command" ]; then
+        reportDebug "Command passed: $command"
+        append="$command"
+    fi
 
     if [ "$protocol" = "ssh" ]; then
-        command="ssh $sshopts -Y $xsasuser@$addr"
+        line="ssh $sshopts -Y $xsasuser@$addr $append"
     elif [ "$protocol" = "tel" ]; then
-        command="telnet $addr"
+        line="telnet $addr $append"
     else
         reportError "Invalid protocol type passed: $protocol; valid types are: tel ssh"
         return 1
@@ -3424,12 +3450,12 @@ function screenTerminalHandler {
 
     if [ "$TERM" = "screen" ]; then
         reportDebug "Creating window for $name from within screen"
-        # Warning: command has to be unquoted.
-        screen -r -X screen -t "$name" $command
+        # Warning: line variable has to be unquoted.
+        screen -r -X screen -t "$name" $line
     else
         reportDebug "Creating window for $name from outside of screen"
-        # Warning: command has to be unquoted.
-        screen -r -S "$sesname" -X screen -t "$name" $command
+        # Warning: line variable has to be unquoted.
+        screen -r -S "$sesname" -X screen -t "$name" $line
     fi
 
     if [ "$platform" = "linux" ]; then
@@ -4400,15 +4426,6 @@ function printUsageText {
     reinit      - reinitializes session required and detected tools.
     version     - show session version.
 
-    Argument to control group execution mode (for state, start, stop, etc):
-    --mode      - serial (default), stateful or parallel (experimental).
-
-    Argument to set resilient mode for (extremely) bad or slow networks:
-    --resilient - make checks for state assume the worst. Warning: slow.
-
-    Argument to make the detail command not check the current state:
-    --nocheck   - (nostate, nostatus) just return all detail info directly.
-
     Arguments for addconf, modconf and delconf:
     --type      - the type of the added entry (host, guest, service or group).
     --name      - the name of the entry (can be used for renaming).
@@ -4434,6 +4451,9 @@ function printUsageText {
     --admin     - run the command with admin credentials.
     --service   - run the command with service credentials.
 
+    Arguments for command specification in access and tell:
+    --command   - run specified command directly (tell) or in a window (access).
+
     Argument to talk to parent of guest or service in access, tell and send:
     --parent    - run the command on the parent of the guest or service.
 
@@ -4450,6 +4470,15 @@ function printUsageText {
     Arguments for send:
     --source    - the source directory on the local system to send from.
     --target    - the target directory on the remote system to send to.
+
+    Argument to control group execution mode (for state, start, stop, etc):
+    --mode      - serial (default), stateful or parallel (experimental).
+
+    Argument to set resilient mode for (extremely) bad or slow networks:
+    --resilient - make checks for state assume the worst. Warning: slow.
+
+    Argument to make the detail command not check the current state:
+    --nocheck   - (nostate, nostatus) just return all detail info directly.
 
     Argument to control debug mode (can be passed to all commands):
     --debug     - pass this to enable debug mode. no value required.
