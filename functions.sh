@@ -266,7 +266,7 @@ function psexecTellCommandWriter {
     # Older version of psexec?
     if [ "$user" ]; then user="-u \"$user\"" ; fi
     if [ "$pass" ]; then pass="-p \"$pass\"" ; fi
-    printf "psexec \\\\\\\\$addr -h $user $pass cmd.exe /c \"$command\" 2>nul\n"
+    printf "psexec \\\\\\\\$addr -h $user $pass $command\n"
 }
 
 # winexeTellCommandWriter(<addr> <user> <pass> <command>)
@@ -780,16 +780,16 @@ function osGlobals {
       aix5|aix6|aix7|hpux1123|hpux1131)
         osstop="/sbin/shutdown -hy 0"
         ;;
-      dfbsd2|fbsd7|fbsd8)
+      dfbsd2|dfbsd3|fbsd7|fbsd8|fbsd9)
         osstop="/sbin/shutdown -p now"
         ;;
-      nbsd4|nbsd5|obsd4|obsd5)
+      nbsd4|nbsd5|nbsd6|obsd4|obsd5)
         osstop="/sbin/shutdown -h -p now"
         ;;
       sol10|sol11)
         osstop="/usr/sbin/poweroff"
         ;;
-      windows-like|win2k3|win2k8|wins8|winxp|win7|win8)
+      windows-like|win2k3|win2k8|win2k12|winxp|win7|win8)
         osstop="shutdown -s -t 01"
         osreboot="shutdown -r -t 01"
         oslisten="netstat -na|findstr \"LISTEN\"|findstr \"\<0\.0\.0\.0:$port\> \<$addr:$port\>\" "
