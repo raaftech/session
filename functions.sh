@@ -266,7 +266,7 @@ function psexecTellCommandWriter {
     # Older version of psexec?
     if [ "$user" ]; then user="-u \"$user\"" ; fi
     if [ "$pass" ]; then pass="-p \"$pass\"" ; fi
-    printf "psexec \\\\\\\\$addr -h $user $pass $command\n"
+    printf "psexec \\\\\\\\$addr -h $user $pass cmd.exe /c $command\n"
 }
 
 # winexeTellCommandWriter(<addr> <user> <pass> <command>)
