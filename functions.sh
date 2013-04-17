@@ -3354,7 +3354,7 @@ function appleTerminalHandler {
 # Handle Gnome Terminal parameterization.
 #
 function gnomeTerminalHandler {
-    reportDebugFuncEntry "$*" "name addr sshopts xsasuser"
+    reportDebugFuncEntry "$*" "name addr sshopts xsasuser localUserDblBacksl"
 
     typeset protocol="$1"
     typeset append
@@ -3379,7 +3379,7 @@ function gnomeTerminalHandler {
     fi
 
     # Note that we're prep'ing the LOCAL user here, not a session user!
-    pgrep -u "$USER" gnome-terminal | grep -qv "$$"
+    pgrep -u "$localUserDblBacksl" gnome-terminal | grep -qv "$$"
     if [ "$?" = 0 ]; then
         # Handle tab creation and run connection command.
         windowId="$(xdotool search --class "gnome-terminal" | tail -1)"
@@ -3413,7 +3413,7 @@ function gnomeTerminalHandler {
 # Handle Screen Terminal parameterization.
 #
 function screenTerminalHandler {
-    reportDebugFuncEntry "$*" "name addr sshopts xsasuser userDblBacksl TERM"
+    reportDebugFuncEntry "$*" "name addr sshopts xsasuser $localUserDblBacksl TERM"
 
     typeset protocol="$1"
     typeset append
@@ -3435,7 +3435,7 @@ function screenTerminalHandler {
         return 1
     fi
 
-    typeset sesuser="$userDblBacksl"
+    typeset sesuser="$localUserDblBacksl"
     typeset seshost="$hostname"
     typeset sesname="session.$seshost.$sesuser"
     typeset sesruns="$(screen -ls | grep "$sesname")"

@@ -95,16 +95,21 @@ fi
 # Create backslashed user variable.
 if [ "$user" ]; then
     # $user was set directly, probably in options.conf.
+    # This indicates the local user differs from the remote.
     userDblBacksl="${user//\\/\\\\}"
+    localUserDblBacksl="${USER//\\/\\\\}"
 elif [ "$USER" ]; then
     # $USER was set in the environment.
     userDblBacksl="${USER//\\/\\\\}"
+    localUserDblBacksl="${USER//\\/\\\\}"
 elif [ "$USERNAME" ]; then
     # $USERNAME was set in the environment.
     userDblBacksl="${USERNAME//\\/\\\\}"
+    localUserDblBacksl="${USER//\\/\\\\}"
 else
     # If all else fails you get this.
     userDblBacksl="unknown"
+    localUserDblBacksl="unknown"
 fi
 
 # Construct current config from global and local session.conf.
