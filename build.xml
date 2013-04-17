@@ -14,7 +14,7 @@
     </target>
 
     <!-- Determine platform in a more detailed manner. -->
-    <script language="javascript" src="lib/platform.js"/>
+    <!-- <script language="javascript" src="lib/platform.js"/> -->
 
     <!-- Build a release. -->
     <target name="build" depends="init">
