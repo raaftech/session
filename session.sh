@@ -820,7 +820,7 @@ case "$main" in
     name="$2"
 
     shift 2
-    mandatories="command" optionals="debug user admin service parent mode resilient" silence="true" parseParameters "$@"
+    mandatories="command" optionals="debug user admin service console parent mode resilient" silence="true" parseParameters "$@"
 
     if [ "$parent" ]; then
         parent="true"
@@ -842,7 +842,7 @@ case "$main" in
     name="$2"
 
     shift 2
-    mandatories="source target" optionals="debug user admin service parent mode resilient" silence="true" parseParameters "$@"
+    mandatories="source target" optionals="debug user admin service console parent mode resilient" silence="true" parseParameters "$@"
 
     if [ "$parent" ]; then
         parent="true"
