@@ -3378,7 +3378,8 @@ function gnomeTerminalHandler {
         return 1
     fi
 
-    pgrep -u "$userDblBacksl" gnome-terminal | grep -qv "$$"
+    # Note that we're prep'ing the LOCAL user here, not a session user!
+    pgrep -u "$USER" gnome-terminal | grep -qv "$$"
     if [ "$?" = 0 ]; then
         # Handle tab creation and run connection command.
         windowId="$(xdotool search --class "gnome-terminal" | tail -1)"
