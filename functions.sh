@@ -282,7 +282,7 @@ function winexeTellCommandWriter {
     typeset pass="$3"
     typeset command="$4"
 
-    printf "winexe --debug-stderr --user='%s' --password='%s' //%s 'cmd.exe /c \"%s\"' 2>/dev/null\n" "$user" "$pass" "$addr" "$command"
+    printf "winexe --debug-stderr --user='%s' --password='%s' //%s 'cmd.exe /c \"%s\"'\n" "$user" "$pass" "$addr" "$command"
 }
 
 # plinkTellCommandWriter(<addr> <user> <command>)
