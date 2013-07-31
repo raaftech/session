@@ -29,6 +29,7 @@ doc/schema/openldap.schema -text
 doc/schema/pmi.schema -text
 doc/schema/ppolicy.schema -text
 doc/schema/session.schema -text
+doc/tests/breaks-case-statement-coloring.sh -text
 doc/tools/gen_diagram.sh -text
 doc/tryouts/myactions.py -text
 doc/tryouts/myclasses.py -text
