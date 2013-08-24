@@ -1,6 +1,18 @@
-* Known issue 1: PsExec and Windows Vista or Windows 7:
+Known issues
+------------
+1. PsExec or winexe and Windows Vista or Windows 7
+2. Make sure regular user is logged in when using vmw vrmt
+3. Windows Live ID Sign-In Assistant conflicts with smbclient
+4. Windows Vista and Windows 7 UAC one-time UAC pop-up for nmap
+5. Windows XP updates change default sharing security and psexec
+6. winexe 0.80 fails with "Failed to install... code 0x00000424"
+7. winexe 0.9 fails with command containing pipe character ('|')
+8. Commands sent via psexec or winexe work, but response is slow
 
-If you want to use the command, start and stop session commands to control a
+
+1. PsExec or winexe and Windows Vista or Windows 7
+
+If you want to use the "start" and "stop" session commands to control a
 remote Windows Vista or Windows 7 system, you need to run the following two
 commands on that system first
 
@@ -12,7 +24,7 @@ privileges.  To get a console with sufficient privileges you may have to
 click on the Windows icon, type "cmd" and then hit CTRL-SHIFT-ENTER.
 
 
-* Known Issue 2: Make sure regular user is logged in when using vmw vrmt:
+2. Make sure regular user is logged in when using vmw vrmt
 
 When you're commanding a Windows system with VMware Workstation running on it,
 make sure that the user that runs VMware Workstation is logged into the
@@ -23,7 +35,7 @@ also be the user you've defined as the "user" in the session line decribing
 your host.
 
 
-* Known Issue 3: Windows Live ID Sign-In Assistant conflicts with smbclient:
+3. Windows Live ID Sign-In Assistant conflicts with smbclient
 
 When trying to use session send from a unix-like machine to a remote Windows
 Vista or Windows 7 system, the smbclient command is used.
@@ -35,7 +47,7 @@ use as a target with session send. For more information:
 http://social.technet.microsoft.com/Forums/en/w7itpronetworking/thread/9c6f1d74-f7f0-4503-94fa-0d79a5597527
 
 
-* Known Issue 4: Windows Vista and Windows 7 UAC one-time UAC pop-up for nmap:
+4. Windows Vista and Windows 7 UAC one-time UAC pop-up for nmap:
 
 When using session on a Windows Vista or Windows 7 machine, you might encounter
 a UAC pop-up the first time session invokes a state check.
@@ -44,7 +56,7 @@ for as long as the logon session remains active. This happens because nmap
 requests elevated privileges.
 
 
-* Known Issue 5: Windows XP updates change default sharing security and psexec:
+5. Windows XP updates change default sharing security and psexec:
 
 Updates released after Windows XP SP2 change the default sharing security
 model for local accounts. The updates to Windows XP now sets this security
@@ -60,7 +72,7 @@ to "Classic - local users authenticate as themselves". For more information:
 http://itbin.blogspot.com/2010/10/psexec-logon-failure-and-access-denied.html
 
 
-* Known Issue 6: winexe fails with "Failed to install... code 0x00000424"
+6. winexe 0.80 fails with "Failed to install... code 0x00000424"
 
 If you get a message that more or less resembles the following error message:
 [winexe/winexe.c:120:on_ctrl_pipe_error()] ERROR: Failed to install service winexesvc - NT code 0x00000424
@@ -68,13 +80,13 @@ This message was printed by winexe 0.80 on an Ubuntu 11.04 system.  Upgrading
 to winexe 0.90 fixed it.
 
 
-* Known Issue 7: winexe fails with command containing pipe character ('|')
+7. winexe 0.9 fails with command containing pipe character ('|')
 
 Winexe prior to 1.00 does not allow the use of pipes in Windows commands.
 You can upgrade to winexe 1.00 which support pipes in commands sent.
 
 
-* Known Issue 8: commands send via psexec or winexe work, but slow response
+8. Commands sent via psexec or winexe work, but response is slow
 
 On at least Windows 7, the default firewall rules block certain traffic that
 Psexec and Winexe use to communicate. The end result is that the commands will
