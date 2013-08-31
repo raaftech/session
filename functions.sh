@@ -282,7 +282,12 @@ function winexeTellCommandWriter {
     typeset pass="$3"
     typeset command="$4"
 
-    printf "winexe --debug-stderr --user='%s' --password='%s' //%s 'cmd.exe /c \"%s\"'\n" "$user" "$pass" "$addr" "$command"
+    # Make sure we only pass --password when pass was not empty.
+    if [ "$pass" ]; then
+        printf "winexe --debug-stderr --user='%s' --password='%s' //%s 'cmd.exe /c \"%s\"'\n" "$user" "$pass" "$addr" "$command"
+    else
+        printf "winexe --debug-stderr --user='%s' //%s 'cmd.exe /c \"%s\"'\n" "$user" "$addr" "$command"
+    fi
 }
 
 # plinkTellCommandWriter(<addr> <user> <command>)
