@@ -12,16 +12,15 @@ Known issues
 
 1. PsExec or winexe and Windows Vista or Windows 7
 
-If you want to use the "start" and "stop" session commands to control a
-remote Windows Vista or Windows 7 system, you need to run the following two
-commands on that system first
+To use PsExec or winexe with a Windows Vista or Windows 7 machine it is
+necessary to change a registry setting as follows.
+
+Click on the Windows "Start" icon, enter "cmd" and then press
+CTRL-SHIFT-ENTER. In the console window that subsequently opens,
+enter the following commands.
 
 > reg delete "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System" /v LocalAccountTokenFilterPolicy
 > reg add "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System" /v LocalAccountTokenFilterPolicy /t REG_DWORD /d 1
-
-You need to run these commands in a console with elevated/administrator
-privileges.  To get a console with sufficient privileges you may have to
-click on the Windows icon, type "cmd" and then hit CTRL-SHIFT-ENTER.
 
 
 2. Make sure regular user is logged in when using vmw vrmt
