@@ -3390,7 +3390,15 @@ function gnomeTerminalHandler {
         xdotool windowfocus "$windowId" 2>/dev/null
         xdotool key ctrl+shift+t
         sleep 0.2
-        xdotool type --clearmodifiers --delay=10 "$line"
+
+        # Old versions of xdotool don't handle clearing of modifiers and key delay setting..
+        xdotool --version 2> /dev/null
+        if [ "$?" = "0" ]; then
+            xdotool type --clearmodifiers --delay=10 "$line"
+        else
+            xdotool type "$line"
+        fi
+
         xdotool key Return
 
         # If gnome-keyring-daemon is running, check to see if a prompt has started, wait for it to close.
