@@ -1,0 +1,120 @@
+Known issues
+============
+
+Table of contents
+---------------------------------------------------------------
+
+1. winexe
+---------
+1.1. PsExec and winexe blocked by Windows "simple file sharing" mode
+1.2. PsExec and winexe blocked by Windows Remote User Account Control
+1.3. Winexe 0.80 fails with "Failed to install... code 0x00000424"
+1.4. Winexe 0.9 fails with command containing pipe character ('|')
+1.5. Commands sent via psexec or winexe work, but response is slow
+
+2. VMware
+---------
+2.1. Make sure regular user is logged in when using vmw vrmt
+
+3. smbclient
+------------
+3.1. Windows Live ID Sign-In Assistant conflicts with smbclient
+
+4. nmap
+-------
+4.1. Windows Vista and Windows 7 UAC one-time UAC pop-up for nmap
+
+---------------------------------------------------------------
+
+
+1.1. PsExec and winexe blocked by Windows "simple file sharing" mode
+
+Some versions of Windows operate in so-called "simple file sharing" mode.
+In this mode, when an attempt is made to access the system over the
+network using credentials that are local to that server or client,
+Windows will only provide guest level access.
+
+To fix, you have to set the "Network Access: Sharing and security model for
+local accounts" to "Classic – local users authenticate as themselves".
+Access it via Start > Run > secpol.msc > Local Policies > Security Options,
+and change "Network Access: Sharing and security model for local accounts"
+to "Classic - local users authenticate as themselves".
+
+Ref: http://itbin.blogspot.com/2010/10/psexec-logon-failure-and-access-denied.html
+
+
+1.2. PsExec and winexe blocked by Windows Remote User Account Control
+
+The LocalAccountTokenFilterPolicy setting affects how administrator
+credentials are applied to remotely administer the computer.
+
+To use PsExec or winexe with a Windows Vista or Windows 7 machine it is
+necessary to configure a registry setting as follows.
+
+Click on the Windows "Start" icon, enter "cmd" and then press
+CTRL-SHIFT-ENTER. In the console window that subsequently opens, enter
+the following command.
+
+  reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\system" /v LocalAccountTokenFilterPolicy /t REG_DWORD /d 1 /f
+
+Ref: http://support.microsoft.com/kb/942817
+
+
+1.3. Winexe 0.80 fails with "Failed to install... code 0x00000424"
+
+If you get a message that more or less resembles the following error message:
+[winexe/winexe.c:120:on_ctrl_pipe_error()] ERROR: Failed to install service winexesvc - NT code 0x00000424
+This message was printed by winexe 0.80 on an Ubuntu 11.04 system.  Upgrading
+to winexe 0.90 fixed it.
+
+
+1.4. Winexe 0.9 fails with command containing pipe character ('|')
+
+Winexe prior to 1.00 does not allow the use of pipes in Windows commands.
+You can upgrade to winexe 1.00 which support pipes in commands sent.
+
+
+1.5. Commands sent via psexec or winexe work, but response is slow
+
+On at least Windows 7, the default firewall rules block certain traffic that
+Psexec and Winexe use to communicate. The end result is that the commands will
+work, but it takes a long time for them to do so (about 20 seconds).
+To work around this issue, make sure you Enable the "Remote Service Management"
+rules. There are about 6 of them on Windows 7, 2 for each Profile (domain, public
+and private). Start "Windows Firewall with Advanced Security" by using the
+command 'wf.msc'. In the Advanced Firewall GUI, select "Inbound" and find the
+beforementioned "Remote Service Management" rules. Select them and Right Click,
+then select "Enable". Psexec and Winexe commands should now be fast.
+
+
+2.1. Make sure regular user is logged in when using vmw vrmt
+
+When you're commanding a Windows system with VMware Workstation running on it,
+make sure that the user that runs VMware Workstation is logged into the
+system all the way to a visible desktop. We've seen issues where the vmrun
+command does not correctly list and start virtual machines if the login screen
+is currently visible on the console. The regular user mentioned above should
+also be the user you've defined as the "user" in the session line decribing
+your host.
+
+
+3.1. Windows Live ID Sign-In Assistant conflicts with smbclient
+
+When trying to use session send from a unix-like machine to a remote Windows
+Vista or Windows 7 system, the smbclient command is used.
+When the remote Windows Vista or Windows 7 system has "Windows Live ID Sign-In
+Assistant" installed, the smbclient command will fail. Make sure you uninstall
+the "Windows Live ID Sign-In Assistant" from the remote system you want to
+use as a target with session send. For more information:
+
+http://social.technet.microsoft.com/Forums/en/w7itpronetworking/thread/9c6f1d74-f7f0-4503-94fa-0d79a5597527
+
+
+4.1. Windows Vista and Windows 7 UAC one-time UAC pop-up for nmap:
+
+When using session on a Windows Vista or Windows 7 machine, you might encounter
+a UAC pop-up the first time session invokes a state check.
+This will fail the first state check but all subsequent state checks will work
+for as long as the logon session remains active. This happens because nmap
+requests elevated privileges.
+
