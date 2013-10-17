@@ -1,7 +1,0 @@
-# Example session capability entry for os.windows
-dn: capabilityName=os.windows,ou=Capabilities,dc=rfblx,dc=local
-objectClass: top
-objectClass: sessionCapability
-capabilityName: os.windows
-implementationName: OsWindows
-
