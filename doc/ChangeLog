@@ -1,3 +1,34 @@
+rubin (2013-10-17)
+	* session.sh: started version 1.0.1 prework (branch)
+	* session.sh: added commit pre-hook checking to svn (for jira).
+
+rubin (2013-10-17)
+	* session.sh: version 1.0.0 for public release.
+	* session.sh: split into main/functions/globals files.
+	* session.sh: ksh93 compatibility implemented (tested with ksh93t).
+	* session.sh: fixed bug in reinit not running always when called.
+	* session.sh: fixed bug in color handling usage in toolFinder.
+	* session.sh: fixed bug in pageant shell hanging on exit.
+	* session.sh: made all subshell calls go through $() syntax.
+	* session.sh: fixed bug in screen terminal handoff.
+	* session.sh: fixed bug in mapGroup most outward loop detection.
+	* session.sh: added support for pingState. allows ICMP state checking.
+	* session.sh: added agentforwarding option to ssh when using access.
+	* session.sh: added ubuntu lts 12.04 support.
+	* session.sh: added new unified version stanza.
+	* session.sh: fixed bug in spaces handling for viaScript.
+	* session.sh: added support for same-user parallel session invocation.
+	* session.sh: added directly passsing comma separated list of entities.
+	* session.sh: fixed bug in http/https access handlers.
+	* session.sh: added --parent option for access, tell and send commands.
+	* session.sh: added --console option for access, tell and send commands.
+	* session.sh: added --command option for access method.
+	* session.sh: fixed bug in psexec command sending.
+	* session.sh: fixed bug in local user lookup for gnomeTerminalHandler.
+	* session.sh: fixed bug in terminal titling being applied to RDP.
+	* session.sh: fixed bug for interactive passwd usage using winexe.
+	* session.sh: fixed bug in handling ancient versions of xdotool.
+
 rubin (2012-01-11)
 	* session.sh: version 0.9.1 for public release.
 	* session.sh: implemented --debug commandline setting for all commands.
@@ -113,7 +144,7 @@ rubin (2011-05-03)
 	* session.sh: default mode is serial. support for stateful implemented.
 	* session.sh: added resilient mode option for bad networks.
 	* session.sh: all debug messages now start with functionName:.
-	 
+
 rubin (2011-03-28)
 	* session.sh: version 0.7.12 for internal release.
 	* session.sh: fixed various bugs in parseParameters.
@@ -138,7 +169,7 @@ rubin (2011-01-25)
 rubin (2011-01-24)
 	* session.sh: version 0.7.9 for public release.
 	* session.sh: fixed bugs in sanity checking when using modconf.
-	* session.sh: added support for setting vmhome and vmdata for vmhosts. 
+	* session.sh: added support for setting vmhome and vmdata for vmhosts.
 	* session.sh: added support for per-system options.conf using addconf.
 	* session.sh: added support for per-system options.conf using modconf.
 	* session.sh: added safer handling for per-system data directories.
@@ -154,7 +185,7 @@ rubin (2011-01-11)
 
 rubin (2011-01-06)
 	* session.sh: version 0.7.6 for public release.
-	* session.sh: fixed many commenting bugs. 
+	* session.sh: fixed many commenting bugs.
 	* session.sh: fixed color reset issue on macosx.
 	* session.sh: fixed handling of send and command when working on 127.0.0.1.
 	* session.sh: fixed various escaping bugs.
@@ -268,7 +299,7 @@ rubin (2010-07-11)
 	* session.sh: moved a host's vmstore and vmhome to specific ~/.session/$host.opts.
 	* session.sh: support for storing a host's user and admin credentials in ~/.session.
 	* session.sh: renamed to session-linux.sh.
-	* session.sh: optimized $member checking by avoiding forks (5sec -> 4.0sec) 
+	* session.sh: optimized $member checking by avoiding forks (5sec -> 4.0sec)
 	* session.sh: optimized $member parsing by eliminating cut (4sec -> 1.6sec).
 	* session.sh: removed fork-heavy $all in to all-specific case statement in parseEntry.
 	* session.sh: removed recall to checkSystem when checksystem is given a guest.
@@ -304,7 +335,7 @@ rubin (2009-12-23)
 	* session.sh: version 0.3.0 for internal testing purposes.
 
 rubin (2009-11-27)
-	* session.sh: version 0.2.0 for public release. 
+	* session.sh: version 0.2.0 for public release.
 	* session.sh: grouping of hosts and guests (group)
 	* session.sh: supports physical (host) and virtual (guest) systems
 	* session.sh: supports none, xen, kvm and hpvm virtualization methods
