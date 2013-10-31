@@ -77,6 +77,8 @@ if [ ! -e "$usropt" -a ! -e "$sysopt" ]; then
         agent='$agent'
         privy='$privy'
         debug='$debug'
+        inmt='$inmt'
+        oumt='$oumt'
     " | sed 's/^[[:space:]]*//' > "$usropt"
 elif [ ! -e "$usropt" -a -e "$sysopt" ]; then
     cp "$sysopt" "$usropt"

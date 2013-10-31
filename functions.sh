@@ -36,7 +36,13 @@
 #
 # Print <message_text>s with standard framing text.
 #
-function report { printf "$*\n" ; }
+function report {
+    if [ "$oumt" = "json" ] ; then
+        printf "JSON{ $* }\n" ;
+    else
+        printf "$*\n" ;
+    fi
+}
 function reportSession { report "Session: $*" ; }
 function reportInfo { reportSession "Info: $*" ; }
 function reportWarning { reportSession "Warning: $*" >&2 ; }
@@ -986,6 +992,12 @@ function printPortState {
     fi
 }
 
+# printPingState(<address>)
+# Prints.
+#
+# Print the state ("open"/"unreachable"/"none") of a given host
+# with as little response time as possible.
+#
 function printPingState {
     reportDebugFuncEntry "$*"
 
@@ -1037,6 +1049,7 @@ function printState {
     typeset returnFormat="$2"
     typeset sysopts
     typeset usropts
+    typeset output
 
     if [ ! "$returnFormat" ]; then
         returnFormat="short"
@@ -1044,102 +1057,104 @@ function printState {
 
     case "$returnFormat" in
       long)
-        printf "# main config:\n"
-        printf "type='$type'\n"
-        printf "name='$name'\n"
+        output="${output}# main config:\n"
+        output="${output}type='$type'\n"
+        output="${output}name='$name'\n"
 
         if [ "$type" = "host" -o "$type" = "guest" ]; then
-            printf "osmt='$osmt'\n"
+            output="${output}osmt='$osmt'\n"
         elif [ "$type" = "service" ]; then
-            printf "svmt='$svmt'\n"
-            printf "port='$port'\n"
+            output="${output}svmt='$svmt'\n"
+            output="${output}port='$port'\n"
         fi
 
         if [ "$type" != "group" ]; then
-            printf "acmt='$acmt'\n"
-            printf "exmt='$exmt'\n"
-            printf "user='$user'\n"
-            printf "admin='$admin'\n"
-            printf "addr='$addr'\n"
-            printf "vrmt='$vrmt'\n"
-            printf "host='$host'\n"
+            output="${output}acmt='$acmt'\n"
+            output="${output}exmt='$exmt'\n"
+            output="${output}user='$user'\n"
+            output="${output}admin='$admin'\n"
+            output="${output}addr='$addr'\n"
+            output="${output}vrmt='$vrmt'\n"
+            output="${output}host='$host'\n"
         fi
-        printf "\n"
+        output="${output}\n"
 
         sysopts="$syscfd/sys/$name/options.conf"
         usropts="$usrcfd/sys/$name/options.conf"
 
         if [ -e "$usropts" ]; then
-            printf "# extra options (set locally):\n"
+            output="${output}# extra options (set locally):\n"
             cat "$usropts" | sed '/^$/d' | grep -v "^#"
-            printf "\n"
+            output="${output}\n"
         elif [ -e "$sysopts" -a ! -e "$usropts" ]; then
-            printf "# extra options (set globally):\n"
-            cat "$sysopts" | sed '/^$/d' | grep -v "^#"
-            printf "\n"
+            output="${output}# extra options (set globally):\n"
+            output=${output}$(cat "$sysopts" | sed '/^$/d' | grep -v "^#")"\n"
+            output="${output}\n"
         fi
 
         sysopts="$syscfd/sys/$host/options.conf"
         usropts="$usrcfd/sys/$host/options.conf"
 
         if [ -e "$usropts" ]; then
-            printf "# inherited options (from host, set locally):\n"
-            cat "$usropts" | sed '/^$/d' | grep -v "^#"
-            printf "\n"
+            output="${output}# inherited options (from host, set locally):\n"
+            output=$(cat "$usropts" | sed '/^$/d' | grep -v "^#")
+            output="${output}\n"
         elif [ -e "$sysopts" -a ! -e "$usropts" ]; then
-            printf "# inherited options (from host, set globally):\n"
-            cat "$sysopts" | sed '/^$/d' | grep -v "^#"
-            printf "\n"
+            output="${output}# inherited options (from host, set globally):\n"
+            output=$output$(cat "$sysopts" | sed '/^$/d' | grep -v "^#")
+            output="${output}\n"
+            output="${output}\n"
         fi
 
         if [ "$type" = "host" -o "$type" = "guest" ]; then
-            printf "# inherited os options:\n"
-            printf "osstop='$osstop'\n"
-            printf "osreboot='$osreboot'\n"
-            printf "oslisten='$oslisten'\n"
-            printf "\n"
+            output="${output}# inherited os options:\n"
+            output="${output}osstop='$osstop'\n"
+            output="${output}osreboot='$osreboot'\n"
+            output="${output}oslisten='$oslisten'\n"
+            output="${output}\n"
         fi
 
         if [ "$type" != "group" ]; then
-            printf "# current state:\n"
-            printf "acstate='$acstate'\n"
-            printf "exstate='$exstate'\n"
+            output="${output}# current state:\n"
+            output="${output}acstate='$acstate'\n"
+            output="${output}exstate='$exstate'\n"
             if [ "$type" = "service" ]; then
-                printf "svrunning='$svrunning'\n"
-                printf "svlistening='$svlistening'\n"
-                printf "svstate='$svstate'\n"
+                output="${output}svrunning='$svrunning'\n"
+                output="${output}svlistening='$svlistening'\n"
+                output="${output}svstate='$svstate'\n"
             fi
             if [ "$type" = "guest" ]; then
-                printf "vmstate='$vmstate'\n"
+                output="${output}vmstate='$vmstate'\n"
             fi
-            printf "state='$state'\n"
-            printf "\n"
+            output="${output}state='$state'\n"
+            output="${output}\n"
         fi
 
-        printf "# relations:\n"
+        output="${output}# relations:\n"
         if [ "$type" != "group" ]; then
-            printf "groups="
+            output="${output}groups="
             typeset groups="$(unset debug ; verbose=1 ; listHelper group | grep "$name" | cut -d " " -f 2 | cut -d "(" -f 1 | tr '\n' ',' | sed "s|,$||" 2> /dev/null)"
-            if [ "$groups" ]; then printf "'$groups'\n"; else printf "'none'\n"; fi
+            if [ "$groups" ]; then output="${output}'$groups'\n"; else output="${output}'none'\n"; fi
         fi
 
         if [ "$type" = "host" -o "$type" = "guest" ]; then
-            printf "services="
+            output="${output}services="
             typeset services="$(unset debug ; verbose=1 ; listHelper service | grep "$name" | cut -d " " -f 2 | cut -d "(" -f 1 | tr '\n' ',' | sed  "s|,$||" 2> /dev/null)"
-            if [ "$services" ]; then printf "'$services'\n"; else printf "'none'\n"; fi
+            if [ "$services" ]; then output="${output}'$services'\n"; else output="${output}'none'\n"; fi
         fi
 
         if [ "$type" = "host" -a "$vrmt" != "none" ]; then
-            printf "guests="
+            output="${output}guests="
             typeset guests="$(unset debug ; verbose=1 ; listHelper guest | grep "$name" | cut -d " " -f 2 | cut -d "(" -f 1 | tr '\n' ',' | sed  "s|,$||" 2> /dev/null)"
-            if [ "$guests" ]; then printf "'$guests'\n"; else printf "'none'\n"; fi
+            if [ "$guests" ]; then output="${output}'$guests'\n"; else output="${output}'none'\n"; fi
         fi
 
         if [ "$type" = "group" ]; then
-            printf "members="
+            output="${output}members="
             typeset members="$(tokenReader printVals "$name" "members")"
-            if [ "$members" ]; then printf "'$members'\n"; else printf "'none'\n"; fi
+            if [ "$members" ]; then output="${output}'$members'\n"; else output="${output}'none'\n"; fi
         fi
+        report "$output"
         ;;
       short)
         if [ ! "$color" ]; then
@@ -1300,73 +1315,90 @@ function checkNameOrAddress {
 #
 function listHelper {
     reportDebugFuncEntry "$*"
-
-    name="$1"
+    typeset name="$1"
+    typeset output=""
 
     case "$name" in
       group|groups|guest|guests|host|hosts|service|services|all)
         match="$(printf "$name\n" | sed 's|s$||')"
         if [ "$verbose" ]; then
             if [ "$name" = "all" ]; then
-                grep -ve "^$" -ve "^#" "$config"
+                output=$(grep -ve "^$" -ve "^#" "$config")
             else
-                grep "^$match" "$config" | sed '/^$/d'
+                output=$(grep "^$match" "$config" | sed '/^$/d')
             fi
         else
             if  [ "$name" = "all" ]; then
-                grep -ve "^$" -ve "^#" "$config" | cut -d '(' -f 1 | awk '{print $2}'
+                output=$(grep -ve "^$" -ve "^#" "$config" | cut -d '(' -f 1 | awk '{print $2}')
             else
-                grep "^$match" "$config" | sed "s|^$match ||g" | cut -d '(' -f 1
+                output=$(grep "^$match" "$config" | sed "s|^$match ||g" | cut -d '(' -f 1) # | while read item; do printf "$match : \"$item\", '"; done)
             fi
         fi
         ;;
       mode|modes)
+        # FIXME I do not get this
         if [ "$default" ]; then
-            printf "$defaultmode\n"
+            output="$defaultmode\n"
         else
         for item in $known_modes ; do
-            printf "$item\n" $(if [ "$item" = "$defaultmode" ]; then printf "(default)\n" ; fi)
+            if [ "$item" = "$defaultmode" ] ; then
+                output="$output$item (default)\n";
+            else
+                output="$output$item\n";
+            fi
         done
         fi
         ;;
       osmt)
         for item in $known_osmts ; do
-            printf "$item\n"
+            output="$output$item\n"
         done
         ;;
       acmt)
         for item in $known_acmts ; do
-            printf "$item\n"
+            output="$output$item\n"
         done
         ;;
       exmt)
         for item in $known_exmts ; do
-            printf "$item\n"
+            output="$output$item\n"
         done
         ;;
       svmt)
         for item in $known_svmts ; do
-            printf "$item\n"
+            output="$output$item\n"
         done
         ;;
       vrmt)
         for item in $known_vrmts ; do
-            printf "$item\n"
+            output="$output$item\n"
         done
         ;;
       crmt)
         for item in $known_crmts ; do
-            printf "$item\n"
+            output="$output$item\n"
+        done
+        ;;
+      inmt|inmts)
+        for item in $known_inmts ; do
+            output="$output$item\n"
+        done
+        ;;
+      oumt|oumts)
+        for item in $known_oumts ; do
+            output="$output$item\n"
         done
         ;;
       *)
         if [ "$verbose" ]; then
-            entryReader "$name" "$config"
+            output=$(entryReader "$name" "$config")
         else
-            tokenReader printVals "$name" "name"
+            output=$(tokenReader printVals "$name" "name")
         fi
         ;;
     esac
+
+    report "$output"
 }
 
 # discoveryHelper(<range>)
@@ -1648,10 +1680,10 @@ function tokenValidator {
           user|admin)
             reportDebug "Verifying $key for $name with value $value"
             ;;
-          type|mode|osmt|acmt|exmt|svmt|vrmt)
+          type|mode|osmt|acmt|exmt|svmt|vrmt|inmt|oumt)
             reportDebug "Verifying $key for $name with value $value"
             if [[ ! "$list" =~ "$value" ]]; then
-                reportError "Unknown $key method $value specified for $name"
+                reportError "Unknown $key method $value specified for $key"
                 return 1
             fi
             ;;

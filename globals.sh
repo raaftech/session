@@ -34,6 +34,8 @@ known_crmts="none ssh win"
 known_svmts="none scripted"
 known_exmts="none ssh smb"
 known_acmts="none ssh tel rdp http"
+known_inmts="cmdline rest json-rpc"
+known_oumts="cmdline json"
 
 # Locations of configuration files.
 syscfd="/etc/session"
@@ -140,6 +142,8 @@ color=1
 agent=1
 privy=0
 debug=0
+inmt="cmdline"
+oumt="cmdline"
 
 # Syntax indices for tokenReader()
 typeset -r syntax_host_type=1
