@@ -500,7 +500,11 @@ function toolFinder {
     elif [ "$browser" = "apple" ]; then
         tools_browser="open"
     elif [ "$browser" = "gnome" ]; then
-        tools_browser="open"
+        # Some linux distributions name 'open' 'gnome-open'. Quick fix.
+        if [ -x "/usr/bin/gnome-open" ];then
+            tools_browser="gnome-open"
+        else
+            tools_browser="open"
     fi
 
     for tools_access_type in tools_terminal tools_desktop tools_browser; do
