@@ -806,7 +806,7 @@ case "$main" in
     optionals="debug user admin service tabbed console command parent mode resilient" silence="true" parseParameters "$@"
 
     # Set parent mode, for guests and services.
-    if [ "tabbed" ]; then
+    if [ "$tabbed" ]; then
         tabbed="true"
     fi
 
