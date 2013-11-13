@@ -505,6 +505,7 @@ function toolFinder {
             tools_browser="gnome-open"
         else
             tools_browser="open"
+        fi
     fi
 
     for tools_access_type in tools_terminal tools_desktop tools_browser; do
@@ -791,7 +792,7 @@ function osGlobals {
 
     # Override defaults given above for certain osses.
     case "$1" in
-      aix5|aix6|aix7|hpux1123|hpux1131)
+      aix5|aix6|aix7|hpux1111|hpux1123|hpux1131)
         osstop="/sbin/shutdown -hy 0"
         ;;
       dfbsd2|dfbsd3|fbsd7|fbsd8|fbsd9)
