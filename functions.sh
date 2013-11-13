@@ -1710,6 +1710,36 @@ function tokenValidator {
 # parseParameters(<parameters>)
 # Sets variables.
 #
+# Parse parameters <parameters> for options depending on $inmt.
+function parseParameters {
+    reportDebugFuncEntry "$*" "mandatories optionals silence"
+
+    if [ "$inmt" = "rest" ] ; then
+        parseRest $*
+    elif [ "$inmt" = "cmdline" ] ; then
+        parseCommandline $*
+    else
+        reportError "Passed invalid inmt $inmt"
+        exit 1
+    fi
+}
+
+# parseRest(<parameters>)
+# Sets variables.
+#
+# Parse REST parameters <parameters> for options.
+#
+function parseRest {
+    reportDebugFuncEntry "$*" "mandatories optionals silence"
+
+    # TODO: implement parsing of REST parameters
+    reportError "REST parameter parsing not yet implemented."
+    exit 1
+}
+
+# parseCommandline(<parameters>)
+# Sets variables.
+#
 # Parse command-line parameters <parameters> for options.
 #
 # For each command-line option "--foo" or "--foo=bar" set variable
@@ -1728,7 +1758,7 @@ function tokenValidator {
 # Option values may be arbitrary strings.
 # Option names may not contain spaces.
 #
-function parseParameters {
+function parseCommandline {
     reportDebugFuncEntry "$*" "mandatories optionals silence"
 
     typeset -a variables
@@ -4590,6 +4620,8 @@ function printUsageText {
     vrmt        - (list) show all supported virtualization methods.
     osmt        - (list) show all supported operating environments.
     crmt        - (list) show all supported credential methods.
+    inmt        - (list) show all supported input methods.
+    oumt        - (list) show all supported output methods.
 
     Notes:
     Arguments starting with a double dash sign (--) can either be without a value
