@@ -65,6 +65,8 @@ if [ ! -e "$usropt" -a ! -e "$sysopt" ]; then
         sshtell='$sshtell'
         smbsend='$smbsend'
         sshsend='$sshsend'
+        inmt='$inmt'
+        oumt='$oumt'
         execute='$execute'
         access='$access'
         create='$create'
@@ -73,12 +75,11 @@ if [ ! -e "$usropt" -a ! -e "$sysopt" ]; then
         resilient='$resilient'
         timeout='$timeout'
         titling='$titling'
+        tabbed='$tabbed'
         color='$color'
         agent='$agent'
         privy='$privy'
         debug='$debug'
-        inmt='$inmt'
-        oumt='$oumt'
     " | sed 's/^[[:space:]]*//' > "$usropt"
 elif [ ! -e "$usropt" -a -e "$sysopt" ]; then
     cp "$sysopt" "$usropt"
@@ -176,6 +177,9 @@ if [ "$resilient" != 0 ]; then resilient="true" ; else unset resilient ; fi
 
 # Enable (*) or disable (0) title setting for various access functions.
 if [ "$titling" != 0 ]; then titling="true" ; else unset titling ; fi
+
+# Enable (*) or disable (0) tabbed terminal mode for access functions.
+if [ "$tabbed" != 0 ]; then tabbed="true" ; else unset tabbed ; fi
 
 # Enable (*) or disable (0) color state output.
 if [ "$color" != 0 ]; then color="true" ; else unset color ; fi
@@ -799,7 +803,12 @@ case "$main" in
     name="$2"
 
     shift 2
-    optionals="debug user admin service console command parent mode resilient" silence="true" parseParameters "$@"
+    optionals="debug user admin service tabbed console command parent mode resilient" silence="true" parseParameters "$@"
+
+    # Set parent mode, for guests and services.
+    if [ "tabbed" ]; then
+        tabbed="true"
+    fi
 
     # Set parent mode, for guests and services.
     if [ "$parent" ]; then

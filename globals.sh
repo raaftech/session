@@ -130,20 +130,21 @@ else
 fi
 
 # Static options.conf default settings.
-execute=1
-access=1
-create=1
-destroy=0
-send=1
-resilient=0
-timeout=1501
-titling=0
-color=1
-agent=1
-privy=0
-debug=0
 inmt="cmdline"
 oumt="cmdline"
+execute="1"
+access="1"
+create="1"
+destroy="0"
+send="1"
+resilient="0"
+timeout="1501"
+titling="0"
+tabbed="0"
+color="1"
+agent="1"
+privy="0"
+debug="0"
 
 # Syntax indices for tokenReader()
 typeset -r syntax_host_type=1

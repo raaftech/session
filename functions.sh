@@ -3363,30 +3363,54 @@ function appleTerminalHandler {
         return 1
     fi
 
-    # Handle tab creation and run connection command.
-    printf "activate application \"Terminal\"\n" > "$usrcfd/tmp/session.access.$name.scpt"
-    printf "tell application \"Terminal\"\n" >> "$usrcfd/tmp/session.access.$name.scpt"
-    printf "tell application \"System Events\" to tell process \"Terminal\" to keystroke \"t\" using command down\n" >> "$usrcfd/tmp/session.access.$name.scpt"
-    printf "do script \"$line\" in last tab of front window\n" >> "$usrcfd/tmp/session.access.$name.scpt"
-    printf "end tell\n" >> "$usrcfd/tmp/session.access.$name.scpt"
-    osascript "$usrcfd/tmp/session.access.$name.scpt"
-    rm "$usrcfd/tmp/session.access.$name.scpt"
+    if [ "$tabbed" ]; then
+        # Handle tab creation and run connection command.
+        printf "activate application \"Terminal\"\n" > "$usrcfd/tmp/session.access.$name.scpt"
+        printf "tell application \"Terminal\"\n" >> "$usrcfd/tmp/session.access.$name.scpt"
+        printf "tell application \"System Events\" to tell process \"Terminal\" to keystroke \"t\" using command down\n" >> "$usrcfd/tmp/session.access.$name.scpt"
+        printf "do script \"$line\" in last tab of front window\n" >> "$usrcfd/tmp/session.access.$name.scpt"
+        printf "end tell\n" >> "$usrcfd/tmp/session.access.$name.scpt"
+        osascript "$usrcfd/tmp/session.access.$name.scpt"
+        rm "$usrcfd/tmp/session.access.$name.scpt"
 
-    # If Keychain is running, check to see if a prompt has started, wait for it to close.
-    waitForDialog "securityd" "SecurityAgent"
+        # If Keychain is running, check to see if a prompt has started, wait for it to close.
+        waitForDialog "securityd" "SecurityAgent"
 
-    # Set title (only if sshkey is set and agent enabled, due to non-interactivity requirement).
-    if [ "$titling" -a "$sshkey" -a "$agent" ]; then
-        printf 'activate application "Terminal"'\n > "$usrcfd/tmp/session.title.$name.scpt"
-        printf 'tell application "System Events" to tell process "Terminal" to keystroke "PS1=\"[\\u@\\h \\W]\\$ \" ; PROMPT_COMMAND="'\n >> "$usrcfd/tmp/session.title.$name.scpt"
-        printf "tell application \"System Events\" to tell process \"Terminal\" to keystroke quoted form of \"echo -ne \\\"\\\\033]0;$title\\\\007\\\"\"\n" >> "$usrcfd/tmp/session.title.$name.scpt"
-        printf 'tell application "System Events" to tell process "Terminal" to keystroke return'\n >> "$usrcfd/tmp/session.title.$name.scpt"
-        osascript "$usrcfd/tmp/session.title.$name.scpt"
-        rm "$usrcfd/tmp/session.title.$name.scpt"
+        # Set title (only if sshkey is set and agent enabled, due to non-interactivity requirement).
+        if [ "$titling" -a "$sshkey" -a "$agent" ]; then
+            printf 'activate application "Terminal"'\n > "$usrcfd/tmp/session.title.$name.scpt"
+            printf 'tell application "System Events" to tell process "Terminal" to keystroke "PS1=\"[\\u@\\h \\W]\\$ \" ; PROMPT_COMMAND="'\n >> "$usrcfd/tmp/session.title.$name.scpt"
+            printf "tell application \"System Events\" to tell process \"Terminal\" to keystroke quoted form of \"echo -ne \\\"\\\\033]0;$title\\\\007\\\"\"\n" >> "$usrcfd/tmp/session.title.$name.scpt"
+            printf 'tell application "System Events" to tell process "Terminal" to keystroke return'\n >> "$usrcfd/tmp/session.title.$name.scpt"
+            osascript "$usrcfd/tmp/session.title.$name.scpt"
+            rm "$usrcfd/tmp/session.title.$name.scpt"
+        fi
+
+        # Return to first tab.
+        osascript -e 'tell application "System Events"' -e 'keystroke "}" using command down' -e 'end tell'
+    else
+        # Handle window creation and run connection command.
+        printf "activate application \"Terminal\"\n" > "$usrcfd/tmp/session.access.$name.scpt"
+        printf "tell application \"Terminal\"\n" >> "$usrcfd/tmp/session.access.$name.scpt"
+        printf "tell application \"System Events\" to tell process \"Terminal\" to keystroke \"n\" using command down\n" >> "$usrcfd/tmp/session.access.$name.scpt"
+        printf "do script \"$line\" in last tab of front window\n" >> "$usrcfd/tmp/session.access.$name.scpt"
+        printf "end tell\n" >> "$usrcfd/tmp/session.access.$name.scpt"
+        osascript "$usrcfd/tmp/session.access.$name.scpt"
+        rm "$usrcfd/tmp/session.access.$name.scpt"
+
+        # If Keychain is running, check to see if a prompt has started, wait for it to close.
+        waitForDialog "securityd" "SecurityAgent"
+
+        # Set title (only if sshkey is set and agent enabled, due to non-interactivity requirement).
+        if [ "$titling" -a "$sshkey" -a "$agent" ]; then
+            printf 'activate application "Terminal"'\n > "$usrcfd/tmp/session.title.$name.scpt"
+            printf 'tell application "System Events" to tell process "Terminal" to keystroke "PS1=\"[\\u@\\h \\W]\\$ \" ; PROMPT_COMMAND="'\n >> "$usrcfd/tmp/session.title.$name.scpt"
+            printf "tell application \"System Events\" to tell process \"Terminal\" to keystroke quoted form of \"echo -ne \\\"\\\\033]0;$title\\\\007\\\"\"\n" >> "$usrcfd/tmp/session.title.$name.scpt"
+            printf 'tell application "System Events" to tell process "Terminal" to keystroke return'\n >> "$usrcfd/tmp/session.title.$name.scpt"
+            osascript "$usrcfd/tmp/session.title.$name.scpt"
+            rm "$usrcfd/tmp/session.title.$name.scpt"
+        fi
     fi
-
-    # Return to first tab.
-    osascript -e 'tell application "System Events"' -e 'keystroke "}" using command down' -e 'end tell'
 }
 
 # gnomeTerminalHandler(<protocol>)
@@ -3419,38 +3443,49 @@ function gnomeTerminalHandler {
         return 1
     fi
 
-    # Note that we're prep'ing the LOCAL user here, not a session user!
-    pgrep -u "$localUserDblBacksl" gnome-terminal | grep -qv "$$"
-    if [ "$?" = 0 ]; then
-        # Handle tab creation and run connection command.
-        windowId="$(xdotool search --class "gnome-terminal" | tail -1)"
-        xdotool windowfocus "$windowId" 2>/dev/null
-        xdotool key ctrl+shift+t
-        sleep 0.2
+    if [ "$tabbed" ]; then
+        # Note that we're prep'ing the LOCAL user here, not a session user!
+        pgrep -u "$localUserDblBacksl" gnome-terminal | grep -qv "$$"
+        if [ "$?" = 0 ]; then
+            # Handle tab creation and run connection command.
+            windowId="$(xdotool search --class "gnome-terminal" | tail -1)"
+            xdotool windowfocus "$windowId" 2>/dev/null
+            xdotool key ctrl+shift+t
+            sleep 0.2
 
-        # Old versions of xdotool don't handle clearing of modifiers and key delay setting..
-        xdotool --version 2> /dev/null
-        if [ "$?" = "0" ]; then
-            xdotool type --clearmodifiers --delay=10 "$line"
+            # Old versions of xdotool don't handle clearing of modifiers and key delay setting..
+            xdotool --version 2> /dev/null
+            if [ "$?" = "0" ]; then
+                xdotool type --clearmodifiers --delay=10 "$line"
+            else
+                xdotool type "$line"
+            fi
+
+            xdotool key Return
+
+            # If gnome-keyring-daemon is running, check to see if a prompt has started, wait for it to close.
+            waitForDialog "gnome-keyring-daemon" "gnome-keyring-prompt"
+
+            # Set title (only if sshkey is set and agent enabled, due to non-interactivity requirement).
+            if [ "$titling" -a "$sshkey" -a "$agent" ]; then
+                xdotool type --clearmodifiers --delay=10 "PS1=\"[\\u@\\h \\W]\\$ \" ; PROMPT_COMMAND='echo -ne \"\\033]0;\"$title\"\\007\"'"
+                xdotool key Return
+            fi
+
+            # Return to first tab.
+            xdotool key ctrl+Next
         else
-            xdotool type "$line"
+            gnome-terminal --command="$line" &
         fi
-
-        xdotool key Return
-
-        # If gnome-keyring-daemon is running, check to see if a prompt has started, wait for it to close.
-        waitForDialog "gnome-keyring-daemon" "gnome-keyring-prompt"
-
+    else
         # Set title (only if sshkey is set and agent enabled, due to non-interactivity requirement).
         if [ "$titling" -a "$sshkey" -a "$agent" ]; then
+            gnome-terminal --command="$line"
             xdotool type --clearmodifiers --delay=10 "PS1=\"[\\u@\\h \\W]\\$ \" ; PROMPT_COMMAND='echo -ne \"\\033]0;\"$title\"\\007\"'"
             xdotool key Return
+        else
+            gnome-terminal --command="$line"
         fi
-
-        # Return to first tab.
-        xdotool key ctrl+Next
-    else
-        gnome-terminal --command="$line" &
     fi
 
     return 0
@@ -4512,6 +4547,9 @@ function printUsageText {
 
     Argument to explicitly use access method of the parent to access a service:
     --console   - (services only) explicitly use the parent access method.
+
+    Argument to explicitly specify the use of tabbed terminal mode in access.
+    --tabbed    - explicitly request to open in tabbed mode (linux and macosx).
 
     Arguments for create and destroy:
     --desc      - (optional) annotation (--desc=\"My description.\").
