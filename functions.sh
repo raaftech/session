@@ -157,7 +157,7 @@ function toLocalWindowsPath {
 
     reportDebug "Incoming: $input"
     reportDebug "Outgoing: $output"
-    report "$output"
+    printf "$output"
     return 0
 }
 
@@ -1403,7 +1403,7 @@ function listHelper {
         ;;
     esac
 
-    report "$output"
+    printf "$output"
 }
 
 # discoveryHelper(<range>)
