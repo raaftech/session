@@ -4489,16 +4489,16 @@ function mapEntryPoint {
             reportDebug "Terminal exit hook for screen: resuming created screen session"
             sleep 1
             screen -r
-        # Set the title of the local (first) window.
-        elif [ "$terminal" = "gnome" -a "$titling" -a "$sshkey" -a "$agent" ]; then
+        # Set the title of the local (first) tab.
+        elif [ "$terminal" = "gnome" -a "$titling" -a "$tabbed" -a "$sshkey" -a "$agent" ]; then
             reportDebug "Terminal exit hook for gnome: titling typeset terminal screen"
             typeset title="$(capsFirst "$hostname")"
             sleep 1
             xdotool key alt+1
             xdotool type --clearmodifiers --delay=10 "PS1=\"[\\u@\\h \\W]\\$ \" ; PROMPT_COMMAND='echo -ne \"\\033]0;\"$title\"\\007\"'"
             xdotool key Return
-        # Set the title of the local (first) window.
-        elif [ "$terminal" = "apple" -a "$titling" -a "$sshkey" -a "$agent" ]; then
+        # Set the title of the local (first) tab.
+        elif [ "$terminal" = "apple" -a "$titling" -a "$tabbed" -a "$sshkey" -a "$agent" ]; then
             reportDebug "Terminal exit hook for apple: titling typeset terminal screen"
             typeset title="$(capsFirst "$hostname")"
             printf 'activate application "Terminal"'\n > "$usrcfd/tmp/session.title.$hostname.scpt"
