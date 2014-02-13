@@ -1343,55 +1343,55 @@ function listHelper {
       mode|modes)
         # FIXME I do not get this
         if [ "$default" ]; then
-            output="$defaultmode\n"
+            output="$defaultmode"
         else
         for item in $known_modes ; do
             if [ "$item" = "$defaultmode" ] ; then
-                output="$output$item (default)\n";
+                output="$output$item (default)";
             else
-                output="$output$item\n";
+                output="$output$item";
             fi
         done
         fi
         ;;
       osmt)
         for item in $known_osmts ; do
-            output="$output$item\n"
+            output="$output$item"
         done
         ;;
       acmt)
         for item in $known_acmts ; do
-            output="$output$item\n"
+            output="$output$item"
         done
         ;;
       exmt)
         for item in $known_exmts ; do
-            output="$output$item\n"
+            output="$output$item"
         done
         ;;
       svmt)
         for item in $known_svmts ; do
-            output="$output$item\n"
+            output="$output$item"
         done
         ;;
       vrmt)
         for item in $known_vrmts ; do
-            output="$output$item\n"
+            output="$output$item"
         done
         ;;
       crmt)
         for item in $known_crmts ; do
-            output="$output$item\n"
+            output="$output$item"
         done
         ;;
       inmt|inmts)
         for item in $known_inmts ; do
-            output="$output$item\n"
+            output="$output$item"
         done
         ;;
       oumt|oumts)
         for item in $known_oumts ; do
-            output="$output$item\n"
+            output="$output$item"
         done
         ;;
       *)
@@ -1403,7 +1403,7 @@ function listHelper {
         ;;
     esac
 
-    printf "$output"
+    printf "$output\n"
 }
 
 # discoveryHelper(<range>)
