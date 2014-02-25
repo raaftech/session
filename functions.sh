@@ -1715,9 +1715,9 @@ function parseParameters {
     reportDebugFuncEntry "$*" "mandatories optionals silence"
 
     if [ "$inmt" = "rest" ] ; then
-        parseRest $*
+        parseRest "$@"
     elif [ "$inmt" = "cmdline" ] ; then
-        parseCommandline $*
+        parseCommandline "$@"
     else
         reportError "Passed invalid inmt $inmt"
         exit 1
