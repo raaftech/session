@@ -34,8 +34,6 @@ known_crmts="none ssh win"
 known_svmts="none scripted"
 known_exmts="none ssh smb"
 known_acmts="none ssh tel rdp http"
-known_inmts="cmdline rest json-rpc"
-known_oumts="cmdline json"
 
 # Locations of configuration files.
 syscfd="/etc/session"
@@ -130,8 +128,6 @@ else
 fi
 
 # Static options.conf default settings.
-inmt="cmdline"
-oumt="cmdline"
 execute="1"
 access="1"
 create="1"

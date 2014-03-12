@@ -36,13 +36,7 @@
 #
 # Print <message_text>s with standard framing text.
 #
-function report {
-    if [ "$oumt" = "json" ] ; then
-        printf "JSON{ $* }\n" ;
-    else
-        printf "$*\n" ;
-    fi
-}
+function report { printf "$*\n" ; }
 function reportSession { report "Session: $*" ; }
 function reportInfo { reportSession "Info: $*" ; }
 function reportWarning { reportSession "Warning: $*" >&2 ; }
@@ -157,7 +151,7 @@ function toLocalWindowsPath {
 
     reportDebug "Incoming: $input"
     reportDebug "Outgoing: $output"
-    printf "$output"
+    report "$output"
     return 0
 }
 
@@ -1054,7 +1048,6 @@ function printState {
     typeset returnFormat="$2"
     typeset sysopts
     typeset usropts
-    typeset output
 
     if [ ! "$returnFormat" ]; then
         returnFormat="short"
@@ -1062,104 +1055,102 @@ function printState {
 
     case "$returnFormat" in
       long)
-        output="${output}# main config:\n"
-        output="${output}type='$type'\n"
-        output="${output}name='$name'\n"
+        printf "# main config:\n"
+        printf "type='$type'\n"
+        printf "name='$name'\n"
 
         if [ "$type" = "host" -o "$type" = "guest" ]; then
-            output="${output}osmt='$osmt'\n"
+            printf "osmt='$osmt'\n"
         elif [ "$type" = "service" ]; then
-            output="${output}svmt='$svmt'\n"
-            output="${output}port='$port'\n"
+            printf "svmt='$svmt'\n"
+            printf "port='$port'\n"
         fi
 
         if [ "$type" != "group" ]; then
-            output="${output}acmt='$acmt'\n"
-            output="${output}exmt='$exmt'\n"
-            output="${output}user='$user'\n"
-            output="${output}admin='$admin'\n"
-            output="${output}addr='$addr'\n"
-            output="${output}vrmt='$vrmt'\n"
-            output="${output}host='$host'\n"
+            printf "acmt='$acmt'\n"
+            printf "exmt='$exmt'\n"
+            printf "user='$user'\n"
+            printf "admin='$admin'\n"
+            printf "addr='$addr'\n"
+            printf "vrmt='$vrmt'\n"
+            printf "host='$host'\n"
         fi
-        output="${output}\n"
+        printf "\n"
 
         sysopts="$syscfd/sys/$name/options.conf"
         usropts="$usrcfd/sys/$name/options.conf"
 
         if [ -e "$usropts" ]; then
-            output="${output}# extra options (set locally):\n"
+            printf "# extra options (set locally):\n"
             cat "$usropts" | sed '/^$/d' | grep -v "^#"
-            output="${output}\n"
+            printf "\n"
         elif [ -e "$sysopts" -a ! -e "$usropts" ]; then
-            output="${output}# extra options (set globally):\n"
-            output=${output}$(cat "$sysopts" | sed '/^$/d' | grep -v "^#")"\n"
-            output="${output}\n"
+            printf "# extra options (set globally):\n"
+            cat "$sysopts" | sed '/^$/d' | grep -v "^#"
+            printf "\n"
         fi
 
         sysopts="$syscfd/sys/$host/options.conf"
         usropts="$usrcfd/sys/$host/options.conf"
 
         if [ -e "$usropts" ]; then
-            output="${output}# inherited options (from host, set locally):\n"
-            output=$(cat "$usropts" | sed '/^$/d' | grep -v "^#")
-            output="${output}\n"
+            printf "# inherited options (from host, set locally):\n"
+            cat "$usropts" | sed '/^$/d' | grep -v "^#"
+            printf "\n"
         elif [ -e "$sysopts" -a ! -e "$usropts" ]; then
-            output="${output}# inherited options (from host, set globally):\n"
-            output=$output$(cat "$sysopts" | sed '/^$/d' | grep -v "^#")
-            output="${output}\n"
-            output="${output}\n"
+            printf "# inherited options (from host, set globally):\n"
+            cat "$sysopts" | sed '/^$/d' | grep -v "^#"
+            printf "\n"
         fi
 
         if [ "$type" = "host" -o "$type" = "guest" ]; then
-            output="${output}# inherited os options:\n"
-            output="${output}osstop='$osstop'\n"
-            output="${output}osreboot='$osreboot'\n"
-            output="${output}oslisten='$oslisten'\n"
-            output="${output}\n"
+            printf "# inherited os options:\n"
+            printf "osstop='$osstop'\n"
+            printf "osreboot='$osreboot'\n"
+            printf "oslisten='$oslisten'\n"
+            printf "\n"
         fi
 
         if [ "$type" != "group" ]; then
-            output="${output}# current state:\n"
-            output="${output}acstate='$acstate'\n"
-            output="${output}exstate='$exstate'\n"
+            printf "# current state:\n"
+            printf "acstate='$acstate'\n"
+            printf "exstate='$exstate'\n"
             if [ "$type" = "service" ]; then
-                output="${output}svrunning='$svrunning'\n"
-                output="${output}svlistening='$svlistening'\n"
-                output="${output}svstate='$svstate'\n"
+                printf "svrunning='$svrunning'\n"
+                printf "svlistening='$svlistening'\n"
+                printf "svstate='$svstate'\n"
             fi
             if [ "$type" = "guest" ]; then
-                output="${output}vmstate='$vmstate'\n"
+                printf "vmstate='$vmstate'\n"
             fi
-            output="${output}state='$state'\n"
-            output="${output}\n"
+            printf "state='$state'\n"
+            printf "\n"
         fi
 
-        output="${output}# relations:\n"
+        printf "# relations:\n"
         if [ "$type" != "group" ]; then
-            output="${output}groups="
+            printf "groups="
             typeset groups="$(unset debug ; verbose=1 ; listHelper group | grep "$name" | cut -d " " -f 2 | cut -d "(" -f 1 | tr '\n' ',' | sed "s|,$||" 2> /dev/null)"
-            if [ "$groups" ]; then output="${output}'$groups'\n"; else output="${output}'none'\n"; fi
+            if [ "$groups" ]; then printf "'$groups'\n"; else printf "'none'\n"; fi
         fi
 
         if [ "$type" = "host" -o "$type" = "guest" ]; then
-            output="${output}services="
+            printf "services="
             typeset services="$(unset debug ; verbose=1 ; listHelper service | grep "$name" | cut -d " " -f 2 | cut -d "(" -f 1 | tr '\n' ',' | sed  "s|,$||" 2> /dev/null)"
-            if [ "$services" ]; then output="${output}'$services'\n"; else output="${output}'none'\n"; fi
+            if [ "$services" ]; then printf "'$services'\n"; else printf "'none'\n"; fi
         fi
 
         if [ "$type" = "host" -a "$vrmt" != "none" ]; then
-            output="${output}guests="
+            printf "guests="
             typeset guests="$(unset debug ; verbose=1 ; listHelper guest | grep "$name" | cut -d " " -f 2 | cut -d "(" -f 1 | tr '\n' ',' | sed  "s|,$||" 2> /dev/null)"
-            if [ "$guests" ]; then output="${output}'$guests'\n"; else output="${output}'none'\n"; fi
+            if [ "$guests" ]; then printf "'$guests'\n"; else printf "'none'\n"; fi
         fi
 
         if [ "$type" = "group" ]; then
-            output="${output}members="
+            printf "members="
             typeset members="$(tokenReader printVals "$name" "members")"
-            if [ "$members" ]; then output="${output}'$members'\n"; else output="${output}'none'\n"; fi
+            if [ "$members" ]; then printf "'$members'\n"; else printf "'none'\n"; fi
         fi
-        report "$output"
         ;;
       short)
         if [ ! "$color" ]; then
@@ -1320,90 +1311,73 @@ function checkNameOrAddress {
 #
 function listHelper {
     reportDebugFuncEntry "$*"
-    typeset name="$1"
-    typeset output=""
+
+    name="$1"
 
     case "$name" in
       group|groups|guest|guests|host|hosts|service|services|all)
         match="$(printf "$name\n" | sed 's|s$||')"
         if [ "$verbose" ]; then
             if [ "$name" = "all" ]; then
-                output=$(grep -ve "^$" -ve "^#" "$config")
+                grep -ve "^$" -ve "^#" "$config"
             else
-                output=$(grep "^$match" "$config" | sed '/^$/d')
+                grep "^$match" "$config" | sed '/^$/d'
             fi
         else
             if  [ "$name" = "all" ]; then
-                output=$(grep -ve "^$" -ve "^#" "$config" | cut -d '(' -f 1 | awk '{print $2}')
+                grep -ve "^$" -ve "^#" "$config" | cut -d '(' -f 1 | awk '{print $2}'
             else
-                output=$(grep "^$match" "$config" | sed "s|^$match ||g" | cut -d '(' -f 1) # | while read item; do printf "$match : \"$item\", '"; done)
+                grep "^$match" "$config" | sed "s|^$match ||g" | cut -d '(' -f 1
             fi
         fi
         ;;
       mode|modes)
-        # FIXME I do not get this
         if [ "$default" ]; then
-            output="$defaultmode"
+            printf "$defaultmode\n"
         else
         for item in $known_modes ; do
-            if [ "$item" = "$defaultmode" ] ; then
-                output="$output$item (default)";
-            else
-                output="$output$item";
-            fi
+            printf "$item\n" $(if [ "$item" = "$defaultmode" ]; then printf "(default)\n" ; fi)
         done
         fi
         ;;
       osmt)
         for item in $known_osmts ; do
-            output="$output$item"
+            printf "$item\n"
         done
         ;;
       acmt)
         for item in $known_acmts ; do
-            output="$output$item"
+            printf "$item\n"
         done
         ;;
       exmt)
         for item in $known_exmts ; do
-            output="$output$item"
+            printf "$item\n"
         done
         ;;
       svmt)
         for item in $known_svmts ; do
-            output="$output$item"
+            printf "$item\n"
         done
         ;;
       vrmt)
         for item in $known_vrmts ; do
-            output="$output$item"
+            printf "$item\n"
         done
         ;;
       crmt)
         for item in $known_crmts ; do
-            output="$output$item"
-        done
-        ;;
-      inmt|inmts)
-        for item in $known_inmts ; do
-            output="$output$item"
-        done
-        ;;
-      oumt|oumts)
-        for item in $known_oumts ; do
-            output="$output$item"
+            printf "$item\n"
         done
         ;;
       *)
         if [ "$verbose" ]; then
-            output=$(entryReader "$name" "$config")
+            entryReader "$name" "$config"
         else
-            output=$(tokenReader printVals "$name" "name")
+            tokenReader printVals "$name" "name"
         fi
         ;;
     esac
-
-    printf "$output\n"
 }
 
 # discoveryHelper(<range>)
@@ -1685,7 +1659,7 @@ function tokenValidator {
           user|admin)
             reportDebug "Verifying $key for $name with value $value"
             ;;
-          type|mode|osmt|acmt|exmt|svmt|vrmt|inmt|oumt)
+          type|mode|osmt|acmt|exmt|svmt|vrmt)
             reportDebug "Verifying $key for $name with value $value"
             if [[ ! "$list" =~ "$value" ]]; then
                 reportError "Unknown $key method $value specified for $key"
@@ -1710,36 +1684,6 @@ function tokenValidator {
 # parseParameters(<parameters>)
 # Sets variables.
 #
-# Parse parameters <parameters> for options depending on $inmt.
-function parseParameters {
-    reportDebugFuncEntry "$*" "mandatories optionals silence"
-
-    if [ "$inmt" = "rest" ] ; then
-        parseRest "$@"
-    elif [ "$inmt" = "cmdline" ] ; then
-        parseCommandline "$@"
-    else
-        reportError "Passed invalid inmt $inmt"
-        exit 1
-    fi
-}
-
-# parseRest(<parameters>)
-# Sets variables.
-#
-# Parse REST parameters <parameters> for options.
-#
-function parseRest {
-    reportDebugFuncEntry "$*" "mandatories optionals silence"
-
-    # TODO: implement parsing of REST parameters
-    reportError "REST parameter parsing not yet implemented."
-    exit 1
-}
-
-# parseCommandline(<parameters>)
-# Sets variables.
-#
 # Parse command-line parameters <parameters> for options.
 #
 # For each command-line option "--foo" or "--foo=bar" set variable
@@ -1758,7 +1702,7 @@ function parseRest {
 # Option values may be arbitrary strings.
 # Option names may not contain spaces.
 #
-function parseCommandline {
+function parseParameters {
     reportDebugFuncEntry "$*" "mandatories optionals silence"
 
     typeset -a variables
@@ -4620,8 +4564,6 @@ function printUsageText {
     vrmt        - (list) show all supported virtualization methods.
     osmt        - (list) show all supported operating environments.
     crmt        - (list) show all supported credential methods.
-    inmt        - (list) show all supported input methods.
-    oumt        - (list) show all supported output methods.
 
     Notes:
     Arguments starting with a double dash sign (--) can either be without a value

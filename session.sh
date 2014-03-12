@@ -65,8 +65,6 @@ if [ ! -e "$usropt" -a ! -e "$sysopt" ]; then
         sshtell='$sshtell'
         smbsend='$smbsend'
         sshsend='$sshsend'
-        inmt='$inmt'
-        oumt='$oumt'
         execute='$execute'
         access='$access'
         create='$create'
