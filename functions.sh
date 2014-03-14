@@ -3503,6 +3503,8 @@ function screenTerminalHandler {
         screen -dmS "$sesname" -t "$seshost" &
         sleep 1
         reportDebug "Creating window for $seshost (window 0)"
+        screen -r -S "$sesname" -X defscrollback 10000
+        screen -r -S "$sesname" -X termcapinfo xterm* ti@:te@
         screen -r -S "$sesname" -X hardstatus alwayslastline
         screen -r -S "$sesname" -X hardstatus string '%n:%t%-=%d/%m/%Y %c%{-}'
     fi
