@@ -24,6 +24,8 @@ doc/vmf.stf -text
 doc/vmw.stf -text
 /functions.sh -text
 /globals.sh -text
+njs/package.json -text
+njs/server.js -text
 /release.xml -text
 /session.bat -text
 /session.sh -text
