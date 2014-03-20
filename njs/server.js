@@ -1,6 +1,7 @@
 'use strict'
 
 const
+    sessionPath = '/home/maurice/Source/Projects/Trunk/Session/',
     express = require('express'),
     app = express(),
     spawn = require('child_process').spawn,
@@ -33,19 +34,27 @@ app.get('/detail/:component', function(req, res) {
         },
         sessionCmd = spawn(
             'bash', [
-                '/home/maurice/Source/Projects/Trunk/Session/session.sh',
+                sessionPath + 'session.sh',
                 'detail',
                 req.params.component,
                 '--nocheck'
-        ]);
+        ]),
+        buffer = '';
 
     sessionCmd.stdout.on('data', function (data) {
-        let rows = data.toString().split("\n");
+        buffer += data;
+    });
+
+    sessionCmd.on('exit', function() {
+        let
+            data = buffer.toString(),
+            rows = data.split('\n');
         rows.forEach(function (row) {
 
             if(row != '' && row.charAt(0) != '#') {
+                console.log(row);
                 let
-                    item = row.split("="),
+                    item = row.split('='),
                     key = item[0],
                     val = item[1].replace(/\'/g, '');
 
@@ -75,9 +84,6 @@ app.get('/detail/:component', function(req, res) {
                 }
             }
         });
-    });
-
-    sessionCmd.on('exit', function() {
         res.json(responseObj);
     });
 });
@@ -91,7 +97,7 @@ app.get('/state/:component', function(req, res) {
         },
         sessionCmd = spawn(
             'bash', [
-                '/home/maurice/Source/Projects/Trunk/Session/session.sh',
+                sessionPath + 'session.sh',
                 'state',
                 req.params.component
         ]);
@@ -100,7 +106,7 @@ app.get('/state/:component', function(req, res) {
     sessionCmd.stdout.on('data', function (data) {
         let
             rows = data.toString().split("\n"),
-            row = rows[0].split(":");
+            row = rows[0].split(':');
 
         responseObj['data'].push({
             name: row[0],
@@ -129,20 +135,24 @@ app.get('/:service/:component', function(req, res) {
         },
         sessionCmd = spawn(
             'bash', [
-                '/home/maurice/Source/Projects/Trunk/Session/session.sh',
+                sessionPath + 'session.sh',
                 req.params.service,
                 req.params.component
-        ]);
+        ]),
+        buffer = '';
 
     sessionCmd.stdout.on('data', function (data) {
-        let rows = data.toString().split("\n");
+        buffer += data;
+    });
+
+    sessionCmd.on('exit', function() {
+        let
+            data = buffer.toString(),
+            rows = data.split('\n');
         rows.pop();
         rows.forEach(function(row) {
             responseObj['data'].push({name: row});
         });
-    });
-
-    sessionCmd.on('exit', function() {
         res.json(responseObj);
     });
 });
