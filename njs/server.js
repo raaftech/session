@@ -52,7 +52,6 @@ app.get('/detail/:component', function(req, res) {
         rows.forEach(function (row) {
 
             if(row != '' && row.charAt(0) != '#') {
-                console.log(row);
                 let
                     item = row.split('='),
                     key = item[0],
