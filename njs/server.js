@@ -28,7 +28,8 @@ app.get('/detail/:component', function(req, res) {
                 relations: {
                     groups: [],
                     services: [],
-                    guests: []
+                    guests: [],
+                    members: []
                 }
             }]
         },
@@ -76,6 +77,12 @@ app.get('/detail/:component', function(req, res) {
                     let guests = val.split(',');
                     guests.forEach(function (guest) {
                         responseObj['data'][0]['relations']['guests'].push({'name': guest});
+                    });
+                }
+                else if(key === 'members') {
+                    let members = val.split(',');
+                    members.forEach(function (member) {
+                        responseObj['data'][0]['relations']['members'].push({'name': member});
                     });
                 }
                 else{
@@ -136,7 +143,8 @@ app.get('/:service/:component', function(req, res) {
             'bash', [
                 sessionPath + 'session.sh',
                 req.params.service,
-                req.params.component
+                req.params.component,
+                '--verbose'
         ]),
         buffer = '';
 
@@ -150,7 +158,11 @@ app.get('/:service/:component', function(req, res) {
             rows = data.split('\n');
         rows.pop();
         rows.forEach(function(row) {
-            responseObj['data'].push({name: row});
+            row = row.replace(/[\(\ \)]/g, ',').split(',');
+            responseObj['data'].push({
+                name: row[1],
+                type: row[0]
+            });
         });
         res.json(responseObj);
     });
