@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="Universal" default="help" basedir="." xmlns:if="ant:if" xmlns:unless="ant:unless">
+<project name="Session" default="help" basedir="." xmlns:if="ant:if" xmlns:unless="ant:unless">
 
     <!-- Set global properties. -->
     <property name="target" location="target"/>
@@ -58,6 +58,11 @@
         project.setProperty("release.name.uppercase",uppercase);
         ]]>
         </script>
+
+        <!-- Update working copy to whatever executable expects. -->
+        <exec dir="." executable="svn" output="${work}/svnupgrade.out" resultproperty="result">
+            <arg line="upgrade"/>
+        </exec>
 
         <!-- Extract current svn info and write to svninfo.xml. -->
         <exec dir="." executable="svn" output="${work}/svninfo.xml">
@@ -124,6 +129,7 @@
     <target name="rhino" depends="directories">
         <!-- Get rhino and dependencies using getter macro. -->
         <getter url="http://repo.openpcf.org/repository/ext/build/logging/logging.jar" dir="${deps}" file="logging.jar"/>
+        <getter url="http://repo.openpcf.org/repository/ext/build/bsf/ant-bsf.jar" dir="${deps}" file="ant-bsf.jar"/>
         <getter url="http://repo.openpcf.org/repository/ext/build/bsf/bsf.jar" dir="${deps}" file="bsf.jar"/>
         <getter url="http://repo.openpcf.org/repository/ext/build/rhino/js.jar" dir="${deps}" file="js.jar"/>
         <path id="classpath">
@@ -222,24 +228,79 @@
         <antcall target="dist-zip"/>
     </target>
 
-    <!-- Generate a .deb distributable. -->
+    <!-- Generate an Android Package distributable. -->
+    <target name="dist-apk" depends="test">
+        <echo>Android package (.apk) distributable building not implemented yet</echo>
+    </target>
+
+    <!-- Generate a Windows Runtime App Package distributable. -->
+    <target name="dist-appx" depends="test">
+        <echo>Windows Runtime App Package (.appx) distributable building not implemented yet</echo>
+    </target>
+
+    <!-- Generate a Debian or Ubuntu .deb distributable. -->
     <target name="dist-deb" depends="test">
-        <echo>DEB distributable building on ${platform.longname} not implemented yet</echo>
+        <echo>Debian Package (.deb) distributable building not implemented yet</echo>
     </target>
 
-    <!-- Generate a .dmg distributable. -->
+    <!-- Generate a Mac OS X disk image containing a .app bundle or .pkg xar distributable. -->
     <target name="dist-dmg" depends="test">
-        <echo>DMG distributable building on ${platform.longname} not implemented yet</echo>
+        <echo>Apple Disk Image (.dmg) distributable building not implemented yet</echo>
     </target>
 
-    <!-- Generate a .msi distributable. -->
+    <!-- Generate a HP/UX Depot distributable. -->
+    <target name="dist-depot" depends="test">
+        <echo>HP/UX Depot (.depot) distributable building not implemented yet</echo>
+    </target>
+
+    <!-- Generate an Apple iOS iPhone Package Archive distributable. -->
+    <target name="dist-ipa" depends="test">
+        <echo>Apple iOS iPhone Package Archive (.ipa) distributable building not implemented yet</echo>
+    </target>
+
+    <!-- Generate a Solaris Image Packaging System distributable. -->
+    <target name="dist-ips" depends="test">
+        <echo>Solaris Image Packaging System (.ips) distributable building not implemented yet</echo>
+    </target>
+
+    <!-- Generate an IBM Licensed Program Product containing a BFF or RPM payload distributable. -->
+    <target name="dist-lpp" depends="test">
+        <echo>IBM Licensed Program Product (.lpp) distributable building not implemented yet</echo>
+    </target>
+
+    <!-- Generate a Windows Installer distributable. -->
     <target name="dist-msi" depends="test">
-        <echo>MSI distributable building on ${platform.longname} not implemented yet</echo>
+        <echo>Windows Installer (.msi) distributable building not implemented yet</echo>
     </target>
 
-    <!-- Generate a .rpm distributable. -->
+    <!-- Generate a Arch Linux Pacman Package distributable. -->
+    <target name="dist-pacman" depends="test">
+        <echo>Arch Linux Pacman Package (.pkg.xz) distributable building not implemented yet</echo>
+    </target>
+
+    <!-- Generate a FreeBSD/DragonFlyBSD PKGNG Package distributable. -->
+    <target name="dist-pkgng" depends="test">
+        <echo>FreeBSD/DragonFlyBSD PKGNG Package distributable building not implemented yet</echo>
+    </target>
+
+    <!-- Generate a NetBSD PKRSRC Package distributable. -->
+    <target name="dist-pkgsrc" depends="test">
+        <echo>NetBSD PKGSRC Package distributable building not implemented yet</echo>
+    </target>
+
+    <!-- Generate a Generic BSD Ports Package distributable. -->
+    <target name="dist-ports" depends="test">
+        <echo>Generic BSD Ports Package distributable building not implemented yet</echo>
+    </target>
+
+    <!-- Generate a Red Hat Package Manager .rpm distributable. -->
     <target name="dist-rpm" depends="test">
-        <echo>RPM distributable building on ${platform.longname} not implemented yet</echo>
+        <echo>Red Hat Package Manager (.rpm) distributable building not implemented yet</echo>
+    </target>
+
+    <!-- Generate a Solaris SVR4 Package distributable. -->
+    <target name="dist-svr4" depends="test">
+        <echo>Solaris SVR4 Package (.pkg) distributable building not implemented yet</echo>
     </target>
 
     <!-- Generate a .zip distributable. -->
@@ -269,6 +330,11 @@
 
     <!-- Help. -->
     <target name="help">
-        <echo>Valid targets: clean build test detect dist-all dist-deb dist-dmg dist-msi dist-rpm dist-zip</echo>
+        <echo>       Generic targets: clean build test detect               </echo>
+        <echo> Distributable targets: dist-all dist-apk dist-appx dist-deb  </echo>
+        <echo>                        dist-dmg dist-depot dist-ipa dist-ips </echo>
+        <echo>                        dist-lpp dist-msi dist-pacman         </echo>
+        <echo>                        dist-pkgng dist-pkgsrc dist-ports     </echo>
+        <echo>                        dist-rpm dist-svr4 dist-zip           </echo>
     </target>
 </project>
