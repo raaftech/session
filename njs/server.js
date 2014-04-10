@@ -12,6 +12,8 @@ app.configure(function() {
         res.header('Access-Control-Allow-Origin', '*');
         return next();
     });
+    app.use(express.json());
+    app.use(express.urlencoded());
 });
 
 app.listen(3000);
@@ -132,7 +134,7 @@ app.get('/state/:component', function(req, res) {
     });
 });
 
-app.get('/:service/:component', function(req, res) {
+app.get('/:service/:component', function (req, res) {
 
     let 
         responseObj = {
@@ -171,5 +173,38 @@ app.get('/:service/:component', function(req, res) {
 app.get('*', function (req, res) {
     res.json({
         error: 'Unrecognised API call'
+    });
+});
+
+app.post('/discover', function (req, res) {
+    let 
+        responseObj = {
+            command: 'session discover ' + req.body.ip + '/' + req.body.cidr,
+            data: []
+        },
+        sessionCmd = spawn(
+            'bash', [
+                sessionPath + 'session.sh',
+                'discover',
+                req.body.ip + '/' + req.body.cidr
+        ]);
+
+    sessionCmd.stdout.on('data', function (data) {
+        let
+            rows = data.toString().split("\n"),
+            prts = rows[0].split(' '),
+            row = prts[6].replace(/[\(\ \)]/g, ',').split(',');
+
+        responseObj['data'].push({
+            name: row[0]
+        });
+
+        io.sockets.emit('discover', {
+            name: row[0]
+        });
+    });
+
+    sessionCmd.on('exit', function() {
+        res.json(responseObj);
     });
 });
