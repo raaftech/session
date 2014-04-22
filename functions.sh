@@ -1340,33 +1340,38 @@ function listHelper {
         done
         fi
         ;;
-      osmt)
+      osmt|osmts)
         for item in $known_osmts ; do
             printf "$item\n"
         done
         ;;
-      acmt)
+      acmt|acmts)
         for item in $known_acmts ; do
             printf "$item\n"
         done
         ;;
-      exmt)
+      exmt|exmts)
         for item in $known_exmts ; do
             printf "$item\n"
         done
         ;;
-      svmt)
+      svmt|svmts)
         for item in $known_svmts ; do
             printf "$item\n"
         done
         ;;
-      vrmt)
+      vrmt|vrmts)
         for item in $known_vrmts ; do
             printf "$item\n"
         done
         ;;
-      crmt)
+      crmt|crmts)
         for item in $known_crmts ; do
+            printf "$item\n"
+        done
+        ;;
+      type|types)
+        for item in $known_types ; do
             printf "$item\n"
         done
         ;;
@@ -4566,6 +4571,7 @@ function printUsageText {
     vrmt        - (list) show all supported virtualization methods.
     osmt        - (list) show all supported operating environments.
     crmt        - (list) show all supported credential methods.
+    type        - (list) show all supported entity types.
 
     Notes:
     Arguments starting with a double dash sign (--) can either be without a value
