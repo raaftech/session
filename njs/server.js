@@ -92,6 +92,11 @@ app.get('/detail/:component', function(req, res) {
                 }
             }
         });
+        if(responseObj['data'][0]['type'] === 'group') {
+            if(responseObj['data'][0].hasOwnProperty('mode') === false) {
+                responseObj['data'][0]['mode'] = 'serial';
+            }
+        }
         res.json(responseObj);
     });
 });
@@ -202,6 +207,63 @@ app.post('/discover', function (req, res) {
         io.sockets.emit('discover', {
             name: row[0]
         });
+    });
+
+    sessionCmd.on('exit', function() {
+        res.json(responseObj);
+    });
+});
+
+app.post('/modconf', function (req, res) {
+
+    const
+        quoting = ['vmhome','vmdata','svstatus','svstart','svstop'];
+
+    let
+        modTempl = {
+            'host'   : ['type','osmt','acmt','exmt','user','admin','addr','vrmt','vmhome','vmdata'],
+            'guest'  : ['type','osmt','acmt','exmt','user','admin','addr','host'],
+            'group'  : ['type','mode'],
+            'service': ['type','svmt','port','acmt','exmt','user','addr','host']
+        },
+        r = req.body,
+        test = [sessionPath + 'session.sh', 'modconf', r.oldname],
+        responseObj = {
+            command: "session modconf " + r.oldname,
+            data: []
+        };
+
+    if(r.name !== r.oldname) {
+        modTempl[r.type].push('name');
+    }
+
+    if(r.type === 'service' && r.svmt === 'scripted') {
+        modTempl[r.type].push('svstatus','svstart','svstop');
+    }
+
+    modTempl[r.type].forEach(function (attr) {
+        let val = '';
+        if(quoting.indexOf(attr) >= 0) {
+            val = "--" + attr + "='" + r[attr] + "'";
+        }
+        else{
+            val = "--" + attr + "=" + r[attr];
+        }
+        test.push(val);
+        responseObj['command'] += ' ' + val;
+    });
+
+    let sessionCmd = spawn(
+        'bash', test
+    );
+    // console.log(test);
+
+    sessionCmd.stdout.on('data', function (data) {
+        console.log('stdout: ' + data);
+    });
+
+    sessionCmd.stderr.on('data', function (data) {
+        console.log('stderr: ' + data);
     });
 
     sessionCmd.on('exit', function() {
