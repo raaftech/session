@@ -789,7 +789,7 @@ function osGlobals {
       aix5|aix6|aix7|hpux1111|hpux1123|hpux1131)
         osstop="/sbin/shutdown -hy 0"
         ;;
-      dfbsd2|dfbsd3|fbsd7|fbsd8|fbsd9)
+      dfbsd2|dfbsd3|fbsd7|fbsd8|fbsd9|fbsd10)
         osstop="/sbin/shutdown -p now"
         ;;
       nbsd4|nbsd5|nbsd6|obsd4|obsd5)
