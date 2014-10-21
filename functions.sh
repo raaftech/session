@@ -4431,12 +4431,16 @@ function mapEntryPoint {
 
     # Do certain access related things when mapEntryPoint loop exits.
     if [[ "$functions" =~ "accessEntity" ]]; then
+
+        # Set endLoop to true if we're at the end of the loop.
+        [ "$entity" = "$entityOrigin" ] && endLoop="true" || endLoop="false"
+
         reportDebug "Function list contains access functions, calling terminal exit hooks"
         # Don't do anything for rdp sessions.
-        if [ "$acmt" != "ssh" ]; then
+        if [ "$acmt" != "ssh" -a "$endLoop" = "false" ]; then
             reportDebug "Not an ssh style access method ($acmt), not executing any terminal exit hooks"
         # Reconnect to a previously generated screen session.
-        elif [ "$terminal" = "screen" -a "$TERM" != "screen" -a "$entity" = "$entityOrigin" ]; then
+        elif [ "$terminal" = "screen" -a "$TERM" != "screen" -a "$endLoop" = "true" ]; then
             reportDebug "Terminal exit hook for screen: resuming created screen session"
             sleep 1
             screen -r
