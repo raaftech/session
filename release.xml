@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <release name="Session">
-    <version major="1" minor="2" patch="0"/>
+    <version major="1" minor="3" patch="0"/>
     <copyright toname="RAAF Technology bv" daterange="2008-2014"/>
     <license type="foss" name="GPLv3"/>
     <description>
