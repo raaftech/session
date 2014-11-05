@@ -2767,7 +2767,12 @@ function vmwVirtHandler {
         ;;
       start)
         if [ "$state" = "off" ]; then
-            result=$(command="\"$vmhome/vmrun\" start \"$vmdata/$name/$name.vmx\" nogui" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasuser)
+            if [ "$vmshared" ]; then
+                reportInfo "VMware Workstation Shared Mode enabled: vmshared=\"$vmshared\", vmport=\"$vmport\""
+                result=$(command="\"$vmhome/vmrun\" -T ws-shared -h https://localhost:$vmport/sdk -u \"$vmuser\" -p \"$vmpass\" start \"[ha-datacenter/standard] $name/$name.vmx\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasuser)
+            else
+                result=$(command="\"$vmhome/vmrun\" start \"$vmdata/$name/$name.vmx\" nogui" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasuser)
+            fi
             case "$result" in
               *"Error: The file is already in use"*)
                 reportError "Failed to start $name because it is in-use. Try closing $name in your gui"
@@ -3194,7 +3199,7 @@ function pvmVirtHandler {
           *Running*)
             vmstate="active"
             ;;
-          *Not*Activated*)
+          *"Not Activated"*)
             vmstate="inactive"
             ;;
           *)
@@ -4638,6 +4643,10 @@ function printUsageText {
     --vrmt      - (optional, hosts only) the virtualization method supported.
     --vmhome    - (optional, hosts only) where the host stores vm executables.
     --vmdata    - (optional, hosts only) where the host stores virtual machines.
+    --vmuser    - (optional, hosts only) the user that a hypervisor runs as.
+    --vmpass    - (optional, hosts only) the password for the above user.
+    --vmport    - (optional, hosts only) the port the hypervisor runs at.
+    --vmshared  - (optional, hosts only, vmware workstation) shared mode on/off.
     --svstatus  - (optional, scripted services only) status command for a service.
     --svstart   - (optional, scripted services only)  start command for a service.
     --svstop    - (optional, scripted services only)   stop command for a service.
