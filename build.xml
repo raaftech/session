@@ -1,0 +1,340 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Session" default="help" basedir="." xmlns:if="ant:if" xmlns:unless="ant:unless">
+
+    <!-- Set global properties. -->
+    <property name="target" location="target"/>
+    <property name="build"  location="target/ant-build"/>
+    <property name="deps"   location="target/ant-deps"/>
+    <property name="work"   location="target/ant-work"/>
+
+    <!-- A get and checksum handler -->
+    <macrodef name="getter">
+        <attribute name="url"/>
+        <attribute name="dir"/>
+        <attribute name="file"/>
+        <sequential>
+            <get dest="@{dir}" skipexisting="true">
+                <url url="@{url}"/>
+                <url url="@{url}.sha-512"/>
+                <firstmatchmapper>
+                    <globmapper from="@{url}.sha-512" to="@{file}.sha-512"/>
+                    <globmapper from="@{url}" to="@{file}"/>
+                </firstmatchmapper>
+            </get>
+            <local name="checksum.matches"/>
+            <local name="checksum.matches.fail"/>
+            <checksum file="@{dir}\@{file}" algorithm="sha-512" fileext=".sha-512"
+                      verifyproperty="checksum.matches"/>
+            <condition property="checksum.matches.fail">
+                <equals arg1="${checksum.matches}" arg2="false"/>
+            </condition>
+            <fail if="checksum.matches.fail">Checksum error</fail>
+        </sequential>
+    </macrodef>
+
+    <!-- Do some basic initialization. -->
+    <target name="directories">
+           <mkdir dir="${target}"/>
+           <mkdir dir="${build}"/>
+           <mkdir dir="${deps}"/>
+           <mkdir dir="${work}"/>
+    </target>
+
+    <!-- Do some basic initialization. -->
+    <target name="version" depends="directories,rhino">
+        <!-- Read release properties from release.xml. -->
+        <xmlproperty file="release.xml" collapseAttributes="true"/>
+
+        <!-- Using javascript functions to create lower and uppercase names. -->
+        <script language="javascript" manager="bsf">
+        <classpath>
+            <fileset dir="${deps}" includes="*.jar"></fileset>
+        </classpath>
+        <![CDATA[
+        namestring = project.getProperty("release.name");
+        lowercase = namestring.toLowerCase();
+        uppercase = namestring.toUpperCase();
+        project.setProperty("release.name.lowercase",lowercase);
+        project.setProperty("release.name.uppercase",uppercase);
+        ]]>
+        </script>
+
+        <!-- Update working copy to whatever executable expects. -->
+        <exec dir="." executable="svn" output="${work}/svnupgrade.out" resultproperty="result">
+            <arg line="upgrade"/>
+        </exec>
+
+        <!-- Extract current svn info and write to svninfo.xml. -->
+        <exec dir="." executable="svn" output="${work}/svninfo.xml">
+            <arg line="info --xml"/>
+        </exec>
+
+        <!-- Read revision properties from svninfo.xml. -->
+        <xmlproperty file="${work}/svninfo.xml" collapseAttributes="true"/>
+
+        <!-- Using javascript to format commit time and date from svninfo.xml. -->
+        <script language="javascript" manager="bsf">
+        <classpath>
+            <fileset dir="${deps}" includes="*.jar"></fileset>
+        </classpath>
+        <![CDATA[
+        datestring = String(project.getProperty("info.entry.commit.date"));
+        datestrcut = datestring.split('.').slice(0);
+        datefmtin = java.text.SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss");
+        datefmtout = java.text.SimpleDateFormat("MMMM dd yyyy HH:mm 'UTC'");
+        commitdate = datefmtout.format(datefmtin.parse(datestrcut));
+        project.setProperty("release.date.commit",commitdate);
+        ]]>
+        </script>
+
+        <!-- Using javascript to determine release tag from svn repository url. -->
+        <script language="javascript" manager="bsf">
+        <classpath>
+            <fileset dir="${deps}" includes="*.jar"></fileset>
+        </classpath>
+        <![CDATA[
+        namestring = project.getProperty("release.name.lowercase");
+        repostring = project.getProperty("info.entry.url");
+        if      (repostring.match(/\/tags/))     { project.setProperty("release.tag","release"); }
+        else if (repostring.match(/\/stable/))   { project.setProperty("release.tag","release"); }
+        else if (repostring.match(/\/branches/)) { project.setProperty("release.tag","branch");  }
+        else if (repostring.match(/\/trunk/))    { project.setProperty("release.tag","trunk");   }
+        else                                     { project.setProperty("release.tag","unknown"); }
+        ]]>
+        </script>
+
+        <!-- Set the current time and date. -->
+        <tstamp>
+            <format property="release.date.built" pattern="MMMM dd yyyy HH:mm z" timezone="UTC"/>
+        </tstamp>
+
+        <!-- Create a few release properties. -->
+        <property name="release.number.full"      value="${release.version.major}.${release.version.minor}.${release.version.patch}.${info.entry.commit.revision}"/>
+        <property name="release.number.short"     value="${release.version.major}.${release.version.minor}.${release.version.patch}"/>
+        <property name="release.string.version"   value="${release.name} version ${release.number.full} ${release.tag}"/>
+        <property name="release.string.copyright" value="Copyright © ${release.copyright.daterange} ${release.copyright.toname}"/>
+        <property name="release.string.reldate"   value="Released ${release.date.commit}"/>
+        <property name="release.string.built"     value="Built ${release.date.built}"/>
+        <property name="release.string.license"   value="Licensed under ${release.license.name}"/>
+
+        <!-- Show version details. -->
+        <echo>  Version string: ${release.string.version}</echo>
+        <echo>Copyright string: ${release.string.copyright}</echo>
+        <echo>  Release string: ${release.string.reldate}</echo>
+        <echo>  Builder string: ${release.string.built}</echo>
+        <echo>  License string: ${release.string.license}</echo>
+    </target>
+
+    <!-- Get rhino interpreter task. -->
+    <target name="rhino" depends="directories">
+        <!-- Get rhino and dependencies using getter macro. -->
+        <getter url="http://repo.openpcf.org/repository/ext/build/logging/logging.jar" dir="${deps}" file="logging.jar"/>
+        <getter url="http://repo.openpcf.org/repository/ext/build/bsf/ant-bsf.jar" dir="${deps}" file="ant-bsf.jar"/>
+        <getter url="http://repo.openpcf.org/repository/ext/build/bsf/bsf.jar" dir="${deps}" file="bsf.jar"/>
+        <getter url="http://repo.openpcf.org/repository/ext/build/rhino/js.jar" dir="${deps}" file="js.jar"/>
+        <path id="classpath">
+            <fileset dir="${deps}">
+                <include name="**/*.jar" />
+            </fileset>
+        </path>
+    </target>
+
+    <!-- A detection runner task. -->
+    <target name="detect" depends="directories">
+        <!-- Get detector using getter macro. -->
+        <getter url="http://repo.openpcf.org/repository/ext/build/detector/detector.jar" dir="${deps}" file="detector.jar"/>
+
+        <!-- Execute detector to write platform.properties. -->
+        <java jar="${deps}/detector.jar" dir="${work}" fork="true"/>
+
+        <!-- Include platform.properties. -->
+        <condition property="platform.properties.exists">
+            <resourceexists>
+                <file file="${work}/platform.properties"/>
+            </resourceexists>
+        </condition>
+        <property if:set="platform.properties.exists" file="${work}/platform.properties"/>
+        <echo if:set="platform.properties.exists">Platform type: ${platform.type}</echo>
+        <echo if:set="platform.properties.exists">Platform name: ${platform.longname} (${platform.shortname})</echo>
+        <echo if:set="platform.properties.exists">Platform dist: ${platform.packagingformat}</echo>
+        <echo unless:set="platform.properties.exists">The platform.properties file was not created by detector.jar; it probably doesn't support this platform yet</echo>
+    </target>
+
+
+
+    <!-- Build a release. -->
+    <target name="build" depends="version">
+
+        <!-- Copy data to build directory. -->
+        <copy todir="${build}">
+            <fileset dir=".">
+                <exclude name="target/**"/>
+                <exclude name=".*"/>
+                <exclude name=".svn/**"/>
+                <exclude name=".idea/**"/>
+                <exclude name=".settings/**"/>
+                <exclude name="*.iml"/>
+                <exclude name="*.sln*"/>
+                <exclude name="*.suo*"/>
+                <exclude name="*.xml"/>
+                <exclude name="*.pyproj*"/>
+                <exclude name="*.project"/>
+                <exclude name="*.cproject"/>
+                <exclude name="*.classpath"/>
+                <exclude name="*.sublime-*"/>
+            </fileset>
+        </copy>
+
+        <!-- Replace version string name and number template stanza. -->
+        <replaceregexp byline="true" encoding="UTF-8">
+            <regexp pattern="RELEASE.STRING.VERSION"/>
+            <substitution expression="${release.string.version}"/>
+            <fileset dir="${build}" excludes="*.xml"/>
+        </replaceregexp>
+
+        <!-- Replace release copyright stanza. -->
+        <replaceregexp byline="true" encoding="UTF-8">
+            <regexp pattern="RELEASE.STRING.COPYRIGHT"/>
+            <substitution expression="${release.string.copyright}"/>
+            <fileset dir="${build}" excludes="*.xml"/>
+        </replaceregexp>
+
+        <!-- Replace release date stanza. -->
+        <replaceregexp byline="true" encoding="UTF-8">
+            <regexp pattern="RELEASE.STRING.RELDATE"/>
+            <substitution expression="${release.string.reldate}"/>
+            <fileset dir="${build}" excludes="*.xml"/>
+        </replaceregexp>
+
+        <!-- Replace release built date stanza. -->
+        <replaceregexp byline="true" encoding="UTF-8">
+            <regexp pattern="RELEASE.STRING.BUILT"/>
+            <substitution expression="${release.string.built}"/>
+            <fileset dir="${build}" excludes="*.xml"/>
+        </replaceregexp>
+
+        <!-- Replace release license stanza. -->
+        <replaceregexp byline="true" encoding="UTF-8">
+            <regexp pattern="RELEASE.STRING.LICENSE"/>
+            <substitution expression="${release.string.license}"/>
+            <fileset dir="${build}" excludes="*.xml"/>
+        </replaceregexp>
+    </target>
+
+
+    <!-- Generate all possible distributables for this platform. -->
+    <target name="dist-all" depends="detect">
+        <antcall if:set="platform.properties.exists" target="dist-${platform.packagingformat}"/>
+        <antcall target="dist-zip"/>
+    </target>
+
+    <!-- Generate an Android Package distributable. -->
+    <target name="dist-apk" depends="test">
+        <echo>Android package (.apk) distributable building not implemented yet</echo>
+    </target>
+
+    <!-- Generate a Windows Runtime App Package distributable. -->
+    <target name="dist-appx" depends="test">
+        <echo>Windows Runtime App Package (.appx) distributable building not implemented yet</echo>
+    </target>
+
+    <!-- Generate a Debian or Ubuntu .deb distributable. -->
+    <target name="dist-deb" depends="test">
+        <echo>Debian Package (.deb) distributable building not implemented yet</echo>
+    </target>
+
+    <!-- Generate a Mac OS X disk image containing a .app bundle or .pkg xar distributable. -->
+    <target name="dist-dmg" depends="test">
+        <echo>Apple Disk Image (.dmg) distributable building not implemented yet</echo>
+    </target>
+
+    <!-- Generate a HP/UX Depot distributable. -->
+    <target name="dist-depot" depends="test">
+        <echo>HP/UX Depot (.depot) distributable building not implemented yet</echo>
+    </target>
+
+    <!-- Generate an Apple iOS iPhone Package Archive distributable. -->
+    <target name="dist-ipa" depends="test">
+        <echo>Apple iOS iPhone Package Archive (.ipa) distributable building not implemented yet</echo>
+    </target>
+
+    <!-- Generate a Solaris Image Packaging System distributable. -->
+    <target name="dist-ips" depends="test">
+        <echo>Solaris Image Packaging System (.ips) distributable building not implemented yet</echo>
+    </target>
+
+    <!-- Generate an IBM Licensed Program Product containing a BFF or RPM payload distributable. -->
+    <target name="dist-lpp" depends="test">
+        <echo>IBM Licensed Program Product (.lpp) distributable building not implemented yet</echo>
+    </target>
+
+    <!-- Generate a Windows Installer distributable. -->
+    <target name="dist-msi" depends="test">
+        <echo>Windows Installer (.msi) distributable building not implemented yet</echo>
+    </target>
+
+    <!-- Generate a Arch Linux Pacman Package distributable. -->
+    <target name="dist-pacman" depends="test">
+        <echo>Arch Linux Pacman Package (.pkg.xz) distributable building not implemented yet</echo>
+    </target>
+
+    <!-- Generate a FreeBSD/DragonFlyBSD PKGNG Package distributable. -->
+    <target name="dist-pkgng" depends="test">
+        <echo>FreeBSD/DragonFlyBSD PKGNG Package distributable building not implemented yet</echo>
+    </target>
+
+    <!-- Generate a NetBSD PKRSRC Package distributable. -->
+    <target name="dist-pkgsrc" depends="test">
+        <echo>NetBSD PKGSRC Package distributable building not implemented yet</echo>
+    </target>
+
+    <!-- Generate a Generic BSD Ports Package distributable. -->
+    <target name="dist-ports" depends="test">
+        <echo>Generic BSD Ports Package distributable building not implemented yet</echo>
+    </target>
+
+    <!-- Generate a Red Hat Package Manager .rpm distributable. -->
+    <target name="dist-rpm" depends="test">
+        <echo>Red Hat Package Manager (.rpm) distributable building not implemented yet</echo>
+    </target>
+
+    <!-- Generate a Solaris SVR4 Package distributable. -->
+    <target name="dist-svr4" depends="test">
+        <echo>Solaris SVR4 Package (.pkg) distributable building not implemented yet</echo>
+    </target>
+
+    <!-- Generate a .zip distributable. -->
+    <target name="dist-zip" depends="test">
+
+        <!-- Create zip file. -->
+        <zip destfile="${target}/${release.name.lowercase}-${release.number.short}-${release.tag}.zip">
+            <fileset dir="${build}"/>
+        </zip>
+
+        <!-- Create verification hashes. -->
+        <checksum file="${target}/${release.name.lowercase}-${release.number.short}-${release.tag}.zip" algorithm="md5"/>
+        <checksum file="${target}/${release.name.lowercase}-${release.number.short}-${release.tag}.zip" algorithm="sha1"/>
+        <checksum file="${target}/${release.name.lowercase}-${release.number.short}-${release.tag}.zip" algorithm="sha-256"/>
+        <checksum file="${target}/${release.name.lowercase}-${release.number.short}-${release.tag}.zip" algorithm="sha-512"/>
+    </target>
+
+    <!-- Clean up. -->
+    <target name="clean">
+        <delete dir="${target}"/>
+    </target>
+
+    <!-- Test. -->
+    <target name="test" depends="build">
+        <echo>Placeholder test task. Please implement tests soon!</echo>
+    </target>
+
+    <!-- Help. -->
+    <target name="help">
+        <echo>       Generic targets: clean build test detect               </echo>
+        <echo> Distributable targets: dist-all dist-apk dist-appx dist-deb  </echo>
+        <echo>                        dist-dmg dist-depot dist-ipa dist-ips </echo>
+        <echo>                        dist-lpp dist-msi dist-pacman         </echo>
+        <echo>                        dist-pkgng dist-pkgsrc dist-ports     </echo>
+        <echo>                        dist-rpm dist-svr4 dist-zip           </echo>
+    </target>
+</project>
