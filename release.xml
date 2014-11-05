@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<release name="Session">
+    <version major="1" minor="2" patch="0"/>
+    <copyright toname="RAAF Technology bv" daterange="2008-2014"/>
+    <license type="foss" name="GPLv3"/>
+    <description>
+        Session - A tool for checking the state of- and commanding systems and services.
+    </description>
+    <supported>
+        <os name="*" version="*" arch="*">
+            <pkg type="zip"/>
+        </os>
+        <os name="Fedora" version="*" arch="*">
+            <pkg type="rpm"/>
+        </os>
+        <os name="RHEL" version="*" arch="*">
+            <pkg type="rpm"/>
+        </os>
+        <os name="CentOS" version="*" arch="*">
+            <pkg type="rpm"/>
+        </os>
+        <os name="openSUSE" version="*" arch="*">
+            <pkg type="rpm"/>
+        </os>
+        <os name="SLES" version="*" arch="*">
+            <pkg type="rpm"/>
+        </os>
+        <os name="Debian" version="*" arch="*">
+            <pkg type="deb"/>
+        </os>
+        <os name="Ubuntu" version="*" arch="*">
+            <pkg type="deb"/>
+        </os>
+        <os name="Windows" version="*" arch="*">
+            <pkg type="msi"/>
+        </os>
+    </supported>
+</release>

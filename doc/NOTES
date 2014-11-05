@@ -1,0 +1,31 @@
+Programmer's notes
+==================
+
+1. Bug in ksh93u IFS handling
+-----------------------------
+
+The following script causes a segmentation fault in ksh93u.
+
+==============================================
+(IFS=)
+function g { IFS=  ; }
+function f { typeset IFS  ;  (g)  ;  : $V  ; }
+f
+==============================================
+
+A variant in which IFS is always declared local with "typeset"
+does not segfault.
+
+==============================================
+(IFS=)
+function g { typeset IFS  ;  IFS=  ; }
+function f { typeset IFS  ;  (g)  ;  : $V  ; }
+f
+==============================================
+
+We therefore adopt the rule that IFS must always be declared local
+using "typeset" in functions.
+
+The bug has been reported:
+
+    https://mailman.research.att.com/pipermail/ast-developers/2012q1/000984.html
