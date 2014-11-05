@@ -2614,67 +2614,6 @@ function kvmVirtHandler {
     return 0
 }
 
-# hpvmVirtHandler(state|start|stop|restart|create|destroy)
-# Sets vmstate, runs commands.
-#
-# Handle HPVM virtual machine related commands.
-#
-function hpvmVirtHandler {
-    reportDebugFuncEntry "$*" "name host state destroy"
-
-    typeset result
-
-    case "$1" in
-      state)
-        result="$(command="/opt/hpvm/bin/hpvmstatus -P \"$name\" | grep \"^$name\" | awk '{print \$4}'" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin)"
-        case "$result" in
-          *On*)
-            vmstate="active"
-            ;;
-          *Off*)
-            vmstate="inactive"
-            ;;
-          *)
-            vmstate="non-existing"
-            ;;
-        esac
-        ;;
-      start)
-        if [ "$state" = "off" ]; then
-            (command="/opt/hpvm/bin/hpvmstart -P \"$name\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin) 2>/dev/null
-            state="booting"
-        fi
-        ;;
-      stop)
-        if [ "$state" = "on" ]; then
-            (command="$osstop" ; ${exmt}ExecHandler runasadmin) 2>/dev/null
-            state="stopping"
-        fi
-        ;;
-      restart)
-        if [ "$state" = "on" ]; then
-            (command="$osreboot" ; ${exmt}ExecHandler runasadmin) 2>/dev/null
-            state="restarting"
-        fi
-        ;;
-      create)
-        reportError "Haven't implemented $1 yet"
-        return 1
-        ;;
-      destroy)
-        if [ "$destroy" = "true" ]; then
-            reportError "Haven't implemented $1 yet"
-            return 1
-        else
-            reportError "Destroy is disabled"
-            return 1
-        fi
-        ;;
-    esac
-
-    return 0
-}
-
 # xenVirtHandler(state|start|stop|restart|create|destroy)
 # Sets vmstate, runs commands.
 #
@@ -3103,6 +3042,192 @@ function esxVirtHandler {
                     state="saved"
                 fi
             fi
+        else
+            reportError "Destroy is disabled"
+            return 1
+        fi
+        ;;
+    esac
+
+    return 0
+}
+
+# hpvmVirtHandler(state|start|stop|restart|create|destroy)
+# Sets vmstate, runs commands.
+#
+# Handle HPVM virtual machine related commands.
+#
+function hpvmVirtHandler {
+    reportDebugFuncEntry "$*" "name host state destroy"
+
+    typeset result
+
+    case "$1" in
+      state)
+        result="$(command="/opt/hpvm/bin/hpvmstatus -P \"$name\" | grep \"^$name\" | awk '{print \$4}'" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin)"
+        case "$result" in
+          *On*)
+            vmstate="active"
+            ;;
+          *Off*)
+            vmstate="inactive"
+            ;;
+          *)
+            vmstate="non-existing"
+            ;;
+        esac
+        ;;
+      start)
+        if [ "$state" = "off" ]; then
+            (command="/opt/hpvm/bin/hpvmstart -P \"$name\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin) 2>/dev/null
+            state="booting"
+        fi
+        ;;
+      stop)
+        if [ "$state" = "on" ]; then
+            (command="$osstop" ; ${exmt}ExecHandler runasadmin) 2>/dev/null
+            state="stopping"
+        fi
+        ;;
+      restart)
+        if [ "$state" = "on" ]; then
+            (command="$osreboot" ; ${exmt}ExecHandler runasadmin) 2>/dev/null
+            state="restarting"
+        fi
+        ;;
+      create)
+        reportError "Haven't implemented $1 yet"
+        return 1
+        ;;
+      destroy)
+        if [ "$destroy" = "true" ]; then
+            reportError "Haven't implemented $1 yet"
+            return 1
+        else
+            reportError "Destroy is disabled"
+            return 1
+        fi
+        ;;
+    esac
+
+    return 0
+}
+
+# ldomVirtHandler(state|start|stop|restart|create|destroy)
+# Sets vmstate, runs commands.
+#
+# Handle Sun/Oracle LDOM virtual machine related commands.
+#
+function ldomVirtHandler {
+    reportDebugFuncEntry "$*" "name host state destroy"
+
+    typeset result
+
+    case "$1" in
+      state)
+        result="$(command="ldm list | grep \"^$name\" | awk '{print \$2}'" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin)"
+        case "$result" in
+          *active*)
+            vmstate="active"
+            ;;
+          *inactive*)
+            vmstate="inactive"
+            ;;
+          *)
+            vmstate="non-existing"
+            ;;
+        esac
+        ;;
+      start)
+        if [ "$state" = "off" ]; then
+            (command="ldm start-domain \"$name\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin) 2>/dev/null
+            state="booting"
+        fi
+        ;;
+      stop)
+        if [ "$state" = "on" ]; then
+            (command="$osstop" ; ${exmt}ExecHandler runasadmin) 2>/dev/null
+            state="stopping"
+        fi
+        ;;
+      restart)
+        if [ "$state" = "on" ]; then
+            (command="$osreboot" ; ${exmt}ExecHandler runasadmin) 2>/dev/null
+            state="restarting"
+        fi
+        ;;
+      create)
+        reportError "Haven't implemented $1 yet"
+        return 1
+        ;;
+      destroy)
+        if [ "$destroy" = "true" ]; then
+            reportError "Haven't implemented $1 yet"
+            return 1
+        else
+            reportError "Destroy is disabled"
+            return 1
+        fi
+        ;;
+    esac
+
+    return 0
+}
+
+# pvmVirtHandler(state|start|stop|restart|create|destroy)
+# Sets vmstate, runs commands.
+#
+# Handle IBM PowerVM virtual machine related commands.
+#
+function pvmVirtHandler {
+    reportDebugFuncEntry "$*" "name host state destroy"
+
+    typeset result
+
+    case "$1" in
+      state)
+        result="$(command="lssyscfg -r sys -F name:state | grep \"$name\" | cut -d: -f2" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin)"
+        case "$result" in
+          *Operating*)
+            vmstate="active"
+            ;;
+          *Running*)
+            vmstate="active"
+            ;;
+          *Not*Activated*)
+            vmstate="inactive"
+            ;;
+          *)
+            vmstate="non-existing"
+            ;;
+        esac
+        ;;
+      start)
+        if [ "$state" = "off" ]; then
+            (command="chsysstate -m \"$name\" -o on" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin) 2>/dev/null
+            state="booting"
+        fi
+        ;;
+      stop)
+        if [ "$state" = "on" ]; then
+            (command="$osstop" ; ${exmt}ExecHandler runasadmin) 2>/dev/null
+            state="stopping"
+        fi
+        ;;
+      restart)
+        if [ "$state" = "on" ]; then
+            (command="$osreboot" ; ${exmt}ExecHandler runasadmin) 2>/dev/null
+            state="restarting"
+        fi
+        ;;
+      create)
+        reportError "Haven't implemented $1 yet"
+        return 1
+        ;;
+      destroy)
+        if [ "$destroy" = "true" ]; then
+            reportError "Haven't implemented $1 yet"
+            return 1
         else
             reportError "Destroy is disabled"
             return 1
