@@ -1,4 +1,4 @@
-Session
+![](https://raw.githubusercontent.com/wiki/raaftech/session/images/session.png) Session
 =======
 Session is the state control component of OpenPCF. It handles the grouping, command execution, starting and stopping of systems and services.
 
