@@ -62,6 +62,9 @@ uname="$(uname | tr A-Z a-z)"
 if [[ "$uname" =~ "linux" ]]; then
     environment="linux"
     platform="linux"
+elif [[ "$uname" =~ "bsd" ]]; then
+    environment="bsd"
+    platform="bsd"
 elif [[ "$uname" =~ "darwin" ]]; then
     environment="macosx"
     platform="macosx"
@@ -80,7 +83,7 @@ else
 fi
 
 # Set pslist global according to platform or environment.
-if [ "$platform" = "linux" -o "$platform" = "macosx" -o "$environment" = "uwin" ]; then
+if [ "$platform" = "linux" -o "$platform" = "bsd" -o "$platform" = "macosx" -o "$environment" = "uwin" ]; then
     pslist="ps ax"
 elif [ "$platform" = "windows" ]; then
     pslist="tasklist"
@@ -93,6 +96,15 @@ if [ "$platform" = "linux" ]; then
     terminal="gnome"
     desktop="rdesktop"
     browser="gnome"
+    smbtell="winexe"
+    sshtell="ssh"
+    smbsend="smbclient"
+    sshsend="scp"
+    privesc="sudo -u root"
+elif [ "$platform" = "bsd" ]; then
+    terminal="screen"
+    desktop="rdesktop"
+    browser="none"
     smbtell="winexe"
     sshtell="ssh"
     smbsend="smbclient"

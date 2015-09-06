@@ -197,7 +197,7 @@ function viaScript {
 
     [ "$nametmp" ] || nametmp=local
 
-    if [ "$platform" = "linux" -o "$platform" = "macosx" ]; then
+    if [ "$platform" = "linux" -o "$platform" = "bsd" -o "$platform" = "macosx" ]; then
         reportDebug "Writing UNIX shell script"
         printf "#!/bin/sh\n" > "$usrcfd/tmp/session.tell.$nametmp.sh"
         printf '%s\n '"$command" | sed 's/^[[:space:]]*//' 2> /dev/null >> "$usrcfd/tmp/session.tell.$nametmp.sh"
@@ -331,7 +331,7 @@ function localSendCommandWriter {
     typeset source
     typeset target
 
-    if [ "$platform" = "linux" -o "$platform" = "macosx" ]; then
+    if [ "$platform" = "linux" -o "$platform" = "bsd" -o "$platform" = "macosx" ]; then
         source="$1"
         target="$2"
         printf "cp -Rpd \"$source\" \"$target\" >/dev/null 2>&1 </dev/null\n"
@@ -455,7 +455,7 @@ function toolFinder {
     if [ "$color" = 0 ]; then unset color; fi
 
     # First write out tools.required.
-    if [ "$platform" = "linux" -o "$platform" = "macosx" ]; then
+    if [ "$platform" = "linux" -o "$platform" = "bsd" -o "$platform" = "macosx" ]; then
         printf "tools_session='awk,cut,grep,host,lsof,nmap,sed,tr,ps'\n" > "$usrcfd/cfg/tools.required"
         printf "tools_execute='ssh,winexe'\n" >> "$usrcfd/cfg/tools.required"
         printf "tools_agent='ssh-agent,ssh-add'\n" >> "$usrcfd/cfg/tools.required"
@@ -558,7 +558,7 @@ function handleSshPrivateKeys {
     reportDebugFuncEntry "$*"
 
     # Set private key option when private key found.
-    if [ "$platform" = "linux" -o "$platform" = "macosx" ]; then
+    if [ "$platform" = "linux" -o "$platform" = "bsd" -o "$platform" = "macosx" ]; then
         # Look for OpenSSH style public/private keypair.
         if [ -e "$HOME/.ssh/id_dsa" ]; then
             sshkey="$HOME/.ssh/id_dsa"
@@ -579,23 +579,20 @@ function handleSshPrivateKeys {
                 printf "SSH_AUTH_SOCK=$SSH_AUTH_SOCK; export SSH_AUTH_SOCK;\n"  > "$sshagentfile"
                 printf "SSH_AGENT_PID=$SSH_AGENT_PID; export SSH_AGENT_PID;\n" >> "$sshagentfile"
                 source "$sshagentfile"
-                unset sshopts
             elif [ "$sshagentproc" ]; then
                 reportDebug "Environment values not set but agent is running, inspecting agent"
                 reportDebug "I'm using $privy lsof to do this"
                 sshagentlsof="$($privy lsof /tmp/ssh-*/agent.* 2> /dev/null | grep ssh-agent | tail -n1)"
-                SSH_AUTH_SOCK="$(printf "$sshagentlsof\n" | awk '{print $9}')"
+                SSH_AUTH_SOCK="$(printf "$sshagentlsof\n" | awk '{print $8}')"
                 SSH_AGENT_PID="$(printf "$sshagentlsof\n" | awk '{print $2}')"
                 printf "SSH_AUTH_SOCK=$SSH_AUTH_SOCK; export SSH_AUTH_SOCK;\n"  > "$sshagentfile"
                 printf "SSH_AGENT_PID=$SSH_AGENT_PID; export SSH_AGENT_PID;\n" >> "$sshagentfile"
                 source "$sshagentfile"
-                unset sshopts
             elif [ ! "$sshagentproc" ]; then
                 reportInfo "You have a private key; starting new ssh-agent"
                 ssh-agent | grep -v "^echo " > "$sshagentfile"
                 chmod 600 "$sshagentfile"
                 source "$sshagentfile"
-                unset sshopts
                 ssh-add
             else
                 reportError "Unexpected exit"
@@ -1410,7 +1407,7 @@ function discoveryHelper {
         return 1
     fi
 
-    if [ "$platform" = "linux" -o "$platform" = "macosx" ]; then
+    if [ "$platform" = "linux" -o "$platform" = "bsd" -o "$platform" = "macosx" ]; then
         file="$usrcfd/tmp/session.discover.out"
     elif [ "$platform" = "windows" ]; then
         file="$(toLocalWindowsPath "$usrcfd/tmp/session.discover.out")"
@@ -1421,7 +1418,7 @@ function discoveryHelper {
     for addr in $($privy cat "$usrcfd/tmp/session.discover.out" | grep Up | cut -d " " -f 2 | sed -e 's/^[[:space:]]*//') ; do
         type="host"
 
-        if [ "$platform" = "linux" -o "$platform" = "macosx" ]; then
+        if [ "$platform" = "linux" -o "$platform" = "bsd" -o "$platform" = "macosx" ]; then
             name="$(host $addr 2>/dev/null | grep "domain name pointer" | cut -d " " -f 5  | cut -d "." -f 1 | head -n 1 | sed -e 's/^[[:space:]]*//' | tr A-Z a-z)"
             reportDebug "Got name from DNS for $addr: $name"
         elif [ "$platform" = "windows" ]; then
@@ -3654,7 +3651,7 @@ function screenTerminalHandler {
         screen -r -S "$sesname" -X screen -t "$name" $line
     fi
 
-    if [ "$platform" = "linux" ]; then
+    if [ "$platform" = "linux" -o "$platform" = "bsd" ]; then
         # If gnome-keyring-daemon is running, check to see if a prompt has started, wait for it to close.
         waitForDialog "gnome-keyring-daemon" "gnome-keyring-prompt"
     elif [ "$platform" = "macosx" ]; then
@@ -4111,7 +4108,7 @@ function smbExecHandler {
         ;;
     esac
 
-    if [ "$platform" = "linux" ]; then
+    if [ "$platform" = "linux" -o "$platform" = "bsd" ]; then
         # If gnome-keyring-daemon is running, check to see if a prompt has started, wait for it to close.
         waitForDialog "gnome-keyring-daemon" "gnome-keyring-prompt"
     elif [ "$platform" = "macosx" ]; then
@@ -4237,7 +4234,7 @@ function sshExecHandler {
         ;;
     esac
 
-    if [ "$platform" = "linux" ]; then
+    if [ "$platform" = "linux" -o "$platform" = "bsd" ]; then
         # If gnome-keyring-daemon is running, check to see if a prompt has started, wait for it to close.
         waitForDialog "gnome-keyring-daemon" "gnome-keyring-prompt"
     elif [ "$platform" = "macosx" ]; then
