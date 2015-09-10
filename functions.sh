@@ -1556,6 +1556,7 @@ function tokenReader {
     typeset position
     typeset value
     typeset output
+    typeset nametmp="tokens.$$"
 
     # Reuse a previously set entry if it is about the same entry.
     case "$entry" in
@@ -1578,6 +1579,10 @@ function tokenReader {
     enttype="${entry%%[[:space:]]*}"
     members="$enttype,$name,$(cutParentheses "$entry")"
 
+    if [ -e "$usrcfd/tmp/session.$nametmp" ]; then 
+        reportDebug "Removing old $usrcfd/tmp/session.$nametmp"
+        rm -f "$usrcfd/tmp/session.$nametmp"
+    fi
     let indx=0
     typeset IFS=","
     for key in $keys ; do
@@ -1600,12 +1605,18 @@ function tokenReader {
             values[indx]="$value"
             let indx+=1
         elif [ "$function" = "setVars" ]; then
-            export "$key"="$value"
+            reportDebug "Writing variable \"$key\" with value: \"$value\" to $usrcfd/tmp/session.$nametmp"
+            echo "$key"=\"$value\" >> "$usrcfd/tmp/session.$nametmp"
         else
             reportError "Invalid function passed: $function"
             return 1
         fi
     done
+    if [ -e "$usrcfd/tmp/session.$nametmp" ]; then 
+        reportDebug "Sourcing $usrcfd/tmp/session.$nametmp"
+        source "$usrcfd/tmp/session.$nametmp"
+        rm -f "$usrcfd/tmp/session.$nametmp"
+    fi
 
     typeset IFS=" "
     if [ "$function" = "printVals" ]; then
@@ -1720,6 +1731,7 @@ function parseParameters {
     typeset mandatory
     typeset optional
     typeset value
+    typeset nametmp="parameters.$$"
 
     # First omit any non-option parameters
     while [ "$1" ]; do
@@ -1801,18 +1813,27 @@ function parseParameters {
         # Accept any variable (extremely unsafe)
         acceptAllVariables="y"
     fi
+    if [ -e "$usrcfd/tmp/session.$nametmp" ]; then 
+        reportDebug "Removing old $usrcfd/tmp/session.$nametmp"
+        rm -f "$usrcfd/tmp/session.$nametmp"
+    fi
     let indx=0
     while [[ indx -lt numVariables ]]; do
         variable="${variables[indx]}"
         if [ "$acceptAllVariables" ] || [[ "$legalVariables" =~ " $variable " ]]; then
             value="${values[indx]}"
-            reportDebug "Setting variable $variable to value $value"
-            export "$variable"="$value"
+            reportDebug "Writing variable \"$variable\" with value: \"$value\" to $usrcfd/tmp/session.$nametmp"
+            echo "$variable"=\"$value\" >> "$usrcfd/tmp/session.$nametmp"
         else
             illegalsPresent="${illegalsPresent:+$illegalsPresent }--$variable"
         fi
         let indx+=1
     done
+    if [ -e "$usrcfd/tmp/session.$nametmp" ]; then 
+        reportDebug "Sourcing $usrcfd/tmp/session.$nametmp"
+        source "$usrcfd/tmp/session.$nametmp"
+        rm -f "$usrcfd/tmp/session.$nametmp"
+    fi
 
     if [ "$illegalsPresent" ]; then
         reportError "Illegal parameter(s): $illegalsPresent"
