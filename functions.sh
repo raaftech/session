@@ -199,8 +199,8 @@ function viaScript {
 
     if [ "$platform" = "linux" -o "$platform" = "bsd" -o "$platform" = "macosx" ]; then
         reportDebug "Writing UNIX shell script"
-        printf "#!/bin/sh\n" > "$usrcfd/tmp/session.tell.$nametmp.sh"
-        printf '%s\n '"$command" | sed 's/^[[:space:]]*//' 2> /dev/null >> "$usrcfd/tmp/session.tell.$nametmp.sh"
+        echo "#!/bin/sh" > "$usrcfd/tmp/session.tell.$nametmp.sh"
+        echo "$command" | sed 's/^[[:space:]]*//' 2> /dev/null >> "$usrcfd/tmp/session.tell.$nametmp.sh"
 
         reportDebug "Executing $usrcfd/tmp/session.tell.$nametmp.sh"
         sh "$usrcfd/tmp/session.tell.$nametmp.sh"
@@ -283,10 +283,12 @@ function winexeTellCommandWriter {
     typeset command="$4"
 
     # Make sure we only pass --password when pass was not empty.
-    if [ "$pass" ]; then
-        printf "winexe --debug-stderr --user='%s' --password='%s' //%s 'cmd.exe /c \"%s\"'\n" "$user" "$pass" "$addr" "$command"
+    if [ ! -z "$pass" ]; then
+       # printf "winexe -U '%s%%%s' //%s 'cmd.exe /c \"%s\"' 2> /dev/null\n" "$user" "$pass" "$addr" "$command"
+        echo   "winexe -U '$user%$pass' //$addr 'cmd.exe /c \"$command\"' 2> /dev/null"
     else
-        printf "winexe --debug-stderr --user='%s' //%s 'cmd.exe /c \"%s\"'\n" "$user" "$addr" "$command"
+       # printf "winexe -U '%s' //%s 'cmd.exe /c \"%s\"' 2> /dev/null\n" "$user" "$addr" "$command"
+        echo   "winexe -U '$user' //$addr 'cmd.exe /c \"$command\"' 2> /dev/null"
     fi
 }
 
