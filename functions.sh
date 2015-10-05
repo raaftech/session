@@ -4372,7 +4372,7 @@ function dynamicHandler {
         reportDebug "Dynamic group: comma detected on entity specification ($entity), initializing"
         type="group"
         name="comma-detected-dynamic-group"
-        members=$(echo $entity | sed -e 's/\s*,\s*/,/g' -e "s|^,||g" -e "s|,$||g")
+        members=$(echo $entity | sed -e 's/[[:space:]]*,[[:space:]]*/,/g' -e "s|^,||g" -e "s|,$||g")
     elif [[ "$dynamicGroups" =~ "$entity" ]]; then
         reportDebug "Dynamic group: entity matched dynamic group name ($entity), initializing"
         type="group"
