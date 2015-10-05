@@ -1608,7 +1608,7 @@ function tokenReader {
             let indx+=1
         elif [ "$function" = "setVars" ]; then
             reportDebug "Writing variable \"$key\" with value: \"$value\" to $usrcfd/tmp/session.$nametmp"
-            echo "$key=$value" >> "$usrcfd/tmp/session.$nametmp"
+            echo "$key='$value'" >> "$usrcfd/tmp/session.$nametmp"
         else
             reportError "Invalid function passed: $function"
             return 1
@@ -1830,7 +1830,7 @@ function parseParameters {
         if [ "$acceptAllVariables" ] || [[ "$legalVariables" =~ " $variable " ]]; then
             value="${values[indx]}"
             reportDebug "Writing variable \"$variable\" with value: \"$value\" to $usrcfd/tmp/session.$nametmp"
-            echo "$variable=$value" >> "$usrcfd/tmp/session.$nametmp"
+            echo "export $variable='$value'" >> "$usrcfd/tmp/session.$nametmp"
         else
             illegalsPresent="${illegalsPresent:+$illegalsPresent }--$variable"
         fi
