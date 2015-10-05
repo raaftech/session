@@ -59,30 +59,31 @@
         ]]>
         </script>
 
-        <!-- Update working copy to whatever executable expects. -->
-        <exec dir="." executable="svn" output="${work}/svnupgrade.out" resultproperty="result">
-            <arg line="upgrade"/>
+        <!-- Extract latest commit date and write to outputproperty. -->
+        <exec dir="." executable="git" outputproperty="git.date">
+            <arg line="show -s --format=%ct HEAD"/>
+        </exec>
+        	
+        <!-- Extract current commit hash and write to outputproperty. -->
+        <exec dir="." executable="git" outputproperty="git.commit">
+            <arg line="rev-parse --short HEAD"/>
         </exec>
 
-        <!-- Extract current svn info and write to svninfo.xml. -->
-        <exec dir="." executable="svn" output="${work}/svninfo.xml">
-            <arg line="info --xml"/>
+        <!-- Extract current branch name and write to outputproperty. -->
+        <exec dir="." executable="git" outputproperty="git.branch">
+            <arg line="rev-parse --abbrev-ref HEAD"/>
         </exec>
-
-        <!-- Read revision properties from svninfo.xml. -->
-        <xmlproperty file="${work}/svninfo.xml" collapseAttributes="true"/>
-
-        <!-- Using javascript to format commit time and date from svninfo.xml. -->
+    	
+        <!-- Using javascript to format commit time and date. -->
         <script language="javascript" manager="bsf">
         <classpath>
             <fileset dir="${deps}" includes="*.jar"></fileset>
         </classpath>
         <![CDATA[
-        datestring = String(project.getProperty("info.entry.commit.date"));
-        datestrcut = datestring.split('.').slice(0);
-        datefmtin = java.text.SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss");
-        datefmtout = java.text.SimpleDateFormat("MMMM dd yyyy HH:mm 'UTC'");
-        commitdate = datefmtout.format(datefmtin.parse(datestrcut));
+        datenumber = project.getProperty("git.date");
+        dateobject = new java.util.Date(datenumber*1000);
+        dateformat = java.text.SimpleDateFormat("MMMM dd yyyy HH:mm z");
+        commitdate = dateformat.format(dateobject);
         project.setProperty("release.date.commit",commitdate);
         ]]>
         </script>
@@ -94,22 +95,21 @@
         </classpath>
         <![CDATA[
         namestring = project.getProperty("release.name.lowercase");
-        repostring = project.getProperty("info.entry.url");
-        if      (repostring.match(/\/tags/))     { project.setProperty("release.tag","release"); }
-        else if (repostring.match(/\/stable/))   { project.setProperty("release.tag","release"); }
-        else if (repostring.match(/\/branches/)) { project.setProperty("release.tag","branch");  }
-        else if (repostring.match(/\/trunk/))    { project.setProperty("release.tag","trunk");   }
-        else                                     { project.setProperty("release.tag","unknown"); }
+        repostring = project.getProperty("git.branch");
+        if      (repostring.match(/tags/))     { project.setProperty("release.tag","release"); }
+        else if (repostring.match(/branches/)) { project.setProperty("release.tag","branch");  }
+        else if (repostring.match(/master/))   { project.setProperty("release.tag","trunk");  }
+        else                                   { project.setProperty("release.tag","unknown"); }
         ]]>
         </script>
 
         <!-- Set the current time and date. -->
         <tstamp>
-            <format property="release.date.built" pattern="MMMM dd yyyy HH:mm z" timezone="UTC"/>
+            <format property="release.date.built" pattern="MMMM dd yyyy HH:mm z" timezone="CET"/>
         </tstamp>
 
         <!-- Create a few release properties. -->
-        <property name="release.number.full"      value="${release.version.major}.${release.version.minor}.${release.version.patch}.${info.entry.commit.revision}"/>
+        <property name="release.number.full"      value="${release.version.major}.${release.version.minor}.${release.version.patch} (${git.commit})"/>
         <property name="release.number.short"     value="${release.version.major}.${release.version.minor}.${release.version.patch}"/>
         <property name="release.string.version"   value="${release.name} version ${release.number.full} ${release.tag}"/>
         <property name="release.string.copyright" value="Copyright © ${release.copyright.daterange} ${release.copyright.toname}"/>
@@ -128,10 +128,10 @@
     <!-- Get rhino interpreter task. -->
     <target name="rhino" depends="directories">
         <!-- Get rhino and dependencies using getter macro. -->
-        <getter url="http://repo.openpcf.org/repository/ext/build/logging/logging.jar" dir="${deps}" file="logging.jar"/>
-        <getter url="http://repo.openpcf.org/repository/ext/build/bsf/ant-bsf.jar" dir="${deps}" file="ant-bsf.jar"/>
-        <getter url="http://repo.openpcf.org/repository/ext/build/bsf/bsf.jar" dir="${deps}" file="bsf.jar"/>
-        <getter url="http://repo.openpcf.org/repository/ext/build/rhino/js.jar" dir="${deps}" file="js.jar"/>
+        <getter url="https://repo.raaftech.com/public/ant/logging/logging.jar" dir="${deps}" file="logging.jar"/>
+        <getter url="https://repo.raaftech.com/public/ant/bsf/ant-bsf.jar" dir="${deps}" file="ant-bsf.jar"/>
+        <getter url="https://repo.raaftech.com/public/ant/bsf/bsf.jar" dir="${deps}" file="bsf.jar"/>
+        <getter url="https://repo.raaftech.com/public/ant/rhino/js.jar" dir="${deps}" file="js.jar"/>
         <path id="classpath">
             <fileset dir="${deps}">
                 <include name="**/*.jar" />
@@ -142,7 +142,7 @@
     <!-- A detection runner task. -->
     <target name="detect" depends="directories">
         <!-- Get detector using getter macro. -->
-        <getter url="http://repo.openpcf.org/repository/ext/build/detector/detector.jar" dir="${deps}" file="detector.jar"/>
+        <getter url="https://repo.raaftech.com/public/ant/detector/detector.jar" dir="${deps}" file="detector.jar"/>
 
         <!-- Execute detector to write platform.properties. -->
         <java jar="${deps}/detector.jar" dir="${work}" fork="true"/>
@@ -170,7 +170,7 @@
             <fileset dir=".">
                 <exclude name="target/**"/>
                 <exclude name=".*"/>
-                <exclude name=".svn/**"/>
+                <exclude name=".git/**"/>
                 <exclude name=".idea/**"/>
                 <exclude name=".settings/**"/>
                 <exclude name="*.iml"/>
@@ -186,42 +186,58 @@
         </copy>
 
         <!-- Replace version string name and number template stanza. -->
-        <replaceregexp byline="true" encoding="UTF-8">
+        <replaceregexp byline="true" encoding="iso-8859-1">
             <regexp pattern="RELEASE.STRING.VERSION"/>
             <substitution expression="${release.string.version}"/>
             <fileset dir="${build}" excludes="*.xml"/>
         </replaceregexp>
 
         <!-- Replace release copyright stanza. -->
-        <replaceregexp byline="true" encoding="UTF-8">
+        <replaceregexp byline="true" encoding="iso-8859-1">
             <regexp pattern="RELEASE.STRING.COPYRIGHT"/>
             <substitution expression="${release.string.copyright}"/>
             <fileset dir="${build}" excludes="*.xml"/>
         </replaceregexp>
 
         <!-- Replace release date stanza. -->
-        <replaceregexp byline="true" encoding="UTF-8">
+        <replaceregexp byline="true" encoding="iso-8859-1">
             <regexp pattern="RELEASE.STRING.RELDATE"/>
             <substitution expression="${release.string.reldate}"/>
             <fileset dir="${build}" excludes="*.xml"/>
         </replaceregexp>
 
         <!-- Replace release built date stanza. -->
-        <replaceregexp byline="true" encoding="UTF-8">
+        <replaceregexp byline="true" encoding="iso-8859-1">
             <regexp pattern="RELEASE.STRING.BUILT"/>
             <substitution expression="${release.string.built}"/>
             <fileset dir="${build}" excludes="*.xml"/>
         </replaceregexp>
 
         <!-- Replace release license stanza. -->
-        <replaceregexp byline="true" encoding="UTF-8">
+        <replaceregexp byline="true" encoding="iso-8859-1">
             <regexp pattern="RELEASE.STRING.LICENSE"/>
             <substitution expression="${release.string.license}"/>
             <fileset dir="${build}" excludes="*.xml"/>
         </replaceregexp>
+    
+        <!-- Set readable bit -->     
+         <chmod perm="ugo+r">
+             <fileset dir="${build}" />
+         </chmod>  
+        <chmod perm="ugo+rx">
+            <dirset dir="${build}" />
+        </chmod>  
+    	
+    	<!-- Set executable bit -->   	
+    	<chmod perm="ugo+rx">
+    		<fileset dir="${build}">
+    		    <include name="**/*.sh"/>
+    	    </fileset>
+    	</chmod>  
     </target>
 
 
+	
     <!-- Generate all possible distributables for this platform. -->
     <target name="dist-all" depends="detect">
         <antcall if:set="platform.properties.exists" target="dist-${platform.packagingformat}"/>
