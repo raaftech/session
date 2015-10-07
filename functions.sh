@@ -1738,7 +1738,6 @@ function parseParameters {
     typeset mandatory
     typeset optional
     typeset value
-    typeset nametmp="parameters.$$"
 
     # First omit any non-option parameters
     while [ "$1" ]; do
@@ -1820,32 +1819,20 @@ function parseParameters {
         # Accept any variable (extremely unsafe)
         acceptAllVariables="y"
     fi
-    if [ -e "$usrcfd/tmp/session.$nametmp" ]; then 
-        reportDebug "Removing old $usrcfd/tmp/session.$nametmp"
-        rm -f "$usrcfd/tmp/session.$nametmp"
-    fi
+
     let indx=0
     while [[ indx -lt numVariables ]]; do
         variable="${variables[indx]}"
         if [ "$acceptAllVariables" ] || [[ "$legalVariables" =~ " $variable " ]]; then
             value="${values[indx]}"
-            reportDebug "Writing variable \"$variable\" with value: \"$value\" to $usrcfd/tmp/session.$nametmp"
-            echo "export $variable='$value'" >> "$usrcfd/tmp/session.$nametmp"
+            reportDebug "Setting variable \"$variable\" with value: \"$value\""
+            export "$variable"="$value"
         else
             illegalsPresent="${illegalsPresent:+$illegalsPresent }--$variable"
         fi
         let indx+=1
     done
-    if [ -e "$usrcfd/tmp/session.$nametmp" ]; then 
-        reportDebug "Sourcing $usrcfd/tmp/session.$nametmp"
-        source "$usrcfd/tmp/session.$nametmp"
-        if [ "$debug" ]; then
-            reportDebug "Moving $usrcfd/tmp/session.$nametmp to $usrcfd/tmp/session.debug.$nametmp"
-            mv "$usrcfd/tmp/session.$nametmp" "$usrcfd/tmp/session.debug.$nametmp"  
-        else
-            rm -f "$usrcfd/tmp/session.$nametmp"
-        fi
-    fi
+
 
     if [ "$illegalsPresent" ]; then
         reportError "Illegal parameter(s): $illegalsPresent"
