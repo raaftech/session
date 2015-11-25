@@ -581,6 +581,7 @@ function handleSshPrivateKeys {
                 printf "SSH_AUTH_SOCK=$SSH_AUTH_SOCK; export SSH_AUTH_SOCK;\n"  > "$sshagentfile"
                 printf "SSH_AGENT_PID=$SSH_AGENT_PID; export SSH_AGENT_PID;\n" >> "$sshagentfile"
                 source "$sshagentfile"
+                
             elif [ "$sshagentproc" ]; then
                 reportDebug "Environment values not set but agent is running, inspecting agent"
                 reportDebug "I'm using $privy lsof to do this"
@@ -590,15 +591,22 @@ function handleSshPrivateKeys {
                 printf "SSH_AUTH_SOCK=$SSH_AUTH_SOCK; export SSH_AUTH_SOCK;\n"  > "$sshagentfile"
                 printf "SSH_AGENT_PID=$SSH_AGENT_PID; export SSH_AGENT_PID;\n" >> "$sshagentfile"
                 source "$sshagentfile"
+                
             elif [ ! "$sshagentproc" ]; then
                 reportInfo "You have a private key; starting new ssh-agent"
                 ssh-agent | grep -v "^echo " > "$sshagentfile"
                 chmod 600 "$sshagentfile"
                 source "$sshagentfile"
-                ssh-add
+                
             else
                 reportError "Unexpected exit"
                 exit 1
+            fi
+            
+            sshkeyloaded="$(ssh-add -l | grep "$sshkey")"
+            if [ -z "$sshkeyloaded" ]; then
+                reportDebug "Loading ssh key(s) into ssh-agent "
+                ssh-add
             fi
         fi
 

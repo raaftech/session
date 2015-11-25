@@ -28,7 +28,7 @@ color_end="\x1b[0m"       #color_end="$(tput sgr0)"
 # Space-separated lists of keywords for known modes, os, virtualization, credential, service, execute and access methods.
 known_types="host guest service group"
 known_modes="serial parallel stateful"
-known_osmts="embedded-like unix-like windows-like aix5 aix6 aix7 arch2kx debian4 debian5 debian6 debian7 debian8 dfbsd2 dfbsd3 esxi4 esxi5 fbsd7 fbsd8 fbsd9 fbsd10 fedora12 fedora13 fedora14 fedora15 fedora16 fedora17 fedora18 fedora19 fedora20 fedora21 hpux1111 hpux1123 hpux1131 macosx3 macosx4 macosx5 macosx6 macosx7 macosx8 macosx9 nbsd4 nbsd5 nbsd6 obsd4 obsd5 osuse11 osuse12 osuse13 rhel3 rhel4 rhel5 rhel6 rhel7 sles9 sles10 sles11 sles12 sol10 sol11 ubuntu8 ubuntu9 ubuntu10 ubuntu11 ubuntu12 ubuntu13 ubuntu14 win2k3 win2k8 win2k12 win7 win8 win10 winxp"
+known_osmts="embedded-like unix-like windows-like aix5 aix6 aix7 arch2kx debian4 debian5 debian6 debian7 debian8 dfbsd2 dfbsd3 esxi4 esxi5 fbsd7 fbsd8 fbsd9 fbsd10 fedora12 fedora13 fedora14 fedora15 fedora16 fedora17 fedora18 fedora19 fedora20 fedora21 fedora22 fedora23 gentoo hpux1111 hpux1123 hpux1131 macosx3 macosx4 macosx5 macosx6 macosx7 macosx8 macosx9 macosx10 nbsd4 nbsd5 nbsd6 obsd4 obsd5 osuse11 osuse12 osuse13 rhel3 rhel4 rhel5 rhel6 rhel7 sles9 sles10 sles11 sles12 sol10 sol11 trisquel7 ubuntu8 ubuntu9 ubuntu10 ubuntu11 ubuntu12 ubuntu13 ubuntu14 ubuntu15 ubuntu16 win2k win2k3 win2k8 win2k12 win2k16 winv win7 win8 win10 winxp"
 known_vrmts="none kvm xen vbox vmw vmf esx hpvm ldom pvm"
 known_crmts="none ssh win"
 known_svmts="none scripted"
