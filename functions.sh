@@ -3863,7 +3863,7 @@ function xfreerdpDesktopHandler {
 
     rdpFileWriter
     if [ "$xsasupwd" ]; then typeset pass="/p:$xsasupwd"; fi
-    xfreerdp "$rdpfile" $pass 2>/dev/null &
+    xfreerdp "$rdpfile" +clipboard $pass 2>/dev/null &
 }
 
 # noneAccessHandler(state|access)
