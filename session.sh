@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright © 2008-2015 RAAF Technology bv
+# Copyright © 2008-2016 RAAF Technology bv
 #
 # This file is part of Session.
 #
