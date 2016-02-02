@@ -3625,6 +3625,46 @@ function gnomeTerminalHandler {
     return 0
 }
 
+# urxvtTerminalHandler(<protocol>)
+# Writes command line, runs command line.
+#
+# Handle URXVT Terminal parameterization.
+#
+function urxvtTerminalHandler {
+    reportDebugFuncEntry "$*" "name addr sshopts xsasuser localUserDblBacksl"
+
+    typeset protocol="$1"
+    typeset append
+    typeset title="$(capsFirst "$name")"
+    typeset line
+
+    if [ "$command" ]; then
+        reportDebug "Command passed: $command"
+        append="$command"
+    fi
+
+    if [ "$protocol" = "ssh" ]; then
+        line="ssh $sshopts -A -Y $xsasuser@$addr $append"
+    elif [ "$protocol" = "tel" ]; then
+        line="telnet $addr $append"
+    else
+        reportError "Invalid protocol type passed: $protocol; valid types are: tel ssh"
+        return 1
+    fi
+
+    
+    # Set title (only if sshkey is set and agent enabled, due to non-interactivity requirement).
+    if [ "$titling" -a "$sshkey" -a "$agent" ]; then
+        urxvt -e bash -c "$line" &
+        xdotool type --clearmodifiers --delay=10 "PS1=\"[\\u@\\h \\W]\\$ \" ; PROMPT_COMMAND='echo -ne \"\\033]0;\"$title\"\\007\"'"
+        xdotool key Return
+    else
+        urxvt -e bash -c "$line" &
+    fi
+    
+    return 0
+}
+
 # screenTerminalHandler(<protocol>)
 # Writes command line, runs command line.
 #
@@ -3756,7 +3796,6 @@ function rdpFileWriter {
     printf "autoreconnection enabled:i:1\n" >> "$rdpfile"
     printf "authentication level:i:0\n" >> "$rdpfile"
     printf "username:s:$xsasuser\n" >> "$rdpfile"
-    printf "domain:s:$name\n" >> "$rdpfile"
     printf "alternate shell:s:\n" >> "$rdpfile"
     printf "shell working directory:s:\n" >> "$rdpfile"
     printf "disable wallpaper:i:1\n" >> "$rdpfile"
@@ -3812,6 +3851,19 @@ function rdesktopDesktopHandler {
     rdpFileWriter
     if [ "$titling" ]; then typeset title="-T $(capsFirst "$name")"; fi
     printf "$xsasupwd\n" | rdesktop -0 -g 1024x768 -b -B $title -u "$xsasuser" -p - -N -a 16 -z -x l -r disk:home="$HOME" "$addr" 2>/dev/null &
+}
+
+# xfreerdpDesktopHandler()
+# Runs command.
+#
+# Calls rdpFileWriter and executes xfreerdp.
+#
+function xfreerdpDesktopHandler {
+    reportDebugFuncEntry "$*"
+
+    rdpFileWriter
+    if [ "$xsasupwd" ]; then typeset pass="/p:$xsasupwd"; fi
+    xfreerdp "$rdpfile" $pass 2>/dev/null &
 }
 
 # noneAccessHandler(state|access)

@@ -93,8 +93,8 @@ fi
 
 # Platform specific options.conf default settings.
 if [ "$platform" = "linux" ]; then
-    terminal="gnome"
-    desktop="rdesktop"
+    terminal="screen"
+    desktop="xfreerdp"
     browser="gnome"
     smbtell="winexe"
     sshtell="ssh"
@@ -103,7 +103,7 @@ if [ "$platform" = "linux" ]; then
     privesc="sudo -u root"
 elif [ "$platform" = "bsd" ]; then
     terminal="screen"
-    desktop="rdesktop"
+    desktop="xfreerdp"
     browser="none"
     smbtell="winexe"
     sshtell="ssh"
