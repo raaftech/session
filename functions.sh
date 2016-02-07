@@ -2995,7 +2995,7 @@ function esxVirtHandler {
 
     case "$1" in
       state)
-        result="$(command='vim-cmd vmsvc/power.getstate $(vim-cmd vmsvc/getallvms | grep '"$name"' | cut -f 1) | grep Powered' ; parseEntry "$host" ; checkState ;  ${exmt}ExecHandler runasadmin)"
+        result="$(command='vim-cmd vmsvc/power.getstate $(vim-cmd vmsvc/getallvms | grep '"$name"' | cut -f 1) 2> /dev/null | grep Powered' ; parseEntry "$host" ; checkState ;  ${exmt}ExecHandler runasadmin)"
         case "$result" in
           *"Powered on"*)
             vmstate="active"
