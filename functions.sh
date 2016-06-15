@@ -2071,9 +2071,16 @@ function parseService {
 
     # If an entry is about the local system, rewrite $privesc and $privy with correct service user.
     if isLoopback "$addr" || isLocal "$name" ; then
-        reportDebug "Rewriting privesc to $privesc"
-        privesc="$(printf "$privesc\n" | sed -e "s|root|$user|g" -e "s|administrator|$user|g")"
-        [ "$privy" ] && privy="$privesc"
+        reportDebug "Loopback address detected for \"$name\""
+        if [ "$userDblBacksl" = "$user" ]; then
+            reportDebug "Service user is equal to current user, erasing privesc"
+            privesc=""
+            [ "$privy" ] && privy="$privesc"
+        else
+            reportDebug "Service user differs from current user, rewriting privesc to $privesc"
+            privesc="$(printf "$privesc\n" | sed -e "s|root|$user|g" -e "s|administrator|$user|g")"
+            [ "$privy" ] && privy="$privesc"
+        fi
     fi
 
     # Check for global password files and set variables.
