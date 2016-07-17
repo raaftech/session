@@ -573,7 +573,7 @@ function handleSshPrivateKeys {
         fi
 
         # Load private key into ssh-agent if agent handling is enabled.
-        if [ "$sshkey" -a "$agent" ]; then
+        if [ "$sshkey" -a "$agent" == "ssh-agent" ]; then
             sshagentfile="$usrcfd/tmp/session.ssh-agent.out"
             sshagentproc="$(ps x | grep ssh-agent | grep -v grep)"
             if [ "$SSH_AUTH_SOCK" ]; then
@@ -581,7 +581,7 @@ function handleSshPrivateKeys {
                 printf "SSH_AUTH_SOCK=$SSH_AUTH_SOCK; export SSH_AUTH_SOCK;\n"  > "$sshagentfile"
                 printf "SSH_AGENT_PID=$SSH_AGENT_PID; export SSH_AGENT_PID;\n" >> "$sshagentfile"
                 source "$sshagentfile"
-                
+
             elif [ "$sshagentproc" ]; then
                 reportDebug "Environment values not set but agent is running, inspecting agent"
                 reportDebug "I'm using $privy lsof to do this"
@@ -591,23 +591,25 @@ function handleSshPrivateKeys {
                 printf "SSH_AUTH_SOCK=$SSH_AUTH_SOCK; export SSH_AUTH_SOCK;\n"  > "$sshagentfile"
                 printf "SSH_AGENT_PID=$SSH_AGENT_PID; export SSH_AGENT_PID;\n" >> "$sshagentfile"
                 source "$sshagentfile"
-                
+
             elif [ ! "$sshagentproc" ]; then
                 reportInfo "You have a private key; starting new ssh-agent"
                 ssh-agent | grep -v "^echo " > "$sshagentfile"
                 chmod 600 "$sshagentfile"
                 source "$sshagentfile"
-                
+
             else
                 reportError "Unexpected exit"
                 exit 1
             fi
-            
+
             sshkeyloaded="$(ssh-add -l | grep "$sshkey")"
             if [ -z "$sshkeyloaded" ]; then
                 reportDebug "Loading ssh key(s) into ssh-agent "
                 ssh-add
             fi
+        elif [ "$sshkey" -a "$agent" == "gpg-agent" ]; then
+            reportInfo "You have set agent to gpg-agent; assuming your keys are loaded."
         fi
 
         # Disable strict host and reverse mapping checks if not already set.
@@ -637,7 +639,7 @@ function handleSshPrivateKeys {
         fi
 
         # Load private key into pageant if agent handling is enabled.
-        if [ "$sshkey" -a "$agent" ]; then
+        if [ "$sshkey" -a "$agent" == "pageant" ]; then
             running="$($pslist | grep -i pageant | grep -v grep)"
             if [ ! "$running" ]; then
                 reportInfo "You have a private key; loading into ssh-agent"
@@ -645,6 +647,8 @@ function handleSshPrivateKeys {
                 viaScript "$(localTellCommandWriter "$command")" &
                 sleep 10
             fi
+        elif [ "$sshkey" -a "$agent" == "gpg-agent" ]; then
+            reportInfo "You have set agent to gpg-agent; assuming your keys are loaded."
         fi
     fi
 }
@@ -1589,7 +1593,7 @@ function tokenReader {
     enttype="${entry%%[[:space:]]*}"
     members="$enttype,$name,$(cutParentheses "$entry")"
 
-    if [ -e "$usrcfd/tmp/session.$nametmp" ]; then 
+    if [ -e "$usrcfd/tmp/session.$nametmp" ]; then
         reportDebug "Removing old $usrcfd/tmp/session.$nametmp"
         rm -f "$usrcfd/tmp/session.$nametmp"
     fi
@@ -1622,7 +1626,7 @@ function tokenReader {
             return 1
         fi
     done
-    if [ -e "$usrcfd/tmp/session.$nametmp" ]; then 
+    if [ -e "$usrcfd/tmp/session.$nametmp" ]; then
         reportDebug "Sourcing $usrcfd/tmp/session.$nametmp"
         source "$usrcfd/tmp/session.$nametmp"
         if [ "$debug" ]; then
@@ -3659,7 +3663,7 @@ function urxvtTerminalHandler {
         return 1
     fi
 
-    
+
     # Set title (only if sshkey is set and agent enabled, due to non-interactivity requirement).
     if [ "$titling" -a "$sshkey" -a "$agent" ]; then
         urxvt -e bash -c "$line" &
@@ -3668,7 +3672,7 @@ function urxvtTerminalHandler {
     else
         urxvt -e bash -c "$line" &
     fi
-    
+
     return 0
 }
 

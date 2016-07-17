@@ -103,6 +103,7 @@ if [ "$platform" = "linux" ]; then
     sshtell="ssh"
     smbsend="smbclient"
     sshsend="scp"
+    sshagent="ssh-agent"
     privesc="sudo -u root"
 elif [ "$platform" = "bsd" ]; then
     terminal="screen"
@@ -112,6 +113,7 @@ elif [ "$platform" = "bsd" ]; then
     sshtell="ssh"
     smbsend="smbclient"
     sshsend="scp"
+    sshagent="ssh-agent"
     privesc="sudo -u root"
 elif [ "$platform" = "macosx" ]; then
     terminal="apple"
@@ -121,6 +123,7 @@ elif [ "$platform" = "macosx" ]; then
     sshtell="ssh"
     smbsend="smbclient"
     sshsend="scp"
+    sshagent="ssh-agent"
     privesc="sudo -u root"
 elif [ "$platform" = "windows" ]; then
     terminal="putty"
@@ -130,6 +133,7 @@ elif [ "$platform" = "windows" ]; then
     sshtell="plink"
     smbsend="robocopy"
     sshsend="pscp"
+    sshagent="pageant"
     privesc="runas /savecred /user:administrator"
 else
     terminal="none"
@@ -139,6 +143,7 @@ else
     sshtell="none"
     smbsend="none"
     sshsend="none"
+    sshagent="none"
     privesc="none"
 fi
 
@@ -153,7 +158,6 @@ timeout="1501"
 titling="0"
 tabbed="0"
 color="1"
-agent="1"
 privy="0"
 debug="0"
 
