@@ -3861,7 +3861,7 @@ function rdesktopDesktopHandler {
 
     rdpFileWriter
     if [ "$titling" ]; then typeset title="-T $(capsFirst "$name")"; fi
-    printf "$xsasupwd\n" | rdesktop -0 -g 1024x768 -b -B $title -u "$xsasuser" -p - -N -a 16 -z -x l -r disk:home="$HOME" "$addr" 2>/dev/null &
+    printf "$xsasupwd\n" | rdesktop -0 -g ${width}x${height} -b -B "$title" -u "$xsasuser" -p - -N -a 16 -z -x l -r disk:home="$HOME" "$addr" 2>/dev/null &
 }
 
 # xfreerdpDesktopHandler()
@@ -3875,7 +3875,7 @@ function xfreerdpDesktopHandler {
     rdpFileWriter
     if [ "$xsasupwd" ]; then typeset pass="/p:$xsasupwd"; fi
     if [ "$titling" ]; then typeset title="/t:$(capsFirst "$name")"; fi
-    xfreerdp /v:$addr /u:"$xsasuser" $pass $title /f /sound:sys:alsa -bitmap-cache -offscreen-cache -glyph-cache /cert-ignore +auto-reconnect +clipboard +fonts +aero +window-drag +wallpaper +themes > /dev/null 2>&1 &
+    xfreerdp /v:$addr /u:"$xsasuser" $pass /t:"$title" /sound:sys:alsa /w:$width /h:$height /smart-sizing:${width}x${height} -bitmap-cache -offscreen-cache -glyph-cache /cert-ignore +auto-reconnect +clipboard +fonts +aero +window-drag +wallpaper +themes +toggle-fullscreen > /dev/null 2>&1 &
 }
 
 # noneAccessHandler(state|access)

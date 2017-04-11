@@ -160,6 +160,8 @@ tabbed="0"
 color="1"
 privy="0"
 debug="0"
+width="1600"
+height="900"
 
 # Syntax indices for tokenReader()
 typeset -r syntax_host_type=1
