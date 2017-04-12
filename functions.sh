@@ -3875,7 +3875,7 @@ function xfreerdpDesktopHandler {
     rdpFileWriter
     if [ "$xsasupwd" ]; then typeset pass="/p:$xsasupwd"; fi
     if [ "$titling" ]; then typeset title="/t:$(capsFirst "$name")"; fi
-    xfreerdp /v:$addr /u:"$xsasuser" $pass /t:"$title" /sound:sys:alsa /w:$width /h:$height /smart-sizing:${width}x${height} -bitmap-cache -offscreen-cache -glyph-cache /cert-ignore +auto-reconnect +clipboard +fonts +aero +window-drag +wallpaper +themes +toggle-fullscreen > /dev/null 2>&1 &
+    xfreerdp /v:$addr /u:"$xsasuser" $pass "$title" /sound:sys:alsa /w:$width /h:$height /smart-sizing:${width}x${height} -bitmap-cache -offscreen-cache -glyph-cache /cert-ignore +auto-reconnect +clipboard +fonts +aero +window-drag +wallpaper +themes +toggle-fullscreen > /dev/null 2>&1 &
 }
 
 # noneAccessHandler(state|access)
