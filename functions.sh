@@ -132,21 +132,21 @@ function toLocalWindowsPath {
     if [[ "$input" =~ : ]]; then
         # Windows path was passed (ie. contains colon). Only forward slashes.
         reportDebug "Detected colon, only forwarding slashes"
-        output="$(printf "$input\n" | sed 's|\\|/|g')"
+        output="$(printf "$input\n" | tr -d '\015' | sed 's|\\|/|g')"
     elif [ -d "$input" ]; then
         # Path exists locally and is a directory, enter, read out and forward slashes.
         reportDebug "Path exists locally and is a directory. Entering, read out and forwarding slashes"
-        output="$(cd "$input" ; cmd.exe /c cd | sed 's|\\|/|g')"
+        output="$(cd "$input" ; cmd.exe /c cd | tr -d '\015' | sed 's|\\|/|g')"
     elif [ -f "$input" -o "$(dirname "$input")" != "/" ]; then
         # Path exists locally and is a file, enter parent, read out and forward slashes.
         reportDebug "Path exists locally and is a file. Entering, read out and forwarding slashes"
-        path="$(cd "$(dirname "$input")" ; cmd.exe /c cd | sed 's|\\|/|g')"
+        path="$(cd "$(dirname "$input")" ; cmd.exe /c cd | tr -d '\015' | sed 's|\\|/|g')"
         file="$(basename "$input")"
         output="$path/$file"
     else
         # File does not exist locally, and contains no colon. Prepend C: and forward slashes.
         reportDebug "File does not exist locally and contains no colon. Prepending C: and forwarding slashes"
-        output="$(printf "C:$input\n" | sed 's|\\|/|g' )"
+        output="$(printf "C:$input\n" | tr -d '\015' | sed 's|\\|/|g' )"
     fi
 
     reportDebug "Incoming: $input"
@@ -266,7 +266,7 @@ function psexecTellCommandWriter {
     # Older version of psexec?
     if [ "$user" ]; then user="-u \"$user\"" ; fi
     if [ "$pass" ]; then pass="-p \"$pass\"" ; fi
-    printf "psexec \\\\\\\\$addr -h $user $pass cmd.exe /c $command\n"
+    printf "$psexec \\\\\\\\$addr -h $user $pass cmd.exe /c $command\n"
 }
 
 # winexeTellCommandWriter(<addr> <user> <pass> <command>)
@@ -304,7 +304,7 @@ function plinkTellCommandWriter {
     typeset user="$2"
     typeset command="$3"
 
-    printf "plink -x $sshopts -l \"$user\" $addr \"$command\"\n"
+    printf "$plink -x $sshopts -l \"$user\" $addr \"$command\"\n"
 }
 
 # sshTellCommandWriter(<host> <user> <command>)
@@ -340,7 +340,7 @@ function localSendCommandWriter {
     elif [ "$platform" = "windows" ]; then
         source="$(toLocalWindowsPath "$1")"
         target="$(toLocalWindowsPath "$2")"
-        printf "robocopy /e \"$source\" \"$target\" >nul 2>&1\n"
+        printf "$robocopy /e \"$source\" \"$target\" >nul 2>&1\n"
     else
         reportError "Unknown platform specified: $platform"
         return 1
@@ -373,7 +373,7 @@ function robocopySendCommandWriter {
     if [ "$pass" ]; then pass="\"$pass\"" ; fi
     printf %s "
         net use \\\\$addr\\$driveLetter\$ /user:\"${user}\" ${pass} 2>nul
-        robocopy /e \"$source\" \"$target\" >nul 2>&1
+        $robocopy /e \"$source\" \"$target\" >nul 2>&1
         net use \\\\$addr\\$driveLetter\$ /delete >nul 2>&1
     " | sed 's/^[[:space:]]*//'
 }
@@ -415,7 +415,7 @@ function pscpSendCommandWriter {
     typeset source="$(toLocalWindowsPath "$3")"
     typeset target="$4"
 
-    printf "pscp $sshopts -scp -p -q -r -l \"$uopts\" \"$source\" $addr:\"$target\"\n"
+    printf "$pscp $sshopts -scp -p -q -r -l \"$uopts\" \"$source\" $addr:\"$target\"\n"
 }
 
 # scpSendCommandWriter(<addr> <uopts> <source> <target>)
@@ -458,21 +458,21 @@ function toolFinder {
 
     # First write out tools.required.
     if [ "$platform" = "linux" -o "$platform" = "bsd" -o "$platform" = "macosx" ]; then
-        printf "tools_session='awk,cut,grep,host,lsof,nmap,sed,tr,ps'\n" > "$usrcfd/cfg/tools.required"
+        printf "tools_session='awk,cut,grep,host,lsof,$nmap,sed,tr,ps'\n" > "$usrcfd/cfg/tools.required"
         printf "tools_execute='ssh,winexe'\n" >> "$usrcfd/cfg/tools.required"
         printf "tools_agent='ssh-agent,ssh-add'\n" >> "$usrcfd/cfg/tools.required"
         printf "tools_send='cp,scp,smbclient'\n" >> "$usrcfd/cfg/tools.required"
     elif [ "$platform" = "windows" ]; then
-        printf "tools_session='awk,cut,grep,nmap,nslookup,sed,tr,tasklist'\n" > "$usrcfd/cfg/tools.required"
-        printf "tools_execute='plink,psexec'\n" >> "$usrcfd/cfg/tools.required"
-        printf "tools_agent='pageant'\n" >> "$usrcfd/cfg/tools.required"
-        printf "tools_send='pscp,robocopy'\n" >> "$usrcfd/cfg/tools.required"
+        printf "tools_session='awk,cut,grep,$nmap,nslookup,sed,tr,$pslist'\n" > "$usrcfd/cfg/tools.required"
+        printf "tools_execute='$plink,$psexec'\n" >> "$usrcfd/cfg/tools.required"
+        printf "tools_agent='$pageant'\n" >> "$usrcfd/cfg/tools.required"
+        printf "tools_send='$pscp,$robocopy'\n" >> "$usrcfd/cfg/tools.required"
     else
         printf "# unidentified platform specified: $platform\n" > "$usrcfd/cfg/tools.required"
         printf "# toolFinder says you need to define tools_ variables!\n" >> "$usrcfd/cfg/tools.required"
     fi
     if [ "$terminal" = "putty" ]; then
-        tools_terminal="putty"
+        tools_terminal="$putty"
     elif [ "$terminal" = "apple" ]; then
         PATH="${PATH}:/Applications/Utilities/Terminal.app/Contents/MacOS"
         tools_terminal="osascript,Terminal"
@@ -483,7 +483,7 @@ function toolFinder {
     fi
 
     if [ "$desktop" = "mstsc" ]; then
-        tools_desktop="cryptrdp5,mstsc"
+        tools_desktop="$cryptrdp5,$mstsc"
     elif [ "$desktop" = "amsrdc" ]; then
         PATH="${PATH}:/Applications/Remote Desktop Connection.app/Contents/MacOS"
         tools_desktop="Remote Desktop Connection"
@@ -492,7 +492,7 @@ function toolFinder {
     fi
 
     if [ "$browser" = "windows" ]; then
-        tools_browser="explorer"
+        tools_browser="$explorer"
     elif [ "$browser" = "apple" ]; then
         tools_browser="open"
     elif [ "$browser" = "gnome" ]; then
@@ -561,6 +561,7 @@ function handleSshPrivateKeys {
 
     # Set private key option when private key found.
     if [ "$platform" = "linux" -o "$platform" = "bsd" -o "$platform" = "macosx" ]; then
+
         # Look for OpenSSH style public/private keypair.
         if [ -e "$HOME/.ssh/id_dsa" ]; then
             sshkey="$HOME/.ssh/id_dsa"
@@ -628,22 +629,22 @@ function handleSshPrivateKeys {
 
     elif [ "$platform" = "windows" ]; then
         # Look for PuTTY style public/private keypair.
-        if [ -e "$HOME/.ssh/id_dsa.ppk" ]; then
-            sshkey="$(toLocalWindowsPath "$HOME/.ssh/id_dsa.ppk")"
-            sshpub="$(toLocalWindowsPath "$HOME/.ssh/id_dsa.pub")"
+        if [ -e "$usrcfd/../.ssh/id_dsa.ppk" ]; then
+            sshkey="$(toLocalWindowsPath "$usrcfd/../.ssh/id_dsa.ppk")"
+            sshpub="$(toLocalWindowsPath "$usrcfd/../.ssh/id_dsa.pub")"
             sshopts="-i \"$sshkey\""
-        elif [ -e "$HOME/.ssh/id_rsa.ppk" ]; then
-            sshkey="$(toLocalWindowsPath "$HOME/.ssh/id_rsa.ppk")"
-            sshpub="$(toLocalWindowsPath "$HOME/.ssh/id_rsa.pub")"
+        elif [ -e "$usrcfd/../.ssh/id_rsa.ppk" ]; then
+            sshkey="$(toLocalWindowsPath "$usrcfd/../.ssh/id_rsa.ppk")"
+            sshpub="$(toLocalWindowsPath "$usrcfd/../.ssh/id_rsa.pub")"
             sshopts="-i \"$sshkey\""
         fi
 
         # Load private key into pageant if agent handling is enabled.
         if [ "$sshkey" -a "$agent" == "pageant" ]; then
-            running="$($pslist | grep -i pageant | grep -v grep)"
+            running="$($pslist | grep -i $pageant | grep -v grep)"
             if [ ! "$running" ]; then
                 reportInfo "You have a private key; loading into ssh-agent"
-                typeset command="start /b pageant \"$sshkey\""
+                typeset command="start /b $pageant \"$sshkey\""
                 viaScript "$(localTellCommandWriter "$command")" &
                 sleep 10
             fi
@@ -978,15 +979,15 @@ function printPortState {
 
     if [ "$resilient" ]; then
         reportDebug "Enabled resilient mode"
-        command="nmap -n -T1 -PN -sT -p $port $addr"
+        command="$nmap -n -T1 -PN -sT -p $port $addr"
         match=" open "
     else
         if [ "$scantype" = "connect" ]; then
             reportDebug "Scantype was set to connect"
-            command="nmap -n -T5 --host-timeout $timeout -PN -sT -p $port $addr"
+            command="$nmap -n -T5 --host-timeout $timeout -PN -sT -p $port $addr"
             match=" open "
         else
-            command="nmap -n -T5 --host-timeout $timeout -PN -p $port $addr"
+            command="$nmap -n -T5 --host-timeout $timeout -PN -p $port $addr"
             match=" open "
         fi
     fi
@@ -1033,7 +1034,7 @@ function printPingState {
         return
     fi
 
-    command="nmap -sP $addr"
+    command="$nmap -sP $addr"
     match="Host is up"
 
     reportDebug "Command is: $privy $command"
@@ -1427,8 +1428,8 @@ function discoveryHelper {
         file="$(toLocalWindowsPath "$usrcfd/tmp/session.discover.out")"
     fi
 
-    $privy nmap -n -T5 -PE -oG "$file" -sP $range >/dev/null 2>&1 </dev/null
-    reportDebug "Called nmap as: $privy nmap -n -T5 -PE -oG \"$file\" -sP $range"
+    $privy $nmap -n -T5 -PE -oG "$file" -sP $range >/dev/null 2>&1 </dev/null
+    reportDebug "Called nmap as: $privy $nmap -n -T5 -PE -oG \"$file\" -sP $range"
     for addr in $($privy cat "$usrcfd/tmp/session.discover.out" | grep Up | cut -d " " -f 2 | sed -e 's/^[[:space:]]*//') ; do
         type="host"
 
@@ -3441,9 +3442,11 @@ function puttyTerminalHandler {
 
     typeset nametmp="${name}.$$"
     typeset protocol="$1"
+    typeset prefix
     typeset wrapped
     typeset append
     typeset line
+    typeset wsl
 
     if [ "$command" ]; then
         reportDebug "Command passed: $command"
@@ -3453,19 +3456,27 @@ function puttyTerminalHandler {
     fi
 
     if [ "$protocol" = "ssh" ]; then
-        line="putty $sshopts $xsasuser@$addr $append"
+        line="$putty $sshopts $xsasuser@$addr $append"
     elif [ "$protocol" = "tel" ]; then
-        line="putty -telnet $addr $append"
+        line="$putty -telnet $addr $append"
     else
         reportError "Invalid protocol type passed: $protocol; valid types are: tel ssh"
         return 1
+    fi
+
+    wsl=$(uname -a | grep Microsoft)
+    if [ "$wsl" ]; then
+        # Don't use start /b prefix on Windows 10's Bash on Ubuntu on Windows
+        prefix=''
+    else
+        prefix='start /b'
     fi
 
     if [ "$titling" ]; then
         wrapped="\
         reg delete \"HKEY_CURRENT_USER\\Software\\SimonTatham\\PuTTY\\Sessions\\Default%%20Settings\" /v \"WinTitle\" /f > nul 2>&1
         reg add \"HKEY_CURRENT_USER\\Software\\SimonTatham\\PuTTY\\Sessions\\Default%%20Settings\" /t REG_SZ /v \"WinTitle\" /d \"$(capsFirst "$name")\" > nul 2>&1
-        start /b $line
+        $prefix $line
         echo wscript.sleep 1000 > \"%TEMP%\\wait.vbs\"
         wscript.exe \"%TEMP%\\wait.vbs\"
         del \"%TEMP%\\wait.vbs\"
@@ -3473,7 +3484,7 @@ function puttyTerminalHandler {
         reg add \"HKEY_CURRENT_USER\\Software\\SimonTatham\\PuTTY\\Sessions\\Default%%20Settings\" /t REG_SZ /v \"WinTitle\" > nul 2>&1
         "
     else
-        wrapped="start /b $line"
+        wrapped="$prefix $line"
     fi
 
     viaScript "$(localTellCommandWriter "$wrapped")"
@@ -3753,7 +3764,7 @@ function windowsBrowserHandler {
     reportDebugFuncEntry "$*"
 
     typeset url="$1"
-    explorer "$url" &
+    "$explorer" "$url" &
 }
 
 # appleBrowserHandler(<url>)
@@ -3817,10 +3828,10 @@ function rdpFileWriter {
     printf "bitmapcachepersistenable:i:1\n" >> "$rdpfile"
     if [[ "$tools_access_found" =~ "cryptrdp5" ]]; then
         if [ "$xsastype" = "user" -a "$xsasupwd" ]; then
-            typeset rdphash="$(cryptrdp5 "$xsasupwd")"
+            typeset rdphash="$("$cryptrdp5" "$xsasupwd")"
             printf "password 51:b:$rdphash\n" >> "$rdpfile"
         elif [ "$xsastype" = "admin" -a "$xsasapwd" ]; then
-            typeset rdphash="$(cryptrdp5 "$xsasapwd")"
+            typeset rdphash="$("$cryptrdp5" "$xsasapwd")"
             printf "password 51:b:$rdphash\n" >> "$rdpfile"
         fi
     fi
