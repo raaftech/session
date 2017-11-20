@@ -3826,12 +3826,12 @@ function rdpFileWriter {
     printf "disable themes:i:0\n" >> "$rdpfile"
     printf "disable cursor setting:i:0\n" >> "$rdpfile"
     printf "bitmapcachepersistenable:i:1\n" >> "$rdpfile"
-    if [[ "$tools_access_found" =~ "cryptrdp5" ]]; then
+    if [[ "$tools_access_found" =~ "cryptRDP5" ]]; then
         if [ "$xsastype" = "user" -a "$xsasupwd" ]; then
-            typeset rdphash="$("$cryptrdp5" "$xsasupwd")"
+            typeset rdphash="$(cryptRDP5.exe "$xsasupwd")"
             printf "password 51:b:$rdphash\n" >> "$rdpfile"
         elif [ "$xsastype" = "admin" -a "$xsasapwd" ]; then
-            typeset rdphash="$("$cryptrdp5" "$xsasapwd")"
+            typeset rdphash="$(cryptRDP5.exe "$xsasapwd")"
             printf "password 51:b:$rdphash\n" >> "$rdpfile"
         fi
     fi
@@ -3847,7 +3847,7 @@ function mstscDesktopHandler {
     reportDebugFuncEntry "$*"
 
     rdpFileWriter
-    mstsc "$(toLocalWindowsPath "$rdpfile")" 2>/dev/null &
+    mstsc.exe "$(toLocalWindowsPath "$rdpfile")"
 }
 
 # amsrdcDesktopHandler()
