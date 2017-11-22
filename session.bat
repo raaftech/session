@@ -19,30 +19,14 @@ set forwarded=!input:%match%=%replace%!
 :: Set human HOME to MinGW style path.
 set HOME=%forwarded%
 
-:: Set putty HOME.
-set PUTTY_HOME=%ProgramFiles(x86)%/PuTTY
-
-:: Set msys HOME.
-set MSYS_HOME=%ProgramFiles(x86)%/MinGW/msys/1.0
-
-:: Set msys EXECUTABLE.
-set MSYS_EXECUTABLE=%MSYS_HOME%/bin/bash.exe
+:: Set bash EXECUTABLE.
+set BASH_EXECUTABLE=bash.exe
 
 :: Set session HOME.
-set SESSION_HOME=/C/Data/Source/Projects/Maintenance/Session/build
+set SESSION_HOME=/mnt/d/Dropbox/Source/RAAF/session
 
 :: Set session EXECUTABLE.
 set SESSION_EXECUTABLE=%SESSION_HOME%/session.sh
 
-:: Determine which cmd.exe to use
-set SESSION_CMD=%COMSPEC%
-if %PROCESSOR_ARCHITECTURE%==x86 set SESSION_CMD=%COMSPEC%
-if %PROCESSOR_ARCHITECTURE%==AMD64 set SESSION_CMD=%WINDIR%\SysWOW64\cmd.exe
-
-:: Append path.
-set PATH=%MSYS_HOME%/bin;%PUTTY_HOME%;%PATH%
-
 :: Invoke session directly.
-REM "%SESSION_CMD%" /c ""%MSYS_EXECUTABLE%" "%SESSION_EXECUTABLE%"" %*
-"%MSYS_EXECUTABLE%" "%SESSION_EXECUTABLE%" %*
-
+"%BASH_EXECUTABLE%" "%SESSION_EXECUTABLE%" %*
