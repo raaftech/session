@@ -444,6 +444,8 @@ function scpSendCommandWriter {
 function toolFinder {
     reportDebugFuncEntry "$*" "usrcfd color"
 
+    typeset IFS=","
+
     typeset tools_terminal
     typeset tools_desktop
     typeset tools_browser
@@ -485,8 +487,8 @@ function toolFinder {
     if [ "$desktop" = "mstsc" ]; then
         tools_desktop="$cryptrdp5,$mstsc"
     elif [ "$desktop" = "amsrdc" ]; then
-        PATH="${PATH}:/Applications/Remote Desktop Connection.app/Contents/MacOS"
-        tools_desktop="Remote Desktop Connection"
+        PATH="${PATH}:/Applications/Microsoft Remote Desktop.app/Contents/MacOS"
+        tools_desktop="Microsoft Remote Desktop"
     elif [ "$desktop" = "rdesktop" ]; then
         tools_desktop="rdesktop"
     fi
@@ -504,30 +506,29 @@ function toolFinder {
         fi
     fi
 
+    # Construct tools_access_result from tools_terminal, tools_desktop and tools_browser
     for tools_access_type in tools_terminal tools_desktop tools_browser; do
-        typeset current="$(eval printf '%s\\n' "\$$tools_access_type")"
+        typeset current="$(eval printf '%s\\n' "\$$tools_access_type" | tr '\r\n' ',' | sed 's|,$||g')"
         if [ "$current" ]; then
             tools_access_result="$current,$tools_access_result"
         fi
     done
+
     printf "tools_access='$tools_access_result'\n" | sed "s|,'$|'|" >> "$usrcfd/cfg/tools.required"
 
     # Clean up old tools.found first.
     rm -f "$usrcfd/cfg/tools.found"
 
-    # Read tooltypes from generated tools.required.
-    tooltypes="$(cat "$usrcfd/cfg/tools.required" | cut -d "=" -f 1)"
+    # Read tooltypes from generated tools.required, create comma-separated list.
+    tooltypes="$(cat "$usrcfd/cfg/tools.required" | cut -d "=" -f 1 | tr '\r\n' ',' | sed 's|,$||g')"
 
     # Loop over all tooltypes and for each tooltype over its values.
-    ORIG_IFS="$IFS"
-    typeset IFS="$ORIG_IFS"
     for tooltype in $tooltypes ; do
         values="$(cat "$usrcfd/cfg/tools.required" | grep $tooltype | cut -d '=' -f 2 | sed "s|'||g")"
 
         printf "$(printf "$tooltype\n" | cut -d "_" -f 2): "
         printf "${tooltype}_found='" >> "$usrcfd/cfg/tools.found"
 
-        IFS=","
         for tool in $values ; do
             if [ ! "$color" ]; then
                 unset color_red color_green color_yellow color_blue color_end
