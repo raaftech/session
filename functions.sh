@@ -3533,12 +3533,13 @@ function appleTerminalHandler {
         # If Keychain is running, check to see if a prompt has started, wait for it to close.
         waitForDialog "securityd" "SecurityAgent"
 
-        # Set title (only if sshkey is set and agent enabled, due to non-interactivity requirement).
-        if [ "$titling" -a "$sshkey" -a "$agent" ]; then
-            printf 'activate application "Terminal"'\n > "$usrcfd/tmp/session.title.$name.scpt"
-            printf 'tell application "System Events" to tell process "Terminal" to keystroke "PS1=\"[\\u@\\h \\W]\\$ \" ; PROMPT_COMMAND="'\n >> "$usrcfd/tmp/session.title.$name.scpt"
-            printf "tell application \"System Events\" to tell process \"Terminal\" to keystroke quoted form of \"echo -ne \\\"\\\\033]0;$title\\\\007\\\"\"\n" >> "$usrcfd/tmp/session.title.$name.scpt"
-            printf 'tell application "System Events" to tell process "Terminal" to keystroke return'\n >> "$usrcfd/tmp/session.title.$name.scpt"
+        # Set title (only if agent enabled, due to non-interactivity requirement).
+        if [ "$titling" -a "$agent" ]; then
+            printf 'activate application "Terminal"\n' > "$usrcfd/tmp/session.title.$name.scpt"
+            printf 'tell application "System Events" to tell process "Terminal" to keystroke "echo -ne \\"\\\\033]0;' >> "$usrcfd/tmp/session.title.$name.scpt"
+            printf "$title" >> "$usrcfd/tmp/session.title.$name.scpt"
+            printf '\\\\007\\""\n' >> "$usrcfd/tmp/session.title.$name.scpt"
+            printf 'tell application "System Events" to tell process "Terminal" to keystroke return' >> "$usrcfd/tmp/session.title.$name.scpt"
             osascript "$usrcfd/tmp/session.title.$name.scpt"
             rm "$usrcfd/tmp/session.title.$name.scpt"
         fi
@@ -3558,12 +3559,13 @@ function appleTerminalHandler {
         # If Keychain is running, check to see if a prompt has started, wait for it to close.
         waitForDialog "securityd" "SecurityAgent"
 
-        # Set title (only if sshkey is set and agent enabled, due to non-interactivity requirement).
-        if [ "$titling" -a "$sshkey" -a "$agent" ]; then
-            printf 'activate application "Terminal"'\n > "$usrcfd/tmp/session.title.$name.scpt"
-            printf 'tell application "System Events" to tell process "Terminal" to keystroke "PS1=\"[\\u@\\h \\W]\\$ \" ; PROMPT_COMMAND="'\n >> "$usrcfd/tmp/session.title.$name.scpt"
-            printf "tell application \"System Events\" to tell process \"Terminal\" to keystroke quoted form of \"echo -ne \\\"\\\\033]0;$title\\\\007\\\"\"\n" >> "$usrcfd/tmp/session.title.$name.scpt"
-            printf 'tell application "System Events" to tell process "Terminal" to keystroke return'\n >> "$usrcfd/tmp/session.title.$name.scpt"
+        # Set title (only if agent enabled, due to non-interactivity requirement).
+        if [ "$titling" -a "$agent" ]; then
+            printf 'activate application "Terminal"\n' > "$usrcfd/tmp/session.title.$name.scpt"
+            printf 'tell application "System Events" to tell process "Terminal" to keystroke "echo -ne \\"\\\\033]0;' >> "$usrcfd/tmp/session.title.$name.scpt"
+            printf "$title" >> "$usrcfd/tmp/session.title.$name.scpt"
+            printf '\\\\007\\""\n' >> "$usrcfd/tmp/session.title.$name.scpt"
+            printf 'tell application "System Events" to tell process "Terminal" to keystroke return' >> "$usrcfd/tmp/session.title.$name.scpt"
             osascript "$usrcfd/tmp/session.title.$name.scpt"
             rm "$usrcfd/tmp/session.title.$name.scpt"
         fi
