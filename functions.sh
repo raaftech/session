@@ -105,7 +105,7 @@ function isLocal {
     reportDebugFuncEntry "$*"
 
     [ "$hostname" ] || return 1
-    [[ "$1" =~ "$hostname" ]]
+    [ "$1" = "$hostname" ]
 }
 
 # toLocalWindowsPath(<path>)
