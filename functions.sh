@@ -1035,11 +1035,16 @@ function printPingState {
         return
     fi
 
-    command="$nmap -n -Pn -sP $addr"
-    match="Host is up"
+    if [ "$platform" = "bsd" -o "$platform" = "macosx" ]; then
+        command="ping -c1 -t1 $addr"
+    elif [ "$platform" = "linux" ]; then
+        command="ping -c1 -W1 $addr"
+    elif [ "$platform" = "windows" ]; then
+        command="ping.exe -n 1 -w 1000 $addr"
+    fi
 
     reportDebug "Command is: $privy $command"
-    $privy $command 2>/dev/null | grep -q "$match" >/dev/null
+    $privy $command >/dev/null 2>&1
     if [ "$?" = 0 ]; then
         reportDebug "$addr is reachable"
         printf "reachable\n"
