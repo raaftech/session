@@ -1035,7 +1035,7 @@ function printPingState {
         return
     fi
 
-    command="$nmap -sP $addr"
+    command="$nmap -n -Pn -sP $addr"
     match="Host is up"
 
     reportDebug "Command is: $privy $command"
