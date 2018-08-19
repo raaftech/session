@@ -465,7 +465,7 @@ function toolFinder {
         printf "tools_agent='ssh-agent,ssh-add'\n" >> "$usrcfd/cfg/tools.required"
         printf "tools_send='cp,scp,smbclient'\n" >> "$usrcfd/cfg/tools.required"
     elif [ "$platform" = "windows" ]; then
-        printf "tools_session='awk,cut,grep,$nmap,nslookup,sed,tr,$pslist'\n" > "$usrcfd/cfg/tools.required"
+        printf "tools_session='awk,cut,grep,$nmap,nslookup.exe,sed,tr,$pslist'\n" > "$usrcfd/cfg/tools.required"
         printf "tools_execute='$plink,$psexec'\n" >> "$usrcfd/cfg/tools.required"
         printf "tools_agent='$pageant'\n" >> "$usrcfd/cfg/tools.required"
         printf "tools_send='$pscp,$robocopy'\n" >> "$usrcfd/cfg/tools.required"
