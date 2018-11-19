@@ -23,7 +23,7 @@ set HOME=%forwarded%
 set BASH_EXECUTABLE=bash.exe
 
 :: Set session HOME.
-set SESSION_HOME=/mnt/d/Dropbox/Source/RAAF/session
+set SESSION_HOME=/mnt/c/Users/rubin/Syncthing/Source/RAAF/session
 
 :: Set session EXECUTABLE.
 set SESSION_EXECUTABLE=%SESSION_HOME%/session.sh
