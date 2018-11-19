@@ -3472,9 +3472,7 @@ function puttyTerminalHandler {
 
     wsl=$(uname -a | grep Microsoft)
     if [ "$wsl" ]; then
-        # Don't use start /b prefix on Windows 10's Bash on Ubuntu on Windows
-        prefix=''
-    else
+        # Use start /b prefix on Windows 10's Bash on Ubuntu on Windows
         prefix='start /b'
     fi
 
