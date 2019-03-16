@@ -2917,10 +2917,10 @@ function vmfVirtHandler {
             result="$(command="\"$vmhome/vmrun\" listSnapshots \"$vmdata/$name.vmwarevm/$name.vmx\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasuser)"
             case "$result" in
               *"Error: Cannot open VM"*)
-                vmstate="inactive"
+                vmstate="non-existing"
                 ;;
               *)
-                vmstate="non-existing"
+                vmstate="inactive"
                 ;;
             esac
             ;;
