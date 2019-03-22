@@ -3530,8 +3530,15 @@ function appleTerminalHandler {
         printf "tell application \"System Events\" to tell process \"Terminal\" to keystroke \"t\" using command down\n" >> "$usrcfd/tmp/session.access.$name.scpt"
         printf "do script \"$line\" in last tab of front window\n" >> "$usrcfd/tmp/session.access.$name.scpt"
         printf "end tell\n" >> "$usrcfd/tmp/session.access.$name.scpt"
+
         osascript "$usrcfd/tmp/session.access.$name.scpt"
-        rm "$usrcfd/tmp/session.access.$name.scpt"
+
+        if [ "$debug" ]; then
+            reportDebug "Not removing $usrcfd/tmp/session.access.$name.scpt"
+        else
+            rm "$usrcfd/tmp/session.access.$name.scpt"
+        fi
+
 
         # If Keychain is running, check to see if a prompt has started, wait for it to close.
         waitForDialog "securityd" "SecurityAgent"
@@ -3539,12 +3546,20 @@ function appleTerminalHandler {
         # Set title (only if agent enabled, due to non-interactivity requirement).
         if [ "$titling" -a "$agent" ]; then
             printf 'activate application "Terminal"\n' > "$usrcfd/tmp/session.title.$name.scpt"
+            printf 'tell application "System Events" to tell process "Terminal" to keystroke "unset PROMPT_COMMAND"\n' >> "$usrcfd/tmp/session.title.$name.scpt"
+            printf 'tell application "System Events" to tell process "Terminal" to keystroke return\n' >> "$usrcfd/tmp/session.title.$name.scpt"
             printf 'tell application "System Events" to tell process "Terminal" to keystroke "echo -ne \\"\\\\033]0;' >> "$usrcfd/tmp/session.title.$name.scpt"
             printf "$title" >> "$usrcfd/tmp/session.title.$name.scpt"
             printf '\\\\007\\""\n' >> "$usrcfd/tmp/session.title.$name.scpt"
-            printf 'tell application "System Events" to tell process "Terminal" to keystroke return' >> "$usrcfd/tmp/session.title.$name.scpt"
+            printf 'tell application "System Events" to tell process "Terminal" to keystroke return\n' >> "$usrcfd/tmp/session.title.$name.scpt"
+
             osascript "$usrcfd/tmp/session.title.$name.scpt"
-            rm "$usrcfd/tmp/session.title.$name.scpt"
+
+            if [ "$debug" ]; then
+                reportDebug "Not removing $usrcfd/tmp/session.title.$name.scpt"
+            else
+                rm "$usrcfd/tmp/session.title.$name.scpt"
+            fi
         fi
 
         # Return to first tab.
@@ -3556,8 +3571,14 @@ function appleTerminalHandler {
         printf "tell application \"System Events\" to tell process \"Terminal\" to keystroke \"n\" using command down\n" >> "$usrcfd/tmp/session.access.$name.scpt"
         printf "do script \"$line\" in last tab of front window\n" >> "$usrcfd/tmp/session.access.$name.scpt"
         printf "end tell\n" >> "$usrcfd/tmp/session.access.$name.scpt"
+
         osascript "$usrcfd/tmp/session.access.$name.scpt"
-        rm "$usrcfd/tmp/session.access.$name.scpt"
+
+        if [ "$debug" ]; then
+            reportDebug "Not removing $usrcfd/tmp/session.access.$name.scpt"
+        else
+            rm "$usrcfd/tmp/session.access.$name.scpt"
+        fi
 
         # If Keychain is running, check to see if a prompt has started, wait for it to close.
         waitForDialog "securityd" "SecurityAgent"
@@ -3565,12 +3586,20 @@ function appleTerminalHandler {
         # Set title (only if agent enabled, due to non-interactivity requirement).
         if [ "$titling" -a "$agent" ]; then
             printf 'activate application "Terminal"\n' > "$usrcfd/tmp/session.title.$name.scpt"
+            printf 'tell application "System Events" to tell process "Terminal" to keystroke "unset PROMPT_COMMAND"\n' >> "$usrcfd/tmp/session.title.$name.scpt"
+            printf 'tell application "System Events" to tell process "Terminal" to keystroke return\n' >> "$usrcfd/tmp/session.title.$name.scpt"
             printf 'tell application "System Events" to tell process "Terminal" to keystroke "echo -ne \\"\\\\033]0;' >> "$usrcfd/tmp/session.title.$name.scpt"
             printf "$title" >> "$usrcfd/tmp/session.title.$name.scpt"
             printf '\\\\007\\""\n' >> "$usrcfd/tmp/session.title.$name.scpt"
-            printf 'tell application "System Events" to tell process "Terminal" to keystroke return' >> "$usrcfd/tmp/session.title.$name.scpt"
+            printf 'tell application "System Events" to tell process "Terminal" to keystroke return\n' >> "$usrcfd/tmp/session.title.$name.scpt"
+
             osascript "$usrcfd/tmp/session.title.$name.scpt"
-            rm "$usrcfd/tmp/session.title.$name.scpt"
+
+            if [ "$debug" ]; then
+                reportDebug "Not removing $usrcfd/tmp/session.title.$name.scpt"
+            else
+                rm "$usrcfd/tmp/session.title.$name.scpt"
+            fi
         fi
     fi
 }
