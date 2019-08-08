@@ -319,7 +319,7 @@ function sshTellCommandWriter {
     typeset user="$2"
     typeset command="$3"
 
-    printf "ssh $sshopts -l '$user' '$host' '$command'\n"
+    printf "ssh $sshopts -l '$user' '$host' -q '$command'\n"
 }
 
 # localSendCommandWriter(<source> <target>)
