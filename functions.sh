@@ -610,8 +610,9 @@ function handleSshPrivateKeys {
                 reportDebug "Loading ssh key(s) into ssh-agent "
                 ssh-add
             fi
-        elif [ "$sshkey" -a "$agent" == "gpg-agent" ]; then
-            reportInfo "You have set agent to gpg-agent; assuming your keys are loaded."
+        elif [ "$agent" == "gpg-agent" ]; then
+            reportDebug "You have set agent to gpg-agent; assuming your keys are loaded."
+            sshkey=in-gpg
         fi
 
         # Disable strict host and reverse mapping checks if not already set.
@@ -3659,7 +3660,8 @@ function gnomeTerminalHandler {
 
             # Set title (only if sshkey is set and agent enabled, due to non-interactivity requirement).
             if [ "$titling" -a "$sshkey" -a "$agent" ]; then
-                xdotool type --clearmodifiers --delay=10 "PS1=\"[\\u@\\h \\W]\\$ \" ; PROMPT_COMMAND='echo -ne \"\\033]0;\"$title\"\\007\"'"
+                if [ "$user" == "root" ]; then symbol='#' ; else symbol='$' ; fi
+                xdotool type --clearmodifiers --delay=10 "PS1=\"[\\u@\\h \\W]$symbol \" ; PROMPT_COMMAND='echo -ne \"\\033]0;\"$title\"\\007\"'"
                 xdotool key Return
             fi
 
@@ -3672,7 +3674,8 @@ function gnomeTerminalHandler {
         # Set title (only if sshkey is set and agent enabled, due to non-interactivity requirement).
         if [ "$titling" -a "$sshkey" -a "$agent" ]; then
             gnome-terminal --command="$line"
-            xdotool type --clearmodifiers --delay=10 "PS1=\"[\\u@\\h \\W]\\$ \" ; PROMPT_COMMAND='echo -ne \"\\033]0;\"$title\"\\007\"'"
+            if [ "$user" == "root" ]; then symbol='#' ; else symbol='$' ; fi
+            xdotool type --clearmodifiers --delay=10 "PS1=\"[\\u@\\h \\W]$symbol \" ; PROMPT_COMMAND='echo -ne \"\\033]0;\"$title\"\\007\"'"
             xdotool key Return
         else
             gnome-terminal --command="$line"
@@ -3713,7 +3716,8 @@ function urxvtTerminalHandler {
     # Set title (only if sshkey is set and agent enabled, due to non-interactivity requirement).
     if [ "$titling" -a "$sshkey" -a "$agent" ]; then
         urxvt -e bash -c "$line" &
-        xdotool type --clearmodifiers --delay=10 "PS1=\"[\\u@\\h \\W]\\$ \" ; PROMPT_COMMAND='echo -ne \"\\033]0;\"$title\"\\007\"'"
+        if [ "$user" == "root" ]; then symbol='#' ; else symbol='$' ; fi
+        xdotool type --clearmodifiers --delay=10 "PS1=\"[\\u@\\h \\W]$symbol \" ; PROMPT_COMMAND='echo -ne \"\\033]0;\"$title\"\\007\"'"
         xdotool key Return
     else
         urxvt -e bash -c "$line" &
@@ -4715,14 +4719,16 @@ function mapEntryPoint {
             typeset title="$(capsFirst "$hostname")"
             sleep 1
             xdotool key alt+1
-            xdotool type --clearmodifiers --delay=10 "PS1=\"[\\u@\\h \\W]\\$ \" ; PROMPT_COMMAND='echo -ne \"\\033]0;\"$title\"\\007\"'"
+            if [ "$user" == "root" ]; then symbol='#' ; else symbol='$' ; fi
+            xdotool type --clearmodifiers --delay=10 "PS1=\"[\\u@\\h \\W]$symbol \" ; PROMPT_COMMAND='echo -ne \"\\033]0;\"$title\"\\007\"'"
             xdotool key Return
         # Set the title of the local (first) tab.
         elif [ "$terminal" = "apple" -a "$titling" -a "$tabbed" -a "$sshkey" -a "$agent" ]; then
             reportDebug "Terminal exit hook for apple: titling typeset terminal screen"
             typeset title="$(capsFirst "$hostname")"
             printf 'activate application "Terminal"'\n > "$usrcfd/tmp/session.title.$hostname.scpt"
-            printf 'tell application "System Events" to tell process "Terminal" to keystroke "PS1=\"[\\u@\\h \\W]\\$ \" ; PROMPT_COMMAND="'\n >> "$usrcfd/tmp/session.title.$hostname.scpt"
+            if [ "$user" == "root" ]; then symbol='#' ; else symbol='$' ; fi
+            printf 'tell application "System Events" to tell process "Terminal" to keystroke "PS1=\"[\\u@\\h \\W]$symbol \" ; PROMPT_COMMAND="'\n >> "$usrcfd/tmp/session.title.$hostname.scpt"
             printf "tell application \"System Events\" to tell process \"Terminal\" to keystroke quoted form of \"echo -ne \\\"\\\\033]0;$title\\\\007\\\"\"\n" >> "$usrcfd/tmp/session.title.$hostname.scpt"
             printf 'tell application "System Events" to tell process "Terminal" to keystroke return'\n >> "$usrcfd/tmp/session.title.$hostname.scpt"
             osascript "$usrcfd/tmp/session.title.$hostname.scpt"

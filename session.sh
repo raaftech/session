@@ -185,7 +185,7 @@ if [ "$tabbed" != 0 ]; then tabbed="true" ; else unset tabbed ; fi
 if [ "$color" != 0 ]; then color="true" ; else unset color ; fi
 
 # Enable (*) or disable (0) ssh agent (ssh-agent).
-if [ "$agent" != 0 ]; then agent="true" ; else unset agent ; fi
+if [ "$agent" != 0 ]; then agent="$agent" ; else unset agent ; fi
 
 # Enable (*) or disable (0) privilege escalation for various routines.
 # This enables the (optional) use of sudo or runas when running commands
