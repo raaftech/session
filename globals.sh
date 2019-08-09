@@ -82,7 +82,7 @@ fi
 # Locations of configuration files.
 syscfd="/etc/session"
 syscff="$syscfd/cfg/session.conf"
-sysopt="$syscfd/cfg/options.conf"
+sysopt="$syscfd/cfg/options.env"
 if [ "$environment" = "wsl" ]; then
     # wsl has no normal unix-path/win-path mechanism. make sure usrcfd is outside the lxss folder.
     usrcfd="/mnt/c/Users/$USER/.session"
@@ -90,7 +90,7 @@ else
     usrcfd="$HOME/.session"
 fi
 usrcff="$usrcfd/cfg/session.conf"
-usropt="$usrcfd/cfg/options.conf"
+usropt="$usrcfd/cfg/options.env"
 config="$usrcfd/tmp/session.conf.active"
 
 # Location of log file.
@@ -116,7 +116,7 @@ else
     pslist="unknown"
 fi
 
-# Platform specific options.conf default settings.
+# Platform specific options.env default settings.
 if [ "$platform" = "linux" ]; then
     terminal="screen"
     desktop="xfreerdp"
@@ -169,7 +169,7 @@ else
     privesc="none"
 fi
 
-# Static options.conf default settings.
+# Static options.env default settings.
 execute="1"
 access="1"
 create="1"

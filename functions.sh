@@ -1096,8 +1096,8 @@ function printState {
         fi
         printf "\n"
 
-        sysopts="$syscfd/sys/$name/options.conf"
-        usropts="$usrcfd/sys/$name/options.conf"
+        sysopts="$syscfd/sys/$name/options.env"
+        usropts="$usrcfd/sys/$name/options.env"
 
         if [ -e "$usropts" ]; then
             printf "# extra options (set locally):\n"
@@ -1109,8 +1109,8 @@ function printState {
             printf "\n"
         fi
 
-        sysopts="$syscfd/sys/$host/options.conf"
-        usropts="$usrcfd/sys/$host/options.conf"
+        sysopts="$syscfd/sys/$host/options.env"
+        usropts="$usrcfd/sys/$host/options.env"
 
         if [ -e "$usropts" ]; then
             printf "# inherited options (from host, set locally):\n"
@@ -1908,13 +1908,13 @@ function parseGroup {
     name="$1" ; [ "$name" ] || { reportError "No name passed" ; return 1 ; }
 
     # Source group extra options from global settings.
-    opts="$syscfd/sys/$name/options.conf"
+    opts="$syscfd/sys/$name/options.env"
     if [ -e "$opts" ]; then
         . "$opts"
     fi
 
     # Source group extra options from local settings (might override global options).
-    opts="$usrcfd/sys/$name/options.conf"
+    opts="$usrcfd/sys/$name/options.env"
     if [ -e "$opts" ]; then
         . "$opts"
     fi
@@ -1970,13 +1970,13 @@ function parseHost {
     fi
 
     # Source host extra options from global settings.
-    opts="$syscfd/sys/$name/options.conf"
+    opts="$syscfd/sys/$name/options.env"
     if [ -e "$opts" ]; then
         . "$opts"
     fi
 
     # Source host extra options from local settings (might override global options).
-    opts="$usrcfd/sys/$name/options.conf"
+    opts="$usrcfd/sys/$name/options.env"
     if [ -e "$opts" ]; then
         . "$opts"
     fi
@@ -2031,15 +2031,15 @@ function parseGuest {
     fi
 
     # Source both parent host and guest extra options from global settings.
-    opts="$syscfd/sys/$host/options.conf"
+    opts="$syscfd/sys/$host/options.env"
     if [ -e "$opts" ]; then . "$opts" ; fi
-    opts="$syscfd/sys/$name/options.conf"
+    opts="$syscfd/sys/$name/options.env"
     if [ -e "$opts" ]; then . "$opts" ; fi
 
     # Source both parent host and guest extra options from local settings.
-    opts="$usrcfd/sys/$host/options.conf"
+    opts="$usrcfd/sys/$host/options.env"
     if [ -e "$opts" ]; then . "$opts" ; fi
-    opts="$usrcfd/sys/$name/options.conf"
+    opts="$usrcfd/sys/$name/options.env"
     if [ -e "$opts" ]; then . "$opts" ; fi
 
     return 0
@@ -2124,15 +2124,15 @@ function parseService {
     fi
 
     # Source both parent host and service extra options from global settings.
-    opts="$syscfd/sys/$host/options.conf"
+    opts="$syscfd/sys/$host/options.env"
     if [ -e "$opts" ]; then . "$opts" ; fi
-    opts="$syscfd/sys/$name/options.conf"
+    opts="$syscfd/sys/$name/options.env"
     if [ -e "$opts" ]; then . "$opts" ; fi
 
     # Source both parent host and service extra options from local settings.
-    opts="$usrcfd/sys/$host/options.conf"
+    opts="$usrcfd/sys/$host/options.env"
     if [ -e "$opts" ]; then . "$opts" ; fi
-    opts="$usrcfd/sys/$name/options.conf"
+    opts="$usrcfd/sys/$name/options.env"
     if [ -e "$opts" ]; then . "$opts" ; fi
 
     return 0
@@ -2142,7 +2142,7 @@ function parseService {
 # Sets variables.
 #
 # Check the state of a host, guest or service.
-# Also, initialize state variables and variables in options.conf.
+# Also, initialize state variables and variables in options.env.
 #
 function checkState {
     reportDebugFuncEntry "$*" "type acmt exmt"
@@ -4091,7 +4091,7 @@ function httpAccessHandler {
         if [ "$acstate" = "active" -a "$browser" != "none" ]; then
             ${browser}BrowserHandler "$proto://$addr:$port"
         elif [ "$browser" = "none" ]; then
-            reportError "Browser handler was set to \"none\" in options.conf."
+            reportError "Browser handler was set to \"none\" in options.env."
             return 1
         else
             reportError "Failed to access $name on $addr over $acmt (acstate=$acstate)"
@@ -4107,7 +4107,7 @@ function httpAccessHandler {
 # Sets acstate, runs commands.
 #
 # Either determine the state of, or access system using the telnet protocol
-# and the terminal handler specified in options.conf.
+# and the terminal handler specified in options.env.
 #
 function telAccessHandler {
     reportDebugFuncEntry "$*" "name addr acstate terminal"
@@ -4130,7 +4130,7 @@ function telAccessHandler {
         if [ "$acstate" = "active" -a "$terminal" != "none" ]; then
             ${terminal}TerminalHandler tel
         elif [ "$terminal" = "none" ]; then
-            reportError "Terminal handler was set to \"none\" in options.conf."
+            reportError "Terminal handler was set to \"none\" in options.env."
             return 1
         else
             reportError "Failed to access $name on $addr over $acmt (acstate=$acstate)"
@@ -4146,7 +4146,7 @@ function telAccessHandler {
 # Sets acstate, runs commands.
 #
 # Either determine the state of, or access system using the ssh protocol
-# and the terminal handler specified in options.conf.
+# and the terminal handler specified in options.env.
 #
 function sshAccessHandler {
     reportDebugFuncEntry "$*" "name addr acstate terminal"
@@ -4169,7 +4169,7 @@ function sshAccessHandler {
         if [ "$acstate" = "active" ]; then
             ${terminal}TerminalHandler ssh
          elif [ "$terminal" = "none" ]; then
-            reportError "Terminal handler was set to \"none\" in options.conf."
+            reportError "Terminal handler was set to \"none\" in options.env."
             return 1
         else
             reportError "Failed to access $name on $addr over $acmt (acstate=$acstate)"
@@ -4185,7 +4185,7 @@ function sshAccessHandler {
 # Sets acstate, runs commands.
 #
 # Either determine the state of, or access system using the rdp protocol
-# and the desktop handler specified in options.conf.
+# and the desktop handler specified in options.env.
 #
 function rdpAccessHandler {
     reportDebugFuncEntry "$*" "name addr acstate desktop"
@@ -4208,7 +4208,7 @@ function rdpAccessHandler {
         if [ "$acstate" = "active" -a "$desktop" != "none" ] && { ! isLoopback "$addr" || ! isLocal "$name" ; } ; then
             ${desktop}DesktopHandler
         elif [ "$desktop" = "none" ]; then
-            reportError "Desktop handler was set to \"none\" in options.conf."
+            reportError "Desktop handler was set to \"none\" in options.env."
             return 1
         else
             reportError "Failed to access $name on $addr over $acmt (acstate=$acstate)"
