@@ -2203,20 +2203,19 @@ function checkState {
         elif [ "$acstate" = "none" -a "$exstate" = "active" ]; then
             state="on"
         else
-            typeset parentstate="$(parseEntry "$host" ; checkState ; printf "$state\n")"
-            if [ "$parentstate" = "on" ]; then
+            # If exmt is vmn (virtual machine native), ${vrmt}VirtHandler state was already called, so skip.
+            if [ "$exmt" != "vmn" ]; then
                 ${vrmt}VirtHandler state
-                if [ "$vmstate" = "active" -a "$acstate" = "none" -a "$exstate" = "none" ]; then
-                    state="on"
-                elif [ "$vmstate" = "active" ]; then
-                    state="busy"
-                elif [ "$vmstate" = "inactive" ] ;then
-                    state="off"
-                else
-                    state="$vmstate"
-                fi
+            fi
+
+            if [ "$vmstate" = "active" -a "$acstate" = "none" -a "$exstate" = "none" ]; then
+                state="on"
+            elif [ "$vmstate" = "active" ]; then
+                state="busy"
+            elif [ "$vmstate" = "inactive" ] ;then
+                state="off"
             else
-                state="$parentstate"
+                state="$vmstate"
             fi
         fi
 
@@ -4503,7 +4502,8 @@ function vmnExecHandler {
 
     case "$1" in
       state)
-        exstate="active"
+        ${vrmt}VirtHandler state
+        exstate="$vmstate"
         ;;
       runasuser|runasadmin|runasservice)
         ${vrmt}VirtHandler exec
