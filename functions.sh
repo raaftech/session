@@ -3355,19 +3355,19 @@ function dockerVirtHandler {
         ;;
       start)
         if [ "$state" = "off" ]; then
-            (command="docker start \"$name\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin) 2>/dev/null
+            (command="docker start \"$name\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin) >/dev/null
             state="booting"
         fi
         ;;
       stop)
         if [ "$state" = "on" ]; then
-            (command="docker stop \"$name\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin) 2>/dev/null
+            (command="docker stop \"$name\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin) >/dev/null
             state="stopping"
         fi
         ;;
       restart)
         if [ "$state" = "on" ]; then
-            (command="docker restart \"$name\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin) 2>/dev/null
+            (command="docker restart \"$name\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin) >/dev/null
             state="restarting"
         fi
         ;;
