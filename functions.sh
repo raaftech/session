@@ -3361,13 +3361,13 @@ function dockerVirtHandler {
         ;;
       stop)
         if [ "$state" = "on" ]; then
-            (command="docker stop \"$name\"" ; ${exmt}ExecHandler runasadmin) 2>/dev/null
+            (command="docker stop \"$name\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin) 2>/dev/null
             state="stopping"
         fi
         ;;
       restart)
         if [ "$state" = "on" ]; then
-            (command="docker restart \"$name\"" ; ${exmt}ExecHandler runasadmin) 2>/dev/null
+            (command="docker restart \"$name\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin) 2>/dev/null
             state="restarting"
         fi
         ;;
