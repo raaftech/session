@@ -132,6 +132,7 @@ else
     fi
 fi
 
+
 # Initialize functions.
 source "$SESSION_HOME/functions.sh"
 

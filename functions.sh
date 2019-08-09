@@ -2206,7 +2206,9 @@ function checkState {
             typeset parentstate="$(parseEntry "$host" ; checkState ; printf "$state\n")"
             if [ "$parentstate" = "on" ]; then
                 ${vrmt}VirtHandler state
-                if [ "$vmstate" = "active" ]; then
+                if [ "$vmstate" = "active" -a "$acstate" = "none" -a "$exstate" = "none" ]; then
+                    state="on"
+                elif [ "$vmstate" = "active" ]; then
                     state="busy"
                 elif [ "$vmstate" = "inactive" ] ;then
                     state="off"
@@ -2550,6 +2552,10 @@ function noneVirtHandler {
             return 1
         fi
         ;;
+      exec)
+        reportError "Not implemented: I don't know how to execute natively with 'none' as vrmt"
+        return 1
+        ;;
     esac
 
     return 0
@@ -2653,6 +2659,10 @@ function kvmVirtHandler {
             return 1
         fi
         ;;
+      exec)
+        reportError "Haven't implemented $1 yet"
+        return 1
+        ;;
     esac
 
     return 0
@@ -2708,6 +2718,10 @@ function xenVirtHandler {
             reportError "Destroy is disabled"
             return 1
         fi
+        ;;
+      exec)
+        reportError "Haven't implemented $1 yet"
+        return 1
         ;;
     esac
 
@@ -2771,6 +2785,10 @@ function vboxVirtHandler {
             reportError "Destroy is disabled"
             return 1
         fi
+        ;;
+      exec)
+        reportError "Haven't implemented $1 yet"
+        return 1
         ;;
     esac
 
@@ -2890,6 +2908,10 @@ function vmwVirtHandler {
             return 1
         fi
         ;;
+      exec)
+        reportError "Haven't implemented $1 yet"
+        return 1
+        ;;
     esac
 
     return 0
@@ -2995,6 +3017,10 @@ function vmfVirtHandler {
             return 1
         fi
         ;;
+      exec)
+        reportError "Haven't implemented $1 yet"
+        return 1
+        ;;
     esac
 
     return 0
@@ -3096,6 +3122,10 @@ function esxVirtHandler {
             return 1
         fi
         ;;
+      exec)
+        reportError "Haven't implemented $1 yet"
+        return 1
+        ;;
     esac
 
     return 0
@@ -3157,6 +3187,10 @@ function hpvmVirtHandler {
             return 1
         fi
         ;;
+      exec)
+        reportError "Haven't implemented $1 yet"
+        return 1
+        ;;
     esac
 
     return 0
@@ -3217,6 +3251,10 @@ function ldomVirtHandler {
             reportError "Destroy is disabled"
             return 1
         fi
+        ;;
+      exec)
+        reportError "Haven't implemented $1 yet"
+        return 1
         ;;
     esac
 
@@ -3281,6 +3319,69 @@ function pvmVirtHandler {
             reportError "Destroy is disabled"
             return 1
         fi
+        ;;
+      exec)
+        reportError "Haven't implemented $1 yet"
+        return 1
+        ;;
+    esac
+
+    return 0
+}
+
+# dockerVirtHandler(state|start|stop|restart|create|destroy)
+# Sets vmstate, runs commands.
+#
+# Handle Docker container related commands.
+#
+function dockerVirtHandler {
+    reportDebugFuncEntry "$*" "name host state destroy"
+
+    typeset result
+
+    case "$1" in
+      state)
+        result="$(command="docker ps --all --format \"{{.Names}},{{.Status}}\" | grep -i \"$name\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin)"
+        case "$result" in
+          *Up*)
+            vmstate="active"
+            ;;
+          *Exited*)
+            vmstate="inactive"
+            ;;
+          *)
+            vmstate="non-existing"
+            ;;
+        esac
+        ;;
+      start)
+        reportError "Haven't implemented $1 yet"
+        return 1
+        ;;
+      stop)
+        reportError "Haven't implemented $1 yet"
+        return 1
+        ;;
+      restart)
+        reportError "Haven't implemented $1 yet"
+        return 1
+        ;;
+      create)
+        reportError "Haven't implemented $1 yet"
+        return 1
+        ;;
+      destroy)
+        if [ "$destroy" = "true" ]; then
+            reportError "Haven't implemented $1 yet"
+            return 1
+        else
+            reportError "Destroy is disabled"
+            return 1
+        fi
+        ;;
+      exec)
+        result="$(command="docker exec --tty \"$name\" $command" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin)"
+        echo $result
         ;;
     esac
 
@@ -4388,6 +4489,30 @@ function sshExecHandler {
         reportError "Unknown platform specified: $platform"
         return 1
     fi
+
+    return 0
+}
+
+# vmnExecHandler(state|runasuser|runasadmin|runasservice|sendasuser|sendasadmin|sendasservice)
+# Sets exstate, runs commands.
+#
+# Handle execute commands for guests using the native execution method of the hypervisor or container host.
+#
+function vmnExecHandler {
+    reportDebugFuncEntry "$*"
+
+    case "$1" in
+      state)
+        exstate="active"
+        ;;
+      runasuser|runasadmin|runasservice)
+        ${vrmt}VirtHandler exec
+        ;;
+      sendasuser|sendasadmin|sendasservice)
+        reportError "Sending not implemented yet."
+        return 1
+        ;;
+    esac
 
     return 0
 }
