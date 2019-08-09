@@ -3354,16 +3354,22 @@ function dockerVirtHandler {
         esac
         ;;
       start)
-        reportError "Haven't implemented $1 yet"
-        return 1
+        if [ "$state" = "off" ]; then
+            (command="docker start \"$name\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin) 2>/dev/null
+            state="booting"
+        fi
         ;;
       stop)
-        reportError "Haven't implemented $1 yet"
-        return 1
+        if [ "$state" = "on" ]; then
+            (command="docker stop \"$name\"" ; ${exmt}ExecHandler runasadmin) 2>/dev/null
+            state="stopping"
+        fi
         ;;
       restart)
-        reportError "Haven't implemented $1 yet"
-        return 1
+        if [ "$state" = "on" ]; then
+            (command="docker restart \"$name\"" ; ${exmt}ExecHandler runasadmin) 2>/dev/null
+            state="restarting"
+        fi
         ;;
       create)
         reportError "Haven't implemented $1 yet"
