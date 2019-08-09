@@ -115,26 +115,31 @@ else
     localUserDblBacksl="unknown"
 fi
 
-# Construct current config from global and local session.conf.
-if [ -e "$syscff" ]; then
-    if [ -e "$usrcff" ]; then
-        sed "s|\$user|$userDblBacksl|g" "$syscff" "$usrcff" > "$config"
-    else
-        :> "$usrcff"
-        sed "s|\$user|$userDblBacksl|g" "$syscff" > "$config"
-    fi
-else
-    if [ -e "$usrcff" ]; then
-        sed "s|\$user|$userDblBacksl|g" "$usrcff" > "$config"
-    else
-        :> "$usrcff"
-        :> "$config"
-    fi
-fi
-
-
 # Initialize functions.
 source "$SESSION_HOME/functions.sh"
+
+# Make sure at least user's session.conf exists.
+if [ ! -e "$usrcff" ]; then
+    :> "$usrcff"
+fi
+
+# Get any included file names.
+sysincs=$(for line in $(grep ^include $syscff 2> /dev/null); do cutParentheses "$line";done)
+usrincs=$(for line in $(grep ^include $usrcff 2> /dev/null); do cutParentheses "$line";done)
+
+allcff=""
+for file in $syscff $usrcff $sysincs $usrincs; do
+    if [ -e "$file" ]; then
+        allcff="$allcff $file"
+    elif [ -e "$syscfd/cfg/$file" ]; then
+        allcff="$allcff $syscfd/cfg/$file"
+    elif [ -e "$usrcfd/cfg/$file" ]; then
+        allcff="$allcff $usrcfd/cfg/$file"
+    fi
+done
+
+# Write active session.conf from all existence verified config files.
+sed "s|\$user|$userDblBacksl|g" $allcff > "$config"
 
 # Initialize bash quoted regexp behaviour.
 if [ "$(echo "$SHELL" | grep -i "bash")" ]; then
