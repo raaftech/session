@@ -3342,10 +3342,13 @@ function dockerVirtHandler {
       state)
         result="$(command="docker ps --all --format \"{{.Names}},{{.Status}}\" | grep -i \"$name\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin)"
         case "$result" in
-          *Up*)
+          *,Up*)
             vmstate="active"
             ;;
-          *Exited*)
+          *,Created*)
+            vmstate="inactive"
+            ;;
+          *,Exited*)
             vmstate="inactive"
             ;;
           *)
