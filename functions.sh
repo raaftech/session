@@ -3388,7 +3388,7 @@ function dockerVirtHandler {
         fi
         ;;
       exec)
-        result="$(command="docker exec --tty \"$name\" $command" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin)"
+        result="$(command="docker exec --interactive \"$name\" /bin/sh -c \"$command\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin)"
         echo $result
         ;;
     esac
