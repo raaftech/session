@@ -79,7 +79,7 @@ if [ ! -e "$usropt" -a ! -e "$sysopt" ]; then
         privy='$privy'
         debug='$debug'
         width='$width'
-        heigh='$height'
+        height='$height'
     " | sed 's/^[[:space:]]*//' > "$usropt"
 elif [ ! -e "$usropt" -a -e "$sysopt" ]; then
     cp "$sysopt" "$usropt"
