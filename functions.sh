@@ -221,7 +221,7 @@ function viaScript {
         rm "$usrcfd/tmp/session.tell.$nametmp.bat.unix"
 
         reportDebug "Executing $usrcfd/tmp/session.tell.$nametmp.bat"
-        cd "$usrcfd/tmp" ; cmd.exe /c session.tell.$nametmp.bat ; cd - > /dev/null
+        cd "$usrcfd/tmp" ; cmd.exe /c "session.tell.$nametmp.bat" ; cd - > /dev/null
         retval="$?"
 
         if [ "$debug" ]; then
@@ -236,6 +236,54 @@ function viaScript {
 
     return $retval
 }
+
+
+# viaWscript(<command>)
+# Writes a Visual Basic Script to execute a command in the backgroupd, executes and cleans up.
+#
+# Handle execution of <command> via a visual basic wrapper.
+#
+function viaWscript {
+    reportDebugFuncEntry "$*"
+
+    typeset command="$*"
+    typeset retval
+    typeset nametmp="${name}.$$"
+
+    [ "$nametmp" ] || nametmp=local
+
+    if [ "$platform" = "windows" ]; then
+        reportDebug "Writing DOS batch script"
+        printf "@echo off\n" > "$usrcfd/tmp/session.tell.$nametmp.bat.unix"
+        printf '%s\n' "$command" | sed 's/^[[:space:]]*//' 2> /dev/null >> "$usrcfd/tmp/session.tell.$nametmp.bat.unix"
+
+        reportDebug "Correcting for DOS style line endings"
+        sed 's/$/\r/' "$usrcfd/tmp/session.tell.$nametmp.bat.unix" > "$usrcfd/tmp/session.tell.$nametmp.bat"
+        rm "$usrcfd/tmp/session.tell.$nametmp.bat.unix"
+
+        reportDebug "Writing Wscript execution wrapper"
+        printf 'CreateObject("Wscript.Shell").Run """" & WScript.Arguments(0) & """", 0, False' > "$usrcfd/tmp/session.tell.$nametmp.vbs"
+
+        reportDebug "Executing $usrcfd/tmp/session.tell.$nametmp.bat via Wscript execution wrapper"
+        cd "$usrcfd/tmp" ; wscript.exe "session.tell.$nametmp.vbs" "session.tell.$nametmp.bat" //nologo ; cd - > /dev/null
+        retval="$?"
+
+        if [ "$debug" ]; then
+            reportDebug "Not removing $usrcfd/tmp/session.tell.$nametmp.vbs"
+            reportDebug "Not removing $usrcfd/tmp/session.tell.$nametmp.bat"
+        else
+            sleep 1
+            rm "$usrcfd/tmp/session.tell.$nametmp.bat"
+            rm "$usrcfd/tmp/session.tell.$nametmp.vbs"
+        fi
+    else
+        reportError "Visual Basic Script wrapper not supported on platform: $platform"
+        return 1
+    fi
+
+    return $retval
+}
+
 
 # localTellCommandWriter(<command>)
 # Prints.
@@ -303,8 +351,13 @@ function plinkTellCommandWriter {
     typeset addr="$1"
     typeset user="$2"
     typeset command="$3"
+    typeset escapedCommand="$(echo $command | sed -e 's#\(\^\)#^\1#g' -e 's#\([\]\)#^\1#g' -e 's#\([&]\)#^\1#g' -e 's#\([>]\)#^\1#g' -e 's#\([<]\)#^\1#g' -e 's#\([|]\)#^\1#g' -e 's#"#^"#g')"
 
-    printf "$plink -x $sshopts -l \"$user\" $addr \"$command\"\n"
+    typeset nametmp="${name}.$$"
+    [ "$nametmp" ] || nametmp=local
+
+    printf "echo $escapedCommand > \"session.tell.$nametmp.command\"\n"
+    printf "$plink -x $sshopts -l \"$user\" $addr -m \"session.tell.$nametmp.command\"\n"
 }
 
 # sshTellCommandWriter(<host> <user> <command>)
@@ -3558,7 +3611,6 @@ function puttyTerminalHandler {
 
     typeset nametmp="${name}.$$"
     typeset protocol="$1"
-    typeset prefix
     typeset wrapped
     typeset append
     typeset line
@@ -3580,12 +3632,6 @@ function puttyTerminalHandler {
         return 1
     fi
 
-    wsl=$(uname -a | grep Microsoft)
-    if [ "$wsl" ]; then
-        # Use start /b prefix on Windows 10's Bash on Ubuntu on Windows
-        prefix='start /b'
-    fi
-
     if [ "$titling" ]; then
         wrapped="\
         reg delete \"HKEY_CURRENT_USER\\Software\\SimonTatham\\PuTTY\\Sessions\\Default%%20Settings\" /v \"WinTitle\" /f > nul 2>&1
@@ -3598,10 +3644,11 @@ function puttyTerminalHandler {
         reg add \"HKEY_CURRENT_USER\\Software\\SimonTatham\\PuTTY\\Sessions\\Default%%20Settings\" /t REG_SZ /v \"WinTitle\" > nul 2>&1
         "
     else
-        wrapped="$prefix $line"
+        wrapped="$line"
     fi
 
-    viaScript "$(localTellCommandWriter "$wrapped")"
+
+    viaWscript "$(localTellCommandWriter "$wrapped")"
 
     return 0
 }

@@ -139,7 +139,7 @@ for file in $syscff $usrcff $sysincs $usrincs; do
 done
 
 # Write active session.conf from all existence verified config files.
-sed "s|\$user|$userDblBacksl|g" $allcff > "$config"
+sed -e '/^#/d' -e '/^include/d' -e '/^[[:space:]]*$/d' -e "s|\$user|$userDblBacksl|g"  $allcff > "$config"
 
 # Initialize bash quoted regexp behaviour.
 if [ "$(echo "$SHELL" | grep -i "bash")" ]; then
