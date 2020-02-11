@@ -357,7 +357,7 @@ function plinkTellCommandWriter {
     [ "$nametmp" ] || nametmp=local
 
     printf "echo $escapedCommand > \"session.tell.$nametmp.command\"\n"
-    printf "$plink -x $sshopts -l \"$user\" $addr -m \"session.tell.$nametmp.command\"\n"
+    printf "$plink -batch -x $sshopts -l \"$user\" $addr -m \"session.tell.$nametmp.command\"\n"
 }
 
 # sshTellCommandWriter(<host> <user> <command>)
