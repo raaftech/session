@@ -239,7 +239,7 @@ function viaScript {
 
 
 # viaWscript(<command>)
-# Writes a Visual Basic Script to execute a command in the backgroupd, executes and cleans up.
+# Writes a Visual Basic Script to execute a command in the background, executes and cleans up.
 #
 # Handle execution of <command> via a visual basic wrapper.
 #
