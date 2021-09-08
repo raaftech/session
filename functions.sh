@@ -3830,6 +3830,8 @@ function gnomeTerminalHandler {
             # Set title (only if sshkey is set and agent enabled, due to non-interactivity requirement).
             if [ "$titling" -a "$sshkey" -a "$agent" ]; then
                 if [ "$user" == "root" ]; then symbol='#' ; else symbol='$' ; fi
+                xdotool type --clearmodifiers --delay=10 "echo -ne \"\\033]0;\"$title\"\\007\""
+                xdotool key Return
                 xdotool type --clearmodifiers --delay=10 "PS1=\"[\\u@\\h \\W]$symbol \" ; PROMPT_COMMAND='echo -ne \"\\033]0;\"$title\"\\007\"'"
                 xdotool key Return
             fi
@@ -3844,6 +3846,8 @@ function gnomeTerminalHandler {
         if [ "$titling" -a "$sshkey" -a "$agent" ]; then
             gnome-terminal --command="$line"
             if [ "$user" == "root" ]; then symbol='#' ; else symbol='$' ; fi
+            xdotool type --clearmodifiers --delay=10 "echo -ne \"\\033]0;\"$title\"\\007\""
+            xdotool key Return
             xdotool type --clearmodifiers --delay=10 "PS1=\"[\\u@\\h \\W]$symbol \" ; PROMPT_COMMAND='echo -ne \"\\033]0;\"$title\"\\007\"'"
             xdotool key Return
         else
@@ -3886,6 +3890,8 @@ function urxvtTerminalHandler {
     if [ "$titling" -a "$sshkey" -a "$agent" ]; then
         urxvt -e bash -c "$line" &
         if [ "$user" == "root" ]; then symbol='#' ; else symbol='$' ; fi
+        xdotool type --clearmodifiers --delay=10 "echo -ne \"\\033]0;\"$title\"\\007\""
+        xdotool key Return
         xdotool type --clearmodifiers --delay=10 "PS1=\"[\\u@\\h \\W]$symbol \" ; PROMPT_COMMAND='echo -ne \"\\033]0;\"$title\"\\007\"'"
         xdotool key Return
     else
@@ -4907,24 +4913,26 @@ function mapEntryPoint {
             reportDebug "Terminal exit hook for screen: resuming created screen session"
             sleep 1
             screen -r
-        # Set the title of the local (first) tab.
+        # Set the title of the local (first) tab using Gnome Terminal.
         elif [ "$terminal" = "gnome" -a "$titling" -a "$tabbed" -a "$sshkey" -a "$agent" ]; then
-            reportDebug "Terminal exit hook for gnome: titling typeset terminal screen"
-            typeset title="$(capsFirst "$hostname")"
-            sleep 1
+            reportDebug "Terminal exit hook for gnome: Switching back to initial terminal tab"
+            # typeset title="$(capsFirst "$hostname")"
+            # sleep 1
             xdotool key alt+1
-            if [ "$user" == "root" ]; then symbol='#' ; else symbol='$' ; fi
-            xdotool type --clearmodifiers --delay=10 "PS1=\"[\\u@\\h \\W]$symbol \" ; PROMPT_COMMAND='echo -ne \"\\033]0;\"$title\"\\007\"'"
-            xdotool key Return
-        # Set the title of the local (first) tab.
+            # if [ "$USER" == "root" ]; then symbol='#' ; else symbol='$' ; fi
+            # xdotool type --clearmodifiers --delay=10 "echo -ne \"\\033]0;\"$title\"\\007\""
+            # xdotool key Return
+            # xdotool type --clearmodifiers --delay=10 "PS1=\"[\\u@\\h \\W]$symbol \" ; PROMPT_COMMAND='echo -ne \"\\033]0;\"$title\"\\007\"'"
+            # xdotool key Return
+        # Set the title of the local (first) tab using Apple Terminal.
         elif [ "$terminal" = "apple" -a "$titling" -a "$tabbed" -a "$sshkey" -a "$agent" ]; then
-            reportDebug "Terminal exit hook for apple: titling typeset terminal screen"
-            typeset title="$(capsFirst "$hostname")"
+            reportDebug "Terminal exit hook for apple: Switching back to initial terminal tab"
+            #typeset title="$(capsFirst "$hostname")"
             printf 'activate application "Terminal"'\n > "$usrcfd/tmp/session.title.$hostname.scpt"
-            if [ "$user" == "root" ]; then symbol='#' ; else symbol='$' ; fi
-            printf 'tell application "System Events" to tell process "Terminal" to keystroke "PS1=\"[\\u@\\h \\W]$symbol \" ; PROMPT_COMMAND="'\n >> "$usrcfd/tmp/session.title.$hostname.scpt"
-            printf "tell application \"System Events\" to tell process \"Terminal\" to keystroke quoted form of \"echo -ne \\\"\\\\033]0;$title\\\\007\\\"\"\n" >> "$usrcfd/tmp/session.title.$hostname.scpt"
-            printf 'tell application "System Events" to tell process "Terminal" to keystroke return'\n >> "$usrcfd/tmp/session.title.$hostname.scpt"
+            # if [ "$user" == "root" ]; then symbol='#' ; else symbol='$' ; fi
+            # printf 'tell application "System Events" to tell process "Terminal" to keystroke "PS1=\"[\\u@\\h \\W]$symbol \" ; PROMPT_COMMAND="'\n >> "$usrcfd/tmp/session.title.$hostname.scpt"
+            # printf "tell application \"System Events\" to tell process \"Terminal\" to keystroke quoted form of \"echo -ne \\\"\\\\033]0;$title\\\\007\\\"\"\n" >> "$usrcfd/tmp/session.title.$hostname.scpt"
+            # printf 'tell application "System Events" to tell process "Terminal" to keystroke return'\n >> "$usrcfd/tmp/session.title.$hostname.scpt"
             osascript "$usrcfd/tmp/session.title.$hostname.scpt"
             rm "$usrcfd/tmp/session.title.$hostname.scpt"
         fi
