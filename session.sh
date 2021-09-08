@@ -124,8 +124,8 @@ if [ ! -e "$usrcff" ]; then
 fi
 
 # Get any included file names.
-sysincs=$(for line in $(grep ^include $syscff 2> /dev/null); do cutParentheses "$line";done)
-usrincs=$(for line in $(grep ^include $usrcff 2> /dev/null); do cutParentheses "$line";done)
+sysincs=$(for line in $(grep ^include $syscff 2> /dev/null); do expandVariables $(cutParentheses "$line");done)
+usrincs=$(for line in $(grep ^include $usrcff 2> /dev/null); do expandVariables $(cutParentheses "$line");done)
 
 allcff=""
 for file in $syscff $usrcff $sysincs $usrincs; do

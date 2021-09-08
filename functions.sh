@@ -1554,6 +1554,19 @@ function discoveryHelper {
     return 0
 }
 
+
+# expandVariables(<input>)
+# Prints.
+#
+# Returns string with expanded variables.
+#
+function expandVariables {
+    reportDebugFuncEntry "$*"
+
+    typeset command="cat <<< \"$*\""
+    eval "$command"
+}
+
 # cutParentheses(<input>)
 # Prints.
 #
