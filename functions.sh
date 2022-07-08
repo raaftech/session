@@ -675,12 +675,8 @@ function handleSshPrivateKeys {
             if [[ ! "$(cat "$HOME/.ssh/config")" =~ "StrictHostKeyChecking" ]]; then
                 printf "StrictHostKeyChecking no\n" >> "$HOME/.ssh/config"
             fi
-            if [[ ! "$(cat "$HOME/.ssh/config")" =~ "GSSAPIAuthentication" ]]; then
-                printf "GSSAPIAuthentication no\n" >> "$HOME/.ssh/config"
-            fi
         else
             mkdir -p "$HOME/.ssh"
-            printf "GSSAPIAuthentication no\n"   > "$HOME/.ssh/config"
             printf "StrictHostKeyChecking no\n" >> "$HOME/.ssh/config"
         fi
 
