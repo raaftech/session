@@ -851,16 +851,22 @@ function osGlobals {
 
     # Override defaults given above for certain osses.
     case "$1" in
-      aix5|aix6|aix7|hpux1111|hpux1123|hpux1131)
+      alpine*)
+        osstop="/sbin/poweroff"
+        ;;
+      haiku)
+        osstop="/bin/shutdown"
+        ;;
+      aix*|hpux*)
         osstop="/sbin/shutdown -hy 0"
         ;;
-      dfbsd2|dfbsd3|fbsd7|fbsd8|fbsd9|fbsd10)
+      dfbsd*|fbsd*)
         osstop="/sbin/shutdown -p now"
         ;;
-      nbsd4|nbsd5|nbsd6|obsd4|obsd5)
+      nbsd*|obsd*)
         osstop="/sbin/shutdown -h -p now"
         ;;
-      sol10|sol11)
+      chimera|sol10|sol11)
         osstop="/usr/sbin/poweroff"
         ;;
       windows-like|win2k3|win2k8|win2k12|winxp|winv|win7|win8|win10|reactos)
