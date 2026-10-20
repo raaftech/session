@@ -1,4 +1,4 @@
-.TH SESSION "1" "8 Dec 2011" "session" "User Commands"
+.TH SESSION "1" "20 Oct 2026" "session 1.5.0" "User Commands"
 .SH NAME
 session \- access and control groups of machines and services
 .SH SYNOPSIS
@@ -17,7 +17,7 @@ to see a list of commands.
     $ session discover 192.168.0.0/24
     Session: Info: Successfully added entry host unknown-0-2(embedded-like,tel,none,unknown,unknown,192.168.0.2,none).
     Session: Info: Successfully added entry host unknown-0-3(unix-like,ssh,ssh,alfred,root,192.168.0.3,none).
-    $ session addconf localhost --type=host --osmt=ubuntu11 --acmt=ssh --exmt=ssh --addr=127.0.0.1 --user=jdthood --admin=root --vrmt=virtualbox --vmhome=/usr/bin --vmdata=/mnt/sda5/virtualbox
+    $ session addconf localhost --type=host --osmt=ubuntu11 --acmt=ssh --exmt=ssh --addr=127.0.0.1 --user=jdthood --admin=root --vrmt=vbox --vmhome=/usr/bin --vmdata=/mnt/sda5/virtualbox
     $ session addconf myvrtmchn --type=guest --osmt=winxp --acmt=ssh --exmt=ssh --addr=192.168.10.108 --user=Test --admin=User --host=localhost
     $ session start myvrtmchn
     Waiting for VM "myvrtmchn" to power on...
@@ -36,7 +36,7 @@ to see a list of commands.
 .TP
 \fBcheck\fR      - (state, status) checks state of a host, guest, service or group.
 .TP
-\fBdetail\fR     - shows all known information about a host, guest or service.
+\fBdetail\fR     - shows all known details for an entry.
 .TP
 \fBstart\fR      - attempts to start a host, guest, service or group.
 .TP
@@ -56,24 +56,31 @@ to see a list of commands.
 .TP
 \fBkey\fR        - send public key or store credentials for remote admin and user.
 .TP
-\fBlist\fR       - list hosts, guests, services, groups, osmt, acmt, exmt or vrmt's
+\fBlist\fR       - list hosts, guests, services, groups, osmt, acmt, exmt or vrmts
 .TP
 \fBreinit\fR     - reinitializes session's required and detected tools.
 .TP
 \fBversion\fR    - show session version.
 .SH OPTIONS
+Arguments for addconf, modconf and delconf:
 .TP
 \fB--type=\fR\fITYPE\fR
 the type of the added entry (host, guest, service or group).
 .TP
+\fB--name=\fR\fINAME\fR
+the name of the entry (can be used for renaming).
+.TP
 \fB--osmt=\fR\fIOSMT\fR
-the operating system for the host or guest system
+the operating system for the host or guest system.
 .TP
 \fB--acmt=\fR\fIACMT\fR
 the access method to be used.
 .TP
 \fB--exmt=\fR\fIEXMT\fR
 the execute method to be used.
+.TP
+\fB--svmt=\fR\fISVMT\fR
+(services only) the service method to be used.
 .TP
 \fB--addr=\fR\fIIPADDR\fR
 the IP address for the host, guest or service.
@@ -96,6 +103,18 @@ the administrative account for the host or guest.
 \fB--vmdata=\fR\fIMACHINE\fR
 (optional, hosts only) where the host stores its virtual machines.
 .TP
+\fB--vmuser=\fR\fINAME\fR
+(optional, hosts only) the user that a hypervisor runs as.
+.TP
+\fB--vmpass=\fR\fIPASSWORD\fR
+(optional, hosts only) the password for the above user.
+.TP
+\fB--vmport=\fR\fIPORT\fR
+(optional, hosts only) the port the hypervisor runs at.
+.TP
+\fB--vmshared=\fR\fION|OFF\fR
+(optional, hosts only, vmware workstation) shared mode on/off.
+.TP
 \fB--svstatus=\fR\fICMD\fR
 (optional, scripted services only) status command for a service.
 .TP
@@ -106,10 +125,10 @@ the administrative account for the host or guest.
 (optional, scripted services only)   stop command for a service.
 .TP
 \fB--host=\fR\fIMACHINE\fR
-(guests only) the parent host system.
+(guests and services only) the parent host system.
 .TP
 \fB--members=\fR\fIITEM[,ITEM...]\fR
-(groups only) a comma-separated list of hosts and/or guests.
+(groups only) a comma-separated list of hosts/guests/services.
 
 Arguments for privilege specification in access, tell and send:
 .TP
@@ -121,6 +140,20 @@ run the command with admin credentials.
 .TP
 \fB--service
 run the command with service credentials.
+
+Arguments for access, tell and send:
+.TP
+\fB--command=\fR\fICMD\fR
+run the command directly (tell) or in a window (access).
+.TP
+\fB--parent
+run the command on the parent of the guest or service.
+.TP
+\fB--console
+(services only) use the access or execute method of the parent.
+.TP
+\fB--tabbed
+(access only) open in tabbed mode (gnome and apple terminals).
 
 Arguments for create and destroy:
 .TP
@@ -146,9 +179,37 @@ the source directory on the local system to send from.
 .TP
 \fB--target=\fR\fIDIR\fR
 the target directory on the remote system to send to.
+
+Other arguments:
+.TP
+\fB--mode=\fR\fIMODE\fR
+group execution mode: serial (default), stateful or parallel (experimental).
+.TP
+\fB--resilient
+make checks for state assume the worst. Warning: slow.
+.TP
+\fB--nocheck
+(detail only, also --nostate or --nostatus) do not check the current state.
+.TP
+\fB--verbose
+(list only) show the entire entry instead of the name only.
+.TP
+\fB--debug
+enable debug mode. Can be passed to all commands.
+.SH FILES
+.TP
+\fI~/.session/cfg/session.conf\fR, \fI/etc/session/cfg/session.conf\fR
+the entries (hosts, guests, services and groups).
+.TP
+\fI~/.session/cfg/options.env\fR, \fI/etc/session/cfg/options.env\fR
+the main options.
+.TP
+\fI~/.session/sys/<name>/options.env\fR
+the options for one entry.
 .SH COPYRIGHT
-Copyright © 2011 Rubin Simons.
+Copyright © 2011-2026 Rubin Simons.
 This manual is part of Session.
 .SH "SEE ALSO"
 .BR ssh (1),
+.BR ssh-copy-id (1),
 .BR nmap (1).

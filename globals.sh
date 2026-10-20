@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright © 2008-2016 RAAF Technology bv
+# Copyright © 2008-2026 RAAF Services bv
 #
 # This file is part of Session.
 #
@@ -28,12 +28,12 @@ color_end="\x1b[0m"       #color_end="$(tput sgr0)"
 # Space-separated lists of keywords for known modes, os, virtualization, credential, service, execute and access methods.
 known_types="host guest service group"
 known_modes="serial parallel stateful"
-known_osmts="embedded-like unix-like windows-like aix5 aix6 aix7 alpine3 arch chimera coreos debian4 debian5 debian6 debian7 debian8 debian9 debian10 debian11 dfbsd2 dfbsd3 dfbsd4 dfbsd5 dfbsd6 esxi4 esxi5 esxi6 fbsd7 fbsd8 fbsd9 fbsd10 fbsd11 fbsd12 fbsd13 fedora12 fedora13 fedora14 fedora15 fedora16 fedora17 fedora18 fedora19 fedora20 fedora21 fedora22 fedora23 fedora24 fedora25 fedora26 fedora27 fedora28 fedora29 fedora30 fedora31 fedora32 fedora33 fedora34 fedora35 fedora36 fedora37 gentoo guix haiku hpux1111 hpux1123 hpux1131 macosx3 macosx4 macosx5 macosx6 macosx7 macosx8 macosx9 macosx10 macosx11 macos1012 macos1013 macos1014 nbsd4 nbsd5 nbsd6 nbsd7 nbsd8 nbsd9 nbsd10 obsd4 obsd5 obsd6 osuse11 osuse12 osuse13 osuse14 osuse15 popos18 popos19 popos20 popos21 popos22 rhel3 rhel4 rhel5 rhel6 rhel7 rhel8 rhel9 sles9 sles10 sles11 sles12 sles13 sles14 sles15 sol10 sol11 trisquel7 ubuntu8 ubuntu9 ubuntu10 ubuntu11 ubuntu12 ubuntu13 ubuntu14 ubuntu15 ubuntu16 ubuntu17 ubuntu18 ubuntu19 ubuntu20 ubuntu21 ubuntu22 winnt win2k win2k3 win2k8 win2k12 win2k16 winv win7 win8 win10 winxp reactos void"
-known_vrmts="none kvm xen vbox vmw vmf esx hpvm ldom pvm docker"
+known_osmts="embedded-like unix-like windows-like android12 android13 android14 android15 android16 android17 aix5 aix6 aix7 alpine3 arch chimera coreos debian4 debian5 debian6 debian7 debian8 debian9 debian10 debian11 dfbsd2 dfbsd3 dfbsd4 dfbsd5 dfbsd6 esxi4 esxi5 esxi6 fbsd7 fbsd8 fbsd9 fbsd10 fbsd11 fbsd12 fbsd13 fedora12 fedora13 fedora14 fedora15 fedora16 fedora17 fedora18 fedora19 fedora20 fedora21 fedora22 fedora23 fedora24 fedora25 fedora26 fedora27 fedora28 fedora29 fedora30 fedora31 fedora32 fedora33 fedora34 fedora35 fedora36 fedora37 gentoo guix haiku hpux1111 hpux1123 hpux1131 macosx3 macosx4 macosx5 macosx6 macosx7 macosx8 macosx9 macosx10 macosx11 macos1012 macos1013 macos1014 nbsd4 nbsd5 nbsd6 nbsd7 nbsd8 nbsd9 nbsd10 obsd4 obsd5 obsd6 osuse11 osuse12 osuse13 osuse14 osuse15 popos18 popos19 popos20 popos21 popos22 rhel3 rhel4 rhel5 rhel6 rhel7 rhel8 rhel9 sles9 sles10 sles11 sles12 sles13 sles14 sles15 sol10 sol11 trisquel7 ubuntu8 ubuntu9 ubuntu10 ubuntu11 ubuntu12 ubuntu13 ubuntu14 ubuntu15 ubuntu16 ubuntu17 ubuntu18 ubuntu19 ubuntu20 ubuntu21 ubuntu22 winnt win2k win2k3 win2k8 win2k12 win2k16 winv win7 win8 win10 win11 winxp reactos void"
+known_vrmts="none kvm xen vbox vmw vmf esx hpvm ldom pvm docker android"
 known_crmts="none ssh win"
-known_svmts="none scripted"
-known_exmts="none ssh smb vmn"
-known_acmts="none ssh tel rdp http"
+known_svmts="none scripted docker"
+known_exmts="none ssh smb vmn adb"
+known_acmts="none ssh tel rdp http adb"
 
 # Default session execution mode.
 defaultmode="serial"
@@ -107,7 +107,6 @@ elif [ "$platform" = "windows" ]; then
     explorer="explorer.exe"
     mstsc="mstsc.exe"
     nmap="nmap.exe"
-    pageant="PAGEANT.EXE"
     putty="PUTTY.EXE"
     plink="PLINK.EXE"
     pscp="PSCP.EXE"
@@ -127,7 +126,6 @@ if [ "$platform" = "linux" ]; then
     sshtell="ssh"
     smbsend="smbclient"
     sshsend="scp"
-    sshagent="ssh-agent"
     privesc="sudo -u root"
 elif [ "$platform" = "bsd" ]; then
     terminal="screen"
@@ -137,7 +135,6 @@ elif [ "$platform" = "bsd" ]; then
     sshtell="ssh"
     smbsend="smbclient"
     sshsend="scp"
-    sshagent="ssh-agent"
     privesc="sudo -u root"
 elif [ "$platform" = "macosx" ]; then
     terminal="apple"
@@ -147,7 +144,6 @@ elif [ "$platform" = "macosx" ]; then
     sshtell="ssh"
     smbsend="smbclient"
     sshsend="scp"
-    sshagent="ssh-agent"
     privesc="sudo -u root"
 elif [ "$platform" = "windows" ]; then
     terminal="putty"
@@ -157,7 +153,6 @@ elif [ "$platform" = "windows" ]; then
     sshtell="plink"
     smbsend="robocopy"
     sshsend="pscp"
-    sshagent="pageant"
     privesc="runas /savecred /user:administrator"
 else
     terminal="none"
@@ -167,7 +162,6 @@ else
     sshtell="none"
     smbsend="none"
     sshsend="none"
-    sshagent="none"
     privesc="none"
 fi
 

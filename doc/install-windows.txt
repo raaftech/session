@@ -7,15 +7,22 @@ dependencies for session. In the instructions below, we will describe the
 installation steps and dependencies for the Windows platform. If you follow 
 these steps, you should have no troubles with running session!
 
-NOTE! On the website (http://www.raaftech.nl/session) we've also listed the
-dependencies described below, with links to where to get them! Make sure to
-check it out!
+NOTE! The source code and the latest version of session are on GitHub, at
+https://github.com/raaftech/session. Make sure to check it out!
 
 1: Make sure you have a Windows 2000, 2003, XP, Vista or 7 system. We've 
    tested mostly with Windows 2000, XP and 7 but we expect other Windows
    versions to be equally easy to run on.
    Since session is a bash shell script, make sure you also install the
-   MinGW MSYS environment (although Cygwin might work also).
+   MinGW MSYS environment (although Cygwin might work also), or use the
+   Windows Subsystem for Linux (WSL).
+
+   In WSL, session uses the same Windows tools as described below (PuTTY,
+   nmap, mstsc, psexec and robocopy), so make sure they are on your path.
+   Session keeps its settings in /mnt/c/Users/<user>/.session, outside of
+   the WSL file system. Your WSL user name must be the same as your Windows
+   user name. To start session from cmd.exe, set SESSION_HOME in session.bat
+   to the directory of session.sh (as a WSL path) and run session.bat.
 
 2: Session's access command opens new PuTTY windows when something has
    an ssh access method. Additionally, it uses the pscp and plink PuTTY 
@@ -52,16 +59,16 @@ check it out!
    dependencies. Next to that, it will create a default ~/.session directory
    layout with an empty session.conf (under ~/.session/cfg/session.conf).
 
-9: Copy the template files in the distibution archive's 'doc' directory to
+9: Copy the template files in the distribution archive's 'doc' directory to
    your personal template directory under ~/.session/tpl . These files use
-   the .stf (session template file) extention.
+   the .stf (session template file) extension.
 
 
 If session did not give an error about not being able to find any of its 
 dependencies, the above run of the session command will show you the standard
 help output. You are now ready to add systems to your session.conf! You can
-use the "session addconf" and "session delconf" commands to do so (see the
-standard session help output for addconf and delconf examples). Ofcourse, you
-can also edit the ~/.session/cfg/session.conf file directly.
+use the "session addconf" and "session delconf" commands to do so (run
+"session help" for their arguments). Of course, you can also edit the
+~/.session/cfg/session.conf file directly; see session.conf.example.
 
  

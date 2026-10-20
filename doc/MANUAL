@@ -1,10 +1,26 @@
 Session Manual
 
 History
+Session started in 2009 (version 0.1.0) as a shell script to check, start,
+stop and access physical and virtual systems. It became public with version
+0.2.0 in 2009 and version 1.0.0 in 2013. Later versions added services,
+groups of groups, docker, Android emulators and devices (adb), and more
+terminals. See ChangeLog for all versions.
 
 Purpose
+Session helps you to manage many computer systems and services. You group
+your hosts, guests and services, and tell session how to check, start and
+stop them. Session then checks, starts, stops and accesses one system or a
+group of systems, in serial, stateful or parallel mode. It can also send
+commands and files to them.
 
 Contents
+Running Session, Storing Credentials and Sending Keys, Listing, Discovering,
+Checking State, Adding Modifying and Deleting, Starting Stopping and
+Restarting, Creating and Destroying Virtual Machines, Accessing Systems,
+Sending Commands to Systems, Sending Files and Directories to Systems, Main
+Options File, Entry Options Files, Configuration File, Configuration Files
+and Directories.
 
 Running Session
 reinit     - reinitializes session's required and detected tools.
@@ -13,12 +29,17 @@ version    - show session version.
 --user     - run the command with user credentials (default).
 --admin    - run the command with admin credentials.
 --service  - run the command with service credentials.
+--resilient - make checks for state assume the worst. Warning: slow.
+--debug    - enable debug mode. Can be passed to all commands.
 
 Storing Credentials and Sending Keys
 key        - send public key or store credentials for remote admin and user.
+             On unix-likes, ssh-copy-id installs the keys of your ssh agent,
+             or else ~/.ssh/id*.pub.
 
 Listing
-list       - list hosts, guests, services, groups, osmt, acmt, exmt or vrmt's
+list       - list hosts, guests, services, groups, osmt, acmt, exmt or vrmts
+--verbose  - show the entire entry instead of the name only.
 Special parameters for list:
 all        - (list and check only) show or state all.
 mode       - (list) show all modes. --default for default only.
@@ -32,22 +53,26 @@ svmt       - (list) show all supported service methods.
 vrmt       - (list) show all supported virtualization methods.
 osmt       - (list) show all supported operating environments.
 crmt       - (list) show all supported credential methods.
+type       - (list) show all supported entity types.
 
 Discovering
 discover   - scan an ip or an ip subnet.
 
 Checking State
 check      - (state, status) checks state of a host, guest, service or group.
-detail     - shows all known information about a host, guest or service.
+detail     - shows all known details for an entry.
+--nocheck  - (nostate, nostatus) detail does not check the current state.
 
 Adding, Modifying and Deleting
 addconf    - adds a host, guest, service or group to session.conf.
 modconf    - modify an existing host, guest, service or group in session.conf.
 delconf    - removes a host, guest, service or group from session.conf.
 --type     - the type of the added entry (host, guest, service or group).
---osmt     - the operating system for the host or guest system
+--name     - the name of the entry (can be used for renaming).
+--osmt     - the operating system for the host or guest system.
 --acmt     - the access method to be used.
 --exmt     - the execute method to be used.
+--svmt     - (services only) the service method to be used.
 --addr     - the ip address for the host, guest or service.
 --port     - (services only) the port on which a service listens.
 --user     - the regular user account for the host, guest or service.
@@ -55,11 +80,15 @@ delconf    - removes a host, guest, service or group from session.conf.
 --vrmt     - (optional, hosts only) the virtualization method supported.
 --vmhome   - (optional, hosts only) where the host stores its vm executables.
 --vmdata   - (optional, hosts only) where the host stores its virtual machines.
+--vmuser   - (optional, hosts only) the user that a hypervisor runs as.
+--vmpass   - (optional, hosts only) the password for the above user.
+--vmport   - (optional, hosts only) the port the hypervisor runs at.
+--vmshared - (optional, hosts only, vmware workstation) shared mode on/off.
 --svstatus - (optional, scripted services only) status command for a service.
 --svstart  - (optional, scripted services only)  start command for a service.
 --svstop   - (optional, scripted services only)   stop command for a service.
---host     - (guests only) the parent host system.
---members  - (groups only) a comma-separated list of hosts and/or guests.
+--host     - (guests and services only) the parent host system.
+--members  - (groups only) a comma-separated list of hosts/guests/services.
 
 Starting Stopping and Restarting
 start      - attempts to start a host, guest, service or group.
@@ -74,43 +103,93 @@ destroy    - attempts to destroy an existing guest system.
 --memsize  - the virtual memory size in MB for guest system (--memsize=512).
 --dsksize  - the disk size in GB for guest system (--dsksize=4).
 --guestos  - the operating system for guest system (--guestos=other-64).
+Create uses the template <vrmt>.stf from the tpl directory.
 
 Accessing Systems
 access     - access a host, guest, service or group using various methods.
+--command  - run the command in the new terminal window.
+--parent   - access the parent of the guest or service.
+--console  - (services only) use the access method of the parent.
+--tabbed   - open in tabbed mode (gnome and apple terminals).
 
 Sending Commands to Systems
 tell       - send a command to the host, guest, service or group.
+--command  - the command to run.
+--parent   - run the command on the parent of the guest or service.
+--console  - (services only) use the execute method of the parent.
 
 Sending Files and Directories to Systems
 send       - send a directory to the host, guest, service or group.
 --source   - the source directory on the local system to send from.
 --target   - the target directory on the remote system to send to.
+--parent   - send to the parent of the guest or service.
 
 Main Options File
-terminal='putty'
-desktop='mstsc'
-browser='windows'
-smbtell='psexec'
-sshtell='plink'
-smbsend='robocopy'
-sshsend='pscp'
-execute='1'
-access='1'
-create='1'
-destroy='0'
-send='1'
-resilient='0'
-timeout='1501'
-titling='1'
-color='1'
-agent='1'
-privy='0'
-debug='0'
+The main options file is ~/.session/cfg/options.env. Session writes it with
+the defaults for your platform when it does not exist yet. The system-wide
+file /etc/session/cfg/options.env is read first. Values 0 and 1 disable and
+enable a setting.
+terminal   - putty, apple, gnome, urxvt, alacritty, screen or tmux.
+desktop    - mstsc, amsrdc, rdesktop or xfreerdp.
+browser    - windows, macos or gnome.
+smbtell    - psexec or winexe.
+sshtell    - ssh or plink.
+smbsend    - robocopy or smbclient.
+sshsend    - scp or pscp.
+execute    - enable start, stop, restart, create, destroy, tell and key.
+access     - enable access.
+create     - enable create.
+destroy    - enable destroy (disabled by default).
+send       - enable send.
+resilient  - make checks for state assume the worst. Warning: slow.
+timeout    - nmap host timeout for port checks, in milliseconds.
+titling    - set the window title to the entry name. tmux, screen and
+             alacritty also keep the title from changes by the shell.
+tabbed     - open access in tabs (gnome and apple terminals).
+color      - show the state in color.
+privy      - run nmap and ping with privilege escalation (sudo or runas).
+debug      - enable debug mode.
+width      - width of remote desktop windows.
+height     - height of remote desktop windows.
+
+Optional Main Options
+scantype='connect' - check ports with an nmap connect scan, also when privy='1'.
+sshopts='...'      - extra options for ssh and scp, for example '-o Port=2222'.
+
+Entry Options Files
+Each entry can have ~/.session/sys/<name>/options.env. Guests and services
+also read the options.env of their parent host.
+vmhome     - (hosts) where the host stores its vm executables. For the
+             android vrmt, the Android SDK root.
+vmdata     - (hosts) where the host stores its virtual machines. For the
+             android vrmt, the AVD directory.
+vmuser     - (hosts) the user that a hypervisor runs as.
+vmpass     - (hosts) the password for the above user.
+vmport     - (hosts) the port the hypervisor runs at.
+vmshared   - (hosts, vmware workstation) shared mode on/off.
+vmname     - (android guests) the AVD name (default: the guest name).
+vmopts     - (android guests) extra options for the emulator command.
+adbport    - (adb acmt and exmt) the adb port (default 5555). An emulator
+             uses the console port adbport - 1 and serial emulator-<port>.
+svstatus   - (scripted services) status command for a service.
+svstart    - (scripted services) start command for a service.
+svstop     - (scripted services) stop command for a service.
+mode       - (groups) serial, stateful or parallel.
+The same directory can have user.pwd and admin.pwd password files.
+
+Configuration File
+The main configuration file is ~/.session/cfg/session.conf. The system-wide
+file /etc/session/cfg/session.conf is read first. See session.conf.example.
+include(<file>) - read entries from another file. Session also looks for a
+             relative file name in the cfg directories. Variables such as
+             $HOME expand. Included files cannot include other files.
+$user      - in an entry, the name of the current user.
+A docker service uses its name as the container name. A guest of an
+android host is an Android SDK emulator.
 
 Configuration Files and Directories
-cfg: options.conf  session.conf  tools.found  tools.required
+cfg: options.env  session.conf  tools.found  tools.required
 log: session.log
-sys: cwnp1dc1  helpsvc  ntlm  pc05262  rpcbind  sw0001  vmtools  wilco
-tmp: session.conf.active session.ssh-agent.out
-tpl:
-
+sys: one directory per entry, with options.env, user.pwd and admin.pwd.
+tmp: session.conf.active
+tpl: templates for create (<vrmt>.stf).

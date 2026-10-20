@@ -7,25 +7,23 @@ dependencies for session. In the instructions below, we will describe the
 installation steps and dependencies for the Linux and other UNIX-like platforms. 
 If you follow these steps, you should have no troubles with running session!
 
-NOTE! On the website (http://www.raaftech.nl/session) we've also listed the
-dependencies described below, with links to where to get them! Make sure to
-check it out!
+NOTE! The source code and the latest version of session are on GitHub, at
+https://github.com/raaftech/session. Make sure to check it out!
 
 1: Make sure you have a reasonably up to date Linux or UNIX like system.
    We've tested session with Fedora 12 and 13, with Ubuntu 8.04 and 10.04 and
    with small modifications, also on RHEL/CentOS 5 systems.
 
-2: Session's access command opens tabs within gnome-terminal when something has
-   an ssh access method. Make sure you have gnome-terminal installed! Also, to
-   control gnome-terminal, we use xdotool. Make sure you have these commands 
-   installed also!
+2: Session's access command opens a terminal when something has an ssh, tel
+   or adb access method. Set terminal in options.env to gnome, urxvt,
+   alacritty, screen or tmux, and make sure you have that terminal installed!
 
 3: To test for open ports on a system when determining a system's state, the
    program uses nmap. Make sure you have nmap installed.
 
 4: When session accesses systems which have an rdp access method, it uses the
-   rdesktop command to facilitate the connection. Make sure you have rdesktop
-   installed on your system.
+   xfreerdp command to facilitate the connection. Make sure you have xfreerdp
+   installed on your system, or set desktop in options.env to rdesktop.
 
 5: The session command functionality, when talking to a windows box, uses the
    winexe program to do so. The winexe command is the equivalent of psexec on 
@@ -35,25 +33,32 @@ check it out!
    smbclient program to do so. Make sure you have the smbclient command 
    installed on your system.
 
-7: Install the session command somewhere in your path, like /usr/local/bin or
+7: Session uses OpenSSH (ssh, scp and ssh-copy-id) for the ssh access and
+   execute methods. It uses the keys of your ssh agent (SSH_AUTH_SOCK).
+
+8: Optional: adb (Android SDK platform-tools) for the adb access and execute
+   methods, the Android SDK emulator for the android vrmt, and docker for
+   the docker vrmt and svmt.
+
+9: Install the session command somewhere in your path, like /usr/local/bin or
    anywhere else you prefer. You are now ready to run session for the first
    time!
 
-8: Type 'session' at the command prompt. The session command will detect that
+10: Type 'session' at the command prompt. The session command will detect that
    it's being run for the first time and will do a search for all its needed
    dependencies. Next to that, it will create a default ~/.session directory
    layout with an empty session.conf (under ~/.session/cfg/session.conf).
 
-9: Copy the template files in the distibution archive's 'doc' directory to
+11: Copy the template files in the distribution archive's 'doc' directory to
    your personal template directory under ~/.session/tpl . These files use 
-   the .stf (session template file) extention.
+   the .stf (session template file) extension.
 
 
 If session did not give an error about not being able to find any of its 
 dependencies, the above run of the session command will show you the standard
 help output. You are now ready to add systems to your session.conf! You can
-use the "session addconf" and "session delconf" commands to do so (see the
-standard session help output for addconf and delconf examples). Ofcourse, you
-can also edit the ~/.session/cfg/session.conf file directly.
+use the "session addconf" and "session delconf" commands to do so (run
+"session help" for their arguments). Of course, you can also edit the
+~/.session/cfg/session.conf file directly; see session.conf.example.
 
  

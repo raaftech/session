@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright © 2008-2016 RAAF Technology bv
+# Copyright © 2008-2026 RAAF Services bv
 #
 # This file is part of Session.
 #
@@ -332,10 +332,8 @@ function winexeTellCommandWriter {
 
     # Make sure we only pass --password when pass was not empty.
     if [ ! -z "$pass" ]; then
-       # printf "winexe -U '%s%%%s' //%s 'cmd.exe /c \"%s\"' 2> /dev/null\n" "$user" "$pass" "$addr" "$command"
         echo   "winexe -U '$user%$pass' //$addr 'cmd.exe /c \"$command\"' 2> /dev/null"
     else
-       # printf "winexe -U '%s' //%s 'cmd.exe /c \"%s\"' 2> /dev/null\n" "$user" "$addr" "$command"
         echo   "winexe -U '$user' //$addr 'cmd.exe /c \"$command\"' 2> /dev/null"
     fi
 }
@@ -515,12 +513,10 @@ function toolFinder {
     if [ "$platform" = "linux" -o "$platform" = "bsd" -o "$platform" = "macosx" ]; then
         printf "tools_session='awk,cut,grep,host,lsof,$nmap,sed,tr,ps'\n" > "$usrcfd/cfg/tools.required"
         printf "tools_execute='ssh,winexe'\n" >> "$usrcfd/cfg/tools.required"
-        printf "tools_agent='ssh-agent,ssh-add'\n" >> "$usrcfd/cfg/tools.required"
         printf "tools_send='cp,scp,smbclient'\n" >> "$usrcfd/cfg/tools.required"
     elif [ "$platform" = "windows" ]; then
         printf "tools_session='awk,cut,grep,$nmap,nslookup.exe,sed,tr,$pslist'\n" > "$usrcfd/cfg/tools.required"
         printf "tools_execute='$plink,$psexec'\n" >> "$usrcfd/cfg/tools.required"
-        printf "tools_agent='$pageant'\n" >> "$usrcfd/cfg/tools.required"
         printf "tools_send='$pscp,$robocopy'\n" >> "$usrcfd/cfg/tools.required"
     else
         printf "# unidentified platform specified: $platform\n" > "$usrcfd/cfg/tools.required"
@@ -532,9 +528,15 @@ function toolFinder {
         PATH="${PATH}:/Applications/Utilities/Terminal.app/Contents/MacOS"
         tools_terminal="osascript,Terminal"
     elif [ "$terminal" = "gnome" ]; then
-        tools_terminal="gnome-terminal,pgrep,xdotool"
+        tools_terminal="gnome-terminal"
+    elif [ "$terminal" = "urxvt" ]; then
+        tools_terminal="urxvt"
+    elif [ "$terminal" = "alacritty" ]; then
+        tools_terminal="alacritty"
     elif [ "$terminal" = "screen" ]; then
         tools_terminal="screen"
+    elif [ "$terminal" = "tmux" ]; then
+        tools_terminal="tmux"
     fi
 
     if [ "$desktop" = "mstsc" ]; then
@@ -548,7 +550,7 @@ function toolFinder {
 
     if [ "$browser" = "windows" ]; then
         tools_browser="$explorer"
-    elif [ "$browser" = "apple" ]; then
+    elif [ "$browser" = "macos" ]; then
         tools_browser="open"
     elif [ "$browser" = "gnome" ]; then
         # Some linux distributions name 'open' differently. Quick fix.
@@ -607,78 +609,18 @@ function toolFinder {
     mv "$usrcfd/tmp/tools.found" "$usrcfd/cfg/tools.found"
 }
 
-# handleSshPrivateKeys()
-# Detects private keys, handles automatic agent starting when needed.
+# handleSshOptions()
+# Sets sshopts, sshkey and sshpub.
 #
-# Check for private keys and be smart about agent handling.
+# Set ssh options. On Windows, find the PuTTY key pair, because the
+# PuTTY tools do not look for a default key.
 #
-function handleSshPrivateKeys {
+function handleSshOptions {
     reportDebugFuncEntry "$*"
 
-    # Set private key option when private key found.
     if [ "$platform" = "linux" -o "$platform" = "bsd" -o "$platform" = "macosx" ]; then
-
-        # Look for OpenSSH style public/private keypair.
-        if [ -e "$HOME/.ssh/id_dsa" ]; then
-            sshkey="$HOME/.ssh/id_dsa"
-            sshpub="$HOME/.ssh/id_dsa.pub"
-            sshopts="-i $sshkey"
-        elif [ -e "$HOME/.ssh/id_rsa" ]; then
-            sshkey="$HOME/.ssh/id_rsa"
-            sshpub="$HOME/.ssh/id_rsa.pub"
-            sshopts="-i $sshkey"
-        fi
-
-        # Load private key into ssh-agent if agent handling is enabled.
-        if [ "$sshkey" -a "$agent" == "ssh-agent" ]; then
-            sshagentfile="$usrcfd/tmp/session.ssh-agent.out"
-            sshagentproc="$(ps x | grep ssh-agent | grep -v grep)"
-            if [ "$SSH_AUTH_SOCK" ]; then
-                reportDebug "Reusing previously set environment variables for running ssh-agent"
-                printf "SSH_AUTH_SOCK=$SSH_AUTH_SOCK; export SSH_AUTH_SOCK;\n"  > "$sshagentfile"
-                printf "SSH_AGENT_PID=$SSH_AGENT_PID; export SSH_AGENT_PID;\n" >> "$sshagentfile"
-                source "$sshagentfile"
-
-            elif [ "$sshagentproc" ]; then
-                reportDebug "Environment values not set but agent is running, inspecting agent"
-                reportDebug "I'm using $privy lsof to do this"
-                sshagentlsof="$($privy lsof /tmp/ssh-*/agent.* 2> /dev/null | grep ssh-agent | tail -n1)"
-                SSH_AUTH_SOCK="$(printf "$sshagentlsof\n" | awk '{print $8}')"
-                SSH_AGENT_PID="$(printf "$sshagentlsof\n" | awk '{print $2}')"
-                printf "SSH_AUTH_SOCK=$SSH_AUTH_SOCK; export SSH_AUTH_SOCK;\n"  > "$sshagentfile"
-                printf "SSH_AGENT_PID=$SSH_AGENT_PID; export SSH_AGENT_PID;\n" >> "$sshagentfile"
-                source "$sshagentfile"
-
-            elif [ ! "$sshagentproc" ]; then
-                reportInfo "You have a private key; starting new ssh-agent"
-                ssh-agent | grep -v "^echo " > "$sshagentfile"
-                chmod 600 "$sshagentfile"
-                source "$sshagentfile"
-
-            else
-                reportError "Unexpected exit"
-                exit 1
-            fi
-
-            sshkeyloaded="$(ssh-add -l | grep "$sshkey")"
-            if [ -z "$sshkeyloaded" ]; then
-                reportDebug "Loading ssh key(s) into ssh-agent "
-                ssh-add
-            fi
-        elif [ "$agent" == "gpg-agent" ]; then
-            reportDebug "You have set agent to gpg-agent; assuming your keys are loaded."
-            sshkey=in-gpg
-        fi
-
-        # Disable strict host and reverse mapping checks if not already set.
-        if [ -e "$HOME/.ssh/config" ]; then
-            if [[ ! "$(cat "$HOME/.ssh/config")" =~ "StrictHostKeyChecking" ]]; then
-                printf "StrictHostKeyChecking no\n" >> "$HOME/.ssh/config"
-            fi
-        else
-            mkdir -p "$HOME/.ssh"
-            printf "StrictHostKeyChecking no\n" >> "$HOME/.ssh/config"
-        fi
+        # Accept keys of new hosts, refuse changed keys.
+        sshopts="-o StrictHostKeyChecking=accept-new${sshopts:+ $sshopts}"
 
     elif [ "$platform" = "windows" ]; then
         # Look for PuTTY style public/private keypair.
@@ -690,19 +632,6 @@ function handleSshPrivateKeys {
             sshkey="$(toLocalWindowsPath "$usrcfd/../.ssh/id_rsa.ppk")"
             sshpub="$(toLocalWindowsPath "$usrcfd/../.ssh/id_rsa.pub")"
             sshopts="-i \"$sshkey\""
-        fi
-
-        # Load private key into pageant if agent handling is enabled.
-        if [ "$sshkey" -a "$agent" == "pageant" ]; then
-            running="$($pslist | grep -i $pageant | grep -v grep)"
-            if [ ! "$running" ]; then
-                reportInfo "You have a private key; loading into ssh-agent"
-                typeset command="start /b $pageant \"$sshkey\""
-                viaScript "$(localTellCommandWriter "$command")" &
-                sleep 10
-            fi
-        elif [ "$sshkey" -a "$agent" == "gpg-agent" ]; then
-            reportInfo "You have set agent to gpg-agent; assuming your keys are loaded."
         fi
     fi
 }
@@ -729,22 +658,22 @@ function handleQuotedRegExpBehaviour {
     elif [ "$major" = 3 ]; then # Major is 3
         if [ "$minor" -lt 2 ]; then # Version 3.0 and 3.1 will work
             reportDebug "Bash version is old but will work with quoted regexp matching"
-        elif [ "$minor" -eq 2 ]; then  # Handle 3.2 idiosyncracies
+        elif [ "$minor" -eq 2 ]; then  # Handle 3.2 idiosyncrasies
             if [ 0 -le "$patch" -a "$patch" -le 9 ]; then # Version 3.2.0 to 3.2.9 is broken
                 reportError "Bash version has known unfixed issues with quoted regexp matching"
                 exit 1
             elif [ "$patch" -lt 39 ]; then # Version 3.2.10 to 3.2.38 might work
                 reportDebug "Bash version is old but may work with quoted regexp matching"
             else # Version 3.2.39 and higher has compat31
-                reportDebug "Setting shell option compat31 to handle quoted rexexp matching"
+                reportDebug "Setting shell option compat31 to handle quoted regexp matching"
                 shopt -s compat31
             fi
         elif [ "$minor" -gt 2 ]; then # Currently non-existing version of bash 3.3 or higher but not 4
-            reportDebug "Setting shell option compat31 to handle quoted rexexp matching"
+            reportDebug "Setting shell option compat31 to handle quoted regexp matching"
             shopt -s compat31
         fi
     else # 4 and higher.
-        reportDebug "Setting shell option compat31 to handle quoted rexexp matching"
+        reportDebug "Setting shell option compat31 to handle quoted regexp matching"
         shopt -s compat31
     fi
 }
@@ -753,8 +682,10 @@ function handleQuotedRegExpBehaviour {
 # Sends a local public key to another machine.
 #
 # This function takes a username which is supposed to exist on a remote
-# system and first sends the key to the remote system and then executes
-# the commandlist routine below to install the key for the specified user.
+# system and installs the public key(s) for that user. On unix-likes,
+# ssh-copy-id does this with the keys of the ssh agent or ~/.ssh/id*.pub.
+# On Windows, it first sends the key to the remote system and then
+# executes the commandlist routine below to install the key.
 #
 function sshSendKey {
     reportDebugFuncEntry "$*" "sshpub addr"
@@ -766,6 +697,19 @@ function sshSendKey {
     typeset commandlist
 
     [ "$addr" ] || { reportError "\$addr is empty; aborting" ; return 1 ; }
+
+    if [ "$platform" != "windows" ]; then
+        reportInfo "Attempting to install public key(s) for $user on $addr"
+        ssh-copy-id $sshopts "$user@$addr"
+        retval="$?"
+        if [ "$retval" != 0 ]; then
+            reportError "Installation attempt failed with return code: $retval"
+            return 1
+        fi
+        reportInfo "Key installed"
+        return 0
+    fi
+
     [ "$sshpub" ] || { reportError "\$sshpub is empty; aborting" ; return 1 ; }
 
     reportInfo "Attempting to send public key $sshpub"
@@ -849,10 +793,13 @@ function osGlobals {
     osreboot="reboot"
     oslisten="netstat -na|grep \"LISTEN\"|grep -w -e \"0\.0\.0\.0:$port\" -e \":::$port\" -e \"$addr:$port\" "
 
-    # Override defaults given above for certain osses.
+    # Override defaults given above for certain operating systems.
     case "$1" in
       alpine*)
         osstop="/sbin/poweroff"
+        ;;
+      android*)
+        osstop="reboot -p"
         ;;
       haiku)
         osstop="/bin/shutdown"
@@ -869,7 +816,7 @@ function osGlobals {
       chimera|sol10|sol11)
         osstop="/usr/sbin/poweroff"
         ;;
-      windows-like|win2k3|win2k8|win2k12|winxp|winv|win7|win8|win10|reactos)
+      windows-like|win*|reactos)
         osstop="shutdown -s -t 01"
         osreboot="shutdown -r -t 01"
         oslisten="netstat -na|findstr \"LISTEN\"|findstr \"\<0\.0\.0\.0:$port\> \<$addr:$port\>\" "
@@ -1043,10 +990,10 @@ function printPortState {
     else
         if [ "$scantype" = "connect" ]; then
             reportDebug "Scantype was set to connect"
-            command="$nmap -n -T5 --host-timeout $timeout -PN -sT -p $port $addr"
+            command="$nmap -n -T5 --host-timeout ${timeout}ms -PN -sT -p $port $addr"
             match=" open "
         else
-            command="$nmap -n -T5 --host-timeout $timeout -PN -p $port $addr"
+            command="$nmap -n -T5 --host-timeout ${timeout}ms -PN -p $port $addr"
             match=" open "
         fi
     fi
@@ -1073,7 +1020,6 @@ function printPingState {
 
     typeset addr
     typeset command
-    typeset match
 
     if [ "$1" ]; then
         addr="$1"
@@ -1109,6 +1055,53 @@ function printPingState {
     else
         reportDebug "$addr is unreachable"
         printf "unreachable\n"
+    fi
+}
+
+# adbSerial()
+# Prints.
+#
+# Print the adb serial: emulator-<adbport - 1> for Android emulator
+# guests, <addr>:<adbport> for other devices. The adbport is 5555
+# unless set in options.env.
+#
+function adbSerial {
+    reportDebugFuncEntry "$*" "vrmt addr adbport"
+
+    typeset port="${adbport:-5555}"
+
+    if [ "$vrmt" = "android" ]; then
+        printf "emulator-$((port - 1))\n"
+    else
+        printf "$addr:$port\n"
+    fi
+}
+
+# printAdbState()
+# Prints.
+#
+# Print the state ("active"/"inactive") of the adb device of the
+# current entry. Connect to devices that are not emulators first.
+# The device is active only when it has completed its boot.
+#
+function printAdbState {
+    reportDebugFuncEntry "$*" "vrmt addr adbport"
+
+    typeset serial="$(adbSerial)"
+
+    if [ "$vrmt" != "android" ]; then
+        if [ "$(printPortState "$addr" "${adbport:-5555}")" != "open" ]; then
+            printf "inactive\n"
+            return
+        fi
+        adb connect "$serial" >/dev/null 2>&1
+    fi
+
+    if [ "$(adb -s "$serial" get-state 2>/dev/null)" = "device" ] &&
+       [ "$(adb -s "$serial" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ]; then
+        printf "active\n"
+    else
+        printf "inactive\n"
     fi
 }
 
@@ -1661,7 +1654,7 @@ function tokenReader {
         ;;
     esac
 
-    # Check if the neccessary parameters are set.
+    # Check if the necessary parameters are set.
     [ "$function" ] || { reportDebug "Function not specified"    ; return 1 ; }
     [ "$name" ]     || { reportDebug "Name not passed"           ; return 1 ; }
     [ "$keys" ]     || { reportDebug "Keys not passed for $name" ; return 1 ; }
@@ -1739,7 +1732,7 @@ function tokenValidator {
     typeset value
     typeset list
 
-    # Check if the neccessary parameters are set.
+    # Check if the necessary parameters are set.
     [ "$keys" ]     || { reportDebug "Keys not passed" ; return 1 ; }
 
     typeset IFS=","
@@ -2319,7 +2312,7 @@ function startEntity {
     reportDebugFuncEntry "$*" "execute type"
 
     if [ "$execute" != "true" ]; then
-        reportError "Required execute functions disabled; set to 1 in $usropts or $sysopts or make sure your have the required executables; executables required: $tools_execute; executables detected: $tools_execute_found"
+        reportError "Required execute functions disabled; set to 1 in $usropt or $sysopt or make sure you have the required executables; executables required: $tools_execute; executables detected: $tools_execute_found"
         return 1
     fi
 
@@ -2346,7 +2339,7 @@ function stopEntity {
     reportDebugFuncEntry "$*" "execute type"
 
     if [ "$execute" != "true" ]; then
-        reportError "Required execute functions disabled; set execute to 1 in $usropts or in $sysopts or make sure your have the required executables; executables required: $tools_execute; executables detected: $tools_execute_found"
+        reportError "Required execute functions disabled; set execute to 1 in $usropt or in $sysopt or make sure you have the required executables; executables required: $tools_execute; executables detected: $tools_execute_found"
         return 1
     fi
 
@@ -2373,7 +2366,7 @@ function restartEntity {
     reportDebugFuncEntry "$*" "execute type"
 
     if [ "$execute" != "true" ]; then
-        reportError "Required execute functions disabled; set execute to 1 in $usropts or in $sysopts or make sure your have the required executables; executables required: $tools_execute; executables detected: $tools_execute_found"
+        reportError "Required execute functions disabled; set execute to 1 in $usropt or in $sysopt or make sure you have the required executables; executables required: $tools_execute; executables detected: $tools_execute_found"
         return 1
     fi
 
@@ -2397,15 +2390,20 @@ function restartEntity {
 # Create a system by means of the appropriate VirtHandler.
 #
 function createEntity {
-    reportDebugFuncEntry "$*" "execute send type"
+    reportDebugFuncEntry "$*" "execute create send type"
 
     if [ "$execute" != "true" ]; then
-        reportError "Required execute functions disabled; set execute to 1 in $usropts or in $sysopts or make sure your have the required executables; executables required: $tools_execute; executables detected: $tools_execute_found"
+        reportError "Required execute functions disabled; set execute to 1 in $usropt or in $sysopt or make sure you have the required executables; executables required: $tools_execute; executables detected: $tools_execute_found"
+        return 1
+    fi
+
+    if [ "$create" != "true" ]; then
+        reportError "Required create functions disabled; set create to 1 in $usropt or in $sysopt to enable"
         return 1
     fi
 
     if [ "$send" != "true" ]; then
-        reportError "Required send functions disabled; set send to 1 in $usropts or in $sysopts or make sure your have the required executables; executables required: $tools_send; executables detected: $tools_send_found"
+        reportError "Required send functions disabled; set send to 1 in $usropt or in $sysopt or make sure you have the required executables; executables required: $tools_send; executables detected: $tools_send_found"
         return 1
     fi
 
@@ -2430,12 +2428,12 @@ function destroyEntity {
     reportDebugFuncEntry "$*" "execute destroy type"
 
     if [ "$execute" != "true" ]; then
-        reportError "Required execute functions disabled; set execute to 1 in $usropts or in $sysopts or make sure your have the required executables; executables required: $tools_execute; executables detected: $tools_execute_found"
+        reportError "Required execute functions disabled; set execute to 1 in $usropt or in $sysopt or make sure you have the required executables; executables required: $tools_execute; executables detected: $tools_execute_found"
         return 1
     fi
 
     if [ "$destroy" != "true" ]; then
-        reportError "Required destroy functions disabled; set destroy to 1 in $usropts or in $sysopts to enable"
+        reportError "Required destroy functions disabled; set destroy to 1 in $usropt or in $sysopt to enable"
         return 1
     fi
 
@@ -2460,7 +2458,7 @@ function accessEntity {
     reportDebugFuncEntry "$*" "acmt access xsastype user upwd admin apwd"
 
     if [ "$access" != "true" ]; then
-        reportError "Required access functions disabled; set access to 1 in $usropts or in $sysopts or make sure your have the required executables; executables required: $tools_access; executables detected: $tools_access_found"
+        reportError "Required access functions disabled; set access to 1 in $usropt or in $sysopt or make sure you have the required executables; executables required: $tools_access; executables detected: $tools_access_found"
         return 1
     fi
 
@@ -2490,7 +2488,7 @@ function runAs {
     reportDebugFuncEntry "$*" "execute exmt runastype"
 
     if [ "$execute" != "true" ]; then
-        reportError "Required execute functions disabled; set execute to 1 in $usropts or in $sysopts or make sure your have the required executables; executables required: $tools_execute; executables detected: $tools_execute_found"
+        reportError "Required execute functions disabled; set execute to 1 in $usropt or in $sysopt or make sure you have the required executables; executables required: $tools_execute; executables detected: $tools_execute_found"
         return 1
     fi
 
@@ -2512,7 +2510,7 @@ function sendAs {
     reportDebugFuncEntry "$*" "send exmt sendastype"
 
     if [ "$send" != "true" ]; then
-        reportError "Required send functions disabled; set send to 1 in $usropts or in $sysopts or make sure your have the required executables; executables required: $tools_send; executables detected: $tools_send_found"
+        reportError "Required send functions disabled; set send to 1 in $usropt or in $sysopt or make sure you have the required executables; executables required: $tools_send; executables detected: $tools_send_found"
         return 1
     fi
 
@@ -2539,7 +2537,7 @@ function credAs {
     typeset retval
 
     if [ "$execute" != "true" ]; then
-        reportError "Required execute functions disabled; set execute to 1 in $usropts or in $sysopts or make sure your have the required executables; executables required: $tools_execute; executables detected: $tools_execute_found"
+        reportError "Required execute functions disabled; set execute to 1 in $usropt or in $sysopt or make sure you have the required executables; executables required: $tools_execute; executables detected: $tools_execute_found"
         return 1
     fi
 
@@ -3410,7 +3408,7 @@ function dockerVirtHandler {
 
     case "$1" in
       state)
-        result="$(command="docker ps --all --format \"{{.Names}},{{.Status}}\" | grep -i \"$name\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin)"
+        result="$(command="docker ps --all --format \"{{.Names}},{{.Status}}\" | grep -i \"^$name,\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin)"
         case "$result" in
           *,Up*)
             vmstate="active"
@@ -3460,6 +3458,77 @@ function dockerVirtHandler {
       exec)
         result="$(command="docker exec --interactive \"$name\" /bin/sh -c \"$command\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin)"
         echo $result
+        ;;
+    esac
+
+    return 0
+}
+
+# androidVirtHandler(state|start|stop|restart|create|destroy|exec)
+# Sets vmstate, runs commands.
+#
+# Handle Android SDK emulator related commands. The vmhome is the SDK
+# root, vmdata the AVD directory. In options.env of the guest, vmname
+# sets the AVD name (default <name>) and vmopts adds emulator options.
+#
+function androidVirtHandler {
+    reportDebugFuncEntry "$*" "name host state destroy vmhome vmdata vmname vmopts"
+
+    typeset result
+    typeset avd="${vmname:-$name}"
+    typeset serial="$(adbSerial)"
+    typeset adb="\"$vmhome/platform-tools/adb\""
+    typeset avdhome="ANDROID_AVD_HOME=\"$vmdata\""
+    typeset emulator="\"$vmhome/emulator/emulator\""
+
+    case "$1" in
+      state)
+        result="$(command="$adb devices" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasuser 2>/dev/null)"
+        if printf '%s\n' "$result" | grep -q "^$serial[[:space:]]"; then
+            vmstate="active"
+        else
+            result="$(command="$avdhome $emulator -list-avds" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasuser 2>/dev/null)"
+            if printf '%s\n' "$result" | grep -qx "$avd"; then
+                vmstate="inactive"
+            else
+                vmstate="non-existing"
+            fi
+        fi
+        ;;
+      start)
+        if [ "$state" = "off" ]; then
+            (command="$avdhome nohup $emulator -avd \"$avd\" -port ${serial#emulator-} $vmopts </dev/null >/dev/null 2>&1 &" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasuser) >/dev/null
+            state="booting"
+        fi
+        ;;
+      stop)
+        if [ "$state" = "on" ]; then
+            (command="$adb -s $serial emu kill" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasuser) >/dev/null
+            state="stopping"
+        fi
+        ;;
+      restart)
+        if [ "$state" = "on" ]; then
+            (command="$adb -s $serial reboot" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasuser) >/dev/null
+            state="restarting"
+        fi
+        ;;
+      create)
+        reportError "Haven't implemented $1 yet"
+        return 1
+        ;;
+      destroy)
+        if [ "$destroy" = "true" ]; then
+            reportError "Haven't implemented $1 yet"
+            return 1
+        else
+            reportError "Destroy is disabled"
+            return 1
+        fi
+        ;;
+      exec)
+        (command="$adb -s $serial shell \"$command\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasuser)
+        return $?
         ;;
     esac
 
@@ -3585,6 +3654,76 @@ function scriptedServiceHandler {
     return 0
 }
 
+# dockerServiceHandler(state|start|stop|restart)
+# Sets svstate, svrunning, svlistening, runs commands.
+#
+# Handle services that run as a Docker container named <name> on their
+# parent host or guest.
+#
+function dockerServiceHandler {
+    reportDebugFuncEntry "$*" "name addr port state"
+
+    typeset result
+
+    case "$1" in
+      state)
+        svstate="unset"
+        svrunning="unset"
+        svlistening="unset"
+
+        result="$(command="docker inspect --format \"{{.State.Status}}\" \"$name\"" ; ${exmt}ExecHandler runasservice 2>/dev/null)"
+        case "$result" in
+          running)
+            svrunning="active"
+            if [ "$port" != "none" ]; then
+                if [ "$(printPortState "$addr" "$port")" = "open" ]; then
+                    svlistening="active"
+                else
+                    svlistening="inactive"
+                fi
+            fi
+            ;;
+          created|exited|paused|dead)
+            svrunning="inactive"
+            svlistening="inactive"
+            ;;
+          restarting|removing)
+            reportDebug "Container $name is $result"
+            ;;
+          *)
+            svstate="unknown"
+            ;;
+        esac
+        ;;
+      start)
+        if [ "$state" = "off" ]; then
+            (command="docker start \"$name\"" ; ${exmt}ExecHandler runasservice) >/dev/null
+            state="starting"
+        else
+            reportInfo "State of service on $name was not off but $state"
+        fi
+        ;;
+      stop)
+        if [ "$state" = "on" ]; then
+            (command="docker stop \"$name\"" ; ${exmt}ExecHandler runasservice) >/dev/null
+            state="stopping"
+        else
+            reportInfo "State of service on $name was not on but $state"
+        fi
+        ;;
+      restart)
+        if [ "$state" = "on" ]; then
+            (command="docker restart \"$name\"" ; ${exmt}ExecHandler runasservice) >/dev/null
+            state="restarting"
+        else
+            reportInfo "State of service on $name was not on but $state"
+        fi
+        ;;
+    esac
+
+    return 0
+}
+
 # waitForDialog(<triggerProcess> <dialogProcess>)
 # Waits.
 #
@@ -3631,7 +3770,6 @@ function puttyTerminalHandler {
     typeset wrapped
     typeset append
     typeset line
-    typeset wsl
 
     if [ "$command" ]; then
         reportDebug "Command passed: $command"
@@ -3653,7 +3791,7 @@ function puttyTerminalHandler {
         wrapped="\
         reg delete \"HKEY_CURRENT_USER\\Software\\SimonTatham\\PuTTY\\Sessions\\Default%%20Settings\" /v \"WinTitle\" /f > nul 2>&1
         reg add \"HKEY_CURRENT_USER\\Software\\SimonTatham\\PuTTY\\Sessions\\Default%%20Settings\" /t REG_SZ /v \"WinTitle\" /d \"$(capsFirst "$name")\" > nul 2>&1
-        $prefix $line
+        $line
         echo wscript.sleep 1000 > \"%TEMP%\\wait.vbs\"
         wscript.exe \"%TEMP%\\wait.vbs\"
         del \"%TEMP%\\wait.vbs\"
@@ -3692,8 +3830,10 @@ function appleTerminalHandler {
         line="ssh $sshopts -Y $xsasuser@$addr $append"
     elif [ "$protocol" = "tel" ]; then
         line="telnet $addr $append"
+    elif [ "$protocol" = "adb" ]; then
+        line="adb -s $(adbSerial) shell $append"
     else
-        reportError "Invalid protocol type passed: $protocol; valid types are: tel ssh"
+        reportError "Invalid protocol type passed: $protocol; valid types are: tel ssh adb"
         return 1
     fi
 
@@ -3703,6 +3843,9 @@ function appleTerminalHandler {
         printf "tell application \"Terminal\"\n" >> "$usrcfd/tmp/session.access.$name.scpt"
         printf "tell application \"System Events\" to tell process \"Terminal\" to keystroke \"t\" using command down\n" >> "$usrcfd/tmp/session.access.$name.scpt"
         printf "do script \"$line\" in last tab of front window\n" >> "$usrcfd/tmp/session.access.$name.scpt"
+        if [ "$titling" ]; then
+            printf "set custom title of last tab of front window to \"$title\"\n" >> "$usrcfd/tmp/session.access.$name.scpt"
+        fi
         printf "end tell\n" >> "$usrcfd/tmp/session.access.$name.scpt"
 
         osascript "$usrcfd/tmp/session.access.$name.scpt"
@@ -3717,24 +3860,6 @@ function appleTerminalHandler {
         # If Keychain is running, check to see if a prompt has started, wait for it to close.
         waitForDialog "securityd" "SecurityAgent"
 
-        # Set title (only if agent enabled, due to non-interactivity requirement).
-        if [ "$titling" -a "$agent" ]; then
-            printf 'activate application "Terminal"\n' > "$usrcfd/tmp/session.title.$name.scpt"
-            printf 'tell application "System Events" to tell process "Terminal" to keystroke "unset PROMPT_COMMAND"\n' >> "$usrcfd/tmp/session.title.$name.scpt"
-            printf 'tell application "System Events" to tell process "Terminal" to keystroke return\n' >> "$usrcfd/tmp/session.title.$name.scpt"
-            printf 'tell application "System Events" to tell process "Terminal" to keystroke "echo -ne \\"\\\\033]0;' >> "$usrcfd/tmp/session.title.$name.scpt"
-            printf "$title" >> "$usrcfd/tmp/session.title.$name.scpt"
-            printf '\\\\007\\""\n' >> "$usrcfd/tmp/session.title.$name.scpt"
-            printf 'tell application "System Events" to tell process "Terminal" to keystroke return\n' >> "$usrcfd/tmp/session.title.$name.scpt"
-
-            osascript "$usrcfd/tmp/session.title.$name.scpt"
-
-            if [ "$debug" ]; then
-                reportDebug "Not removing $usrcfd/tmp/session.title.$name.scpt"
-            else
-                rm "$usrcfd/tmp/session.title.$name.scpt"
-            fi
-        fi
 
         # Return to first tab.
         osascript -e 'tell application "System Events"' -e 'keystroke "}" using command down' -e 'end tell'
@@ -3744,6 +3869,9 @@ function appleTerminalHandler {
         printf "tell application \"Terminal\"\n" >> "$usrcfd/tmp/session.access.$name.scpt"
         printf "tell application \"System Events\" to tell process \"Terminal\" to keystroke \"n\" using command down\n" >> "$usrcfd/tmp/session.access.$name.scpt"
         printf "do script \"$line\" in last tab of front window\n" >> "$usrcfd/tmp/session.access.$name.scpt"
+        if [ "$titling" ]; then
+            printf "set custom title of last tab of front window to \"$title\"\n" >> "$usrcfd/tmp/session.access.$name.scpt"
+        fi
         printf "end tell\n" >> "$usrcfd/tmp/session.access.$name.scpt"
 
         osascript "$usrcfd/tmp/session.access.$name.scpt"
@@ -3757,24 +3885,6 @@ function appleTerminalHandler {
         # If Keychain is running, check to see if a prompt has started, wait for it to close.
         waitForDialog "securityd" "SecurityAgent"
 
-        # Set title (only if agent enabled, due to non-interactivity requirement).
-        if [ "$titling" -a "$agent" ]; then
-            printf 'activate application "Terminal"\n' > "$usrcfd/tmp/session.title.$name.scpt"
-            printf 'tell application "System Events" to tell process "Terminal" to keystroke "unset PROMPT_COMMAND"\n' >> "$usrcfd/tmp/session.title.$name.scpt"
-            printf 'tell application "System Events" to tell process "Terminal" to keystroke return\n' >> "$usrcfd/tmp/session.title.$name.scpt"
-            printf 'tell application "System Events" to tell process "Terminal" to keystroke "echo -ne \\"\\\\033]0;' >> "$usrcfd/tmp/session.title.$name.scpt"
-            printf "$title" >> "$usrcfd/tmp/session.title.$name.scpt"
-            printf '\\\\007\\""\n' >> "$usrcfd/tmp/session.title.$name.scpt"
-            printf 'tell application "System Events" to tell process "Terminal" to keystroke return\n' >> "$usrcfd/tmp/session.title.$name.scpt"
-
-            osascript "$usrcfd/tmp/session.title.$name.scpt"
-
-            if [ "$debug" ]; then
-                reportDebug "Not removing $usrcfd/tmp/session.title.$name.scpt"
-            else
-                rm "$usrcfd/tmp/session.title.$name.scpt"
-            fi
-        fi
     fi
 }
 
@@ -3789,9 +3899,7 @@ function gnomeTerminalHandler {
     typeset protocol="$1"
     typeset append
     typeset title="$(capsFirst "$name")"
-    typeset windowId
-    typeset keyringDetected
-    typeset keyringPromptActive
+    typeset mode
     typeset line
 
     if [ "$command" ]; then
@@ -3803,61 +3911,27 @@ function gnomeTerminalHandler {
         line="ssh $sshopts -A -Y $xsasuser@$addr $append"
     elif [ "$protocol" = "tel" ]; then
         line="telnet $addr $append"
+    elif [ "$protocol" = "adb" ]; then
+        line="adb -s $(adbSerial) shell $append"
     else
-        reportError "Invalid protocol type passed: $protocol; valid types are: tel ssh"
+        reportError "Invalid protocol type passed: $protocol; valid types are: tel ssh adb"
         return 1
     fi
 
     if [ "$tabbed" ]; then
-        # Note that we're prep'ing the LOCAL user here, not a session user!
-        pgrep -u "$localUserDblBacksl" gnome-terminal | grep -qv "$$"
-        if [ "$?" = 0 ]; then
-            # Handle tab creation and run connection command.
-            windowId="$(xdotool search --class "gnome-terminal" | tail -1)"
-            xdotool windowfocus "$windowId" 2>/dev/null
-            xdotool key ctrl+shift+t
-            sleep 0.2
-
-            # Old versions of xdotool don't handle clearing of modifiers and key delay setting..
-            xdotool --version 2> /dev/null
-            if [ "$?" = "0" ]; then
-                xdotool type --clearmodifiers --delay=10 "$line"
-            else
-                xdotool type "$line"
-            fi
-
-            xdotool key Return
-
-            # If gnome-keyring-daemon is running, check to see if a prompt has started, wait for it to close.
-            waitForDialog "gnome-keyring-daemon" "gnome-keyring-prompt"
-
-            # Set title (only if sshkey is set and agent enabled, due to non-interactivity requirement).
-            if [ "$titling" -a "$sshkey" -a "$agent" ]; then
-                if [ "$user" == "root" ]; then symbol='#' ; else symbol='$' ; fi
-                xdotool type --clearmodifiers --delay=10 "echo -ne \"\\033]0;\"$title\"\\007\""
-                xdotool key Return
-                xdotool type --clearmodifiers --delay=10 "PS1=\"[\\u@\\h \\W]$symbol \" ; PROMPT_COMMAND='echo -ne \"\\033]0;\"$title\"\\007\"'"
-                xdotool key Return
-            fi
-
-            # Return to first tab.
-            xdotool key ctrl+Next
-        else
-            gnome-terminal --command="$line" &
-        fi
+        mode="--tab"
     else
-        # Set title (only if sshkey is set and agent enabled, due to non-interactivity requirement).
-        if [ "$titling" -a "$sshkey" -a "$agent" ]; then
-            gnome-terminal --command="$line"
-            if [ "$user" == "root" ]; then symbol='#' ; else symbol='$' ; fi
-            xdotool type --clearmodifiers --delay=10 "echo -ne \"\\033]0;\"$title\"\\007\""
-            xdotool key Return
-            xdotool type --clearmodifiers --delay=10 "PS1=\"[\\u@\\h \\W]$symbol \" ; PROMPT_COMMAND='echo -ne \"\\033]0;\"$title\"\\007\"'"
-            xdotool key Return
-        else
-            gnome-terminal --command="$line"
-        fi
+        mode="--window"
     fi
+
+    if [ "$titling" ]; then
+        gnome-terminal $mode --title="$title" -- sh -c "$line"
+    else
+        gnome-terminal $mode -- sh -c "$line"
+    fi
+
+    # If gnome-keyring-daemon is running, check to see if a prompt has started, wait for it to close.
+    waitForDialog "gnome-keyring-daemon" "gnome-keyring-prompt"
 
     return 0
 }
@@ -3884,22 +3958,57 @@ function urxvtTerminalHandler {
         line="ssh $sshopts -A -Y $xsasuser@$addr $append"
     elif [ "$protocol" = "tel" ]; then
         line="telnet $addr $append"
+    elif [ "$protocol" = "adb" ]; then
+        line="adb -s $(adbSerial) shell $append"
     else
-        reportError "Invalid protocol type passed: $protocol; valid types are: tel ssh"
+        reportError "Invalid protocol type passed: $protocol; valid types are: tel ssh adb"
         return 1
     fi
 
 
-    # Set title (only if sshkey is set and agent enabled, due to non-interactivity requirement).
-    if [ "$titling" -a "$sshkey" -a "$agent" ]; then
-        urxvt -e bash -c "$line" &
-        if [ "$user" == "root" ]; then symbol='#' ; else symbol='$' ; fi
-        xdotool type --clearmodifiers --delay=10 "echo -ne \"\\033]0;\"$title\"\\007\""
-        xdotool key Return
-        xdotool type --clearmodifiers --delay=10 "PS1=\"[\\u@\\h \\W]$symbol \" ; PROMPT_COMMAND='echo -ne \"\\033]0;\"$title\"\\007\"'"
-        xdotool key Return
+    if [ "$titling" ]; then
+        urxvt -title "$title" -e bash -c "$line" &
     else
         urxvt -e bash -c "$line" &
+    fi
+
+    return 0
+}
+
+# alacrittyTerminalHandler(<protocol>)
+# Writes command line, runs command line.
+#
+# Handle Alacritty terminal parameterization.
+#
+function alacrittyTerminalHandler {
+    reportDebugFuncEntry "$*" "name addr sshopts xsasuser"
+
+    typeset protocol="$1"
+    typeset append
+    typeset title="$(capsFirst "$name")"
+    typeset line
+
+    if [ "$command" ]; then
+        reportDebug "Command passed: $command"
+        append="$command"
+    fi
+
+    if [ "$protocol" = "ssh" ]; then
+        line="ssh $sshopts -A -Y $xsasuser@$addr $append"
+    elif [ "$protocol" = "tel" ]; then
+        line="telnet $addr $append"
+    elif [ "$protocol" = "adb" ]; then
+        line="adb -s $(adbSerial) shell $append"
+    else
+        reportError "Invalid protocol type passed: $protocol; valid types are: tel ssh adb"
+        return 1
+    fi
+
+    # Keep the title, so the shell cannot change it.
+    if [ "$titling" ]; then
+        alacritty --title "$title" -o window.dynamic_title=false -e sh -c "$line" &
+    else
+        alacritty -e sh -c "$line" &
     fi
 
     return 0
@@ -3915,9 +4024,12 @@ function screenTerminalHandler {
 
     typeset protocol="$1"
     typeset append
-    typeset keyringDetected
-    typeset keyringPromptActive
     typeset line
+    typeset title="$name"
+
+    if [ "$titling" ]; then
+        title="$(capsFirst "$name")"
+    fi
 
     if [ "$command" ]; then
         reportDebug "Command passed: $command"
@@ -3928,8 +4040,10 @@ function screenTerminalHandler {
         line="ssh $sshopts -Y $xsasuser@$addr $append"
     elif [ "$protocol" = "tel" ]; then
         line="telnet $addr $append"
+    elif [ "$protocol" = "adb" ]; then
+        line="adb -s $(adbSerial) shell $append"
     else
-        reportError "Invalid protocol type passed: $protocol; valid types are: tel ssh"
+        reportError "Invalid protocol type passed: $protocol; valid types are: tel ssh adb"
         return 1
     fi
 
@@ -3952,11 +4066,11 @@ function screenTerminalHandler {
     if [ "$TERM" = "screen" ]; then
         reportDebug "Creating window for $name from within screen"
         # Warning: line variable has to be unquoted.
-        screen -r -X screen -t "$name" $line
+        screen -r -X eval "screen -t \"$title\" $line" ${titling:+"dynamictitle off"}
     else
         reportDebug "Creating window for $name from outside of screen"
         # Warning: line variable has to be unquoted.
-        screen -r -S "$sesname" -X screen -t "$name" $line
+        screen -r -S "$sesname" -X eval "screen -t \"$title\" $line" ${titling:+"dynamictitle off"}
     fi
 
     if [ "$platform" = "linux" -o "$platform" = "bsd" ]; then
@@ -3970,6 +4084,67 @@ function screenTerminalHandler {
     else
         reportError "Unknown platform specified: $platform"
         return 1
+    fi
+}
+
+# tmuxTerminalHandler(<protocol>)
+# Writes command line, runs command line.
+#
+# Handle tmux terminal parameterization.
+#
+function tmuxTerminalHandler {
+    reportDebugFuncEntry "$*" "name addr sshopts xsasuser localUserDblBacksl TMUX"
+
+    typeset protocol="$1"
+    typeset append
+    typeset line
+    typeset pane
+    typeset title="$name"
+    typeset sesname="session-$hostname-$localUserDblBacksl"
+
+    if [ "$titling" ]; then
+        title="$(capsFirst "$name")"
+    fi
+
+    if [ "$command" ]; then
+        reportDebug "Command passed: $command"
+        append="$command"
+    fi
+
+    if [ "$protocol" = "ssh" ]; then
+        line="ssh $sshopts -Y $xsasuser@$addr $append"
+    elif [ "$protocol" = "tel" ]; then
+        line="telnet $addr $append"
+    elif [ "$protocol" = "adb" ]; then
+        line="adb -s $(adbSerial) shell $append"
+    else
+        reportError "Invalid protocol type passed: $protocol; valid types are: tel ssh adb"
+        return 1
+    fi
+
+    if [ "$TMUX" ]; then
+        reportDebug "Creating window for $name from within tmux"
+        pane="$(tmux new-window -P -F '#{pane_id}' -n "$title" "$line")"
+    else
+        if ! tmux has-session -t "$sesname" 2>/dev/null; then
+            reportDebug "Setting up initial tmux session in background"
+            tmux new-session -d -s "$sesname" -n "$hostname"
+        fi
+        reportDebug "Creating window for $name from outside of tmux"
+        pane="$(tmux new-window -P -F '#{pane_id}' -t "$sesname:" -n "$title" "$line")"
+    fi
+
+    if [ "$titling" ]; then
+        tmux select-pane -t "$pane" -T "$title"
+        tmux set-option -p -t "$pane" allow-set-title off
+    fi
+
+    if [ "$platform" = "linux" -o "$platform" = "bsd" ]; then
+        # If gnome-keyring-daemon is running, check to see if a prompt has started, wait for it to close.
+        waitForDialog "gnome-keyring-daemon" "gnome-keyring-prompt"
+    elif [ "$platform" = "macosx" ]; then
+        # If Keychain is running, check to see if a prompt has started, wait for it to close.
+        waitForDialog "securityd" "SecurityAgent"
     fi
 }
 
@@ -4298,6 +4473,35 @@ function rdpAccessHandler {
     return 0
 }
 
+# adbAccessHandler(state|access)
+# Sets acstate, runs commands.
+#
+# Either determine the state of, or access system using the adb protocol
+# and the terminal handler specified in options.env.
+#
+function adbAccessHandler {
+    reportDebugFuncEntry "$*" "name addr acstate terminal"
+
+    case "$1" in
+      state)
+        acstate="$(printAdbState)"
+        ;;
+      access)
+        if [ "$acstate" = "active" ]; then
+            ${terminal}TerminalHandler adb
+        elif [ "$terminal" = "none" ]; then
+            reportError "Terminal handler was set to \"none\" in options.env."
+            return 1
+        else
+            reportError "Failed to access $name on $addr over $acmt (acstate=$acstate)"
+            return 1
+        fi
+        ;;
+    esac
+
+    return 0
+}
+
 # noneExecHandler(state|runasuser|runasadmin|runasservice|sendasuser|sendasadmin|sendasservice)
 # Sets exstate, runs commands.
 #
@@ -4596,6 +4800,60 @@ function vmnExecHandler {
     return 0
 }
 
+# adbExecHandler(state|runasuser|runasadmin|runasservice|sendasuser|sendasadmin|sendasservice)
+# Sets exstate, runs commands.
+#
+# Handle executing commands on Android devices and emulators using adb.
+# Admin commands go to su on stdin, which needs a rooted device.
+#
+function adbExecHandler {
+    reportDebugFuncEntry "$*" "name exstate command source target"
+
+    typeset serial="$(adbSerial)"
+
+    case "$1" in
+      state)
+        exstate="$(printAdbState)"
+        ;;
+      runasuser|runasservice)
+        if [ "$exstate" = "active" ]; then
+            reportDebug "Attempting to execute user-level command (on $name)"
+            viaScript "adb -s $serial shell '$command'"
+            return $?
+        else
+            reportError "Failed to execute user-level command (on $name) (exstate=$exstate)"
+            return 1
+        fi
+        ;;
+      runasadmin)
+        if [ "$exstate" = "active" ]; then
+            reportDebug "Attempting to execute admin-level command (on $name)"
+            viaScript "printf '%s' '$command' | adb -s $serial shell su"
+            return $?
+        else
+            reportError "Failed to execute admin-level command (on $name) (exstate=$exstate)"
+            return 1
+        fi
+        ;;
+      sendasuser|sendasservice)
+        if [ "$exstate" = "active" ]; then
+            reportDebug "Attempting to send data at user-level (on $name)"
+            viaScript "adb -s $serial push '$source' '$target'"
+            return $?
+        else
+            reportError "Failed to send data at user-level (on $name) (exstate=$exstate)"
+            return 1
+        fi
+        ;;
+      sendasadmin)
+        reportError "Sending with elevated privileges not implemented yet"
+        return 1
+        ;;
+    esac
+
+    return 0
+}
+
 # sshCredHandler(ashost|asguest|asservice)
 # Runs commands.
 #
@@ -4825,7 +5083,6 @@ function mapGroup {
     typeset members="$1"
     typeset functions="$2"
     typeset targetState
-    typeset index
     typeset item
     typeset groupType
     typeset groupName
@@ -4836,7 +5093,7 @@ function mapGroup {
     groupType="$type"
     groupName="$name"
 
-    # If stop funtions are in the function list, reverse order.
+    # If stop functions are in the function list, reverse order.
     # Set the targetState (for using stateful mode), reverse order.
     typeset IFS=","
     if [[ "$functions" =~ "stop" ]]; then
@@ -4856,13 +5113,11 @@ function mapGroup {
     # Return value is the bitwise OR of all function return values
     retval=0
 
-    let index=1
     IFS=","
     for item in $groupList ; do
         reportDebug "Recursing $item to mapEntryPoint"
         mapEntryPoint "$item" "$functions"
         let retval=$((retval|$?))
-        let index+=1
     done
 
     # Restore group's type and name (which might have been overwritten by previous mapEntryPoint).
@@ -4917,28 +5172,10 @@ function mapEntryPoint {
             reportDebug "Terminal exit hook for screen: resuming created screen session"
             sleep 1
             screen -r
-        # Set the title of the local (first) tab using Gnome Terminal.
-        elif [ "$terminal" = "gnome" -a "$titling" -a "$tabbed" -a "$sshkey" -a "$agent" ]; then
-            reportDebug "Terminal exit hook for gnome: Switching back to initial terminal tab"
-            # typeset title="$(capsFirst "$hostname")"
-            # sleep 1
-            xdotool key alt+1
-            # if [ "$USER" == "root" ]; then symbol='#' ; else symbol='$' ; fi
-            # xdotool type --clearmodifiers --delay=10 "echo -ne \"\\033]0;\"$title\"\\007\""
-            # xdotool key Return
-            # xdotool type --clearmodifiers --delay=10 "PS1=\"[\\u@\\h \\W]$symbol \" ; PROMPT_COMMAND='echo -ne \"\\033]0;\"$title\"\\007\"'"
-            # xdotool key Return
-        # Set the title of the local (first) tab using Apple Terminal.
-        elif [ "$terminal" = "apple" -a "$titling" -a "$tabbed" -a "$sshkey" -a "$agent" ]; then
-            reportDebug "Terminal exit hook for apple: Switching back to initial terminal tab"
-            #typeset title="$(capsFirst "$hostname")"
-            printf 'activate application "Terminal"'\n > "$usrcfd/tmp/session.title.$hostname.scpt"
-            # if [ "$user" == "root" ]; then symbol='#' ; else symbol='$' ; fi
-            # printf 'tell application "System Events" to tell process "Terminal" to keystroke "PS1=\"[\\u@\\h \\W]$symbol \" ; PROMPT_COMMAND="'\n >> "$usrcfd/tmp/session.title.$hostname.scpt"
-            # printf "tell application \"System Events\" to tell process \"Terminal\" to keystroke quoted form of \"echo -ne \\\"\\\\033]0;$title\\\\007\\\"\"\n" >> "$usrcfd/tmp/session.title.$hostname.scpt"
-            # printf 'tell application "System Events" to tell process "Terminal" to keystroke return'\n >> "$usrcfd/tmp/session.title.$hostname.scpt"
-            osascript "$usrcfd/tmp/session.title.$hostname.scpt"
-            rm "$usrcfd/tmp/session.title.$hostname.scpt"
+        # Attach to a previously generated tmux session.
+        elif [ "$terminal" = "tmux" -a ! "$TMUX" -a "$endLoop" = "true" ]; then
+            reportDebug "Terminal exit hook for tmux: attaching created tmux session"
+            tmux attach-session -t "session-$hostname-$localUserDblBacksl"
         fi
     fi
 
@@ -5061,7 +5298,7 @@ function printUsageText {
     Notes:
     Arguments starting with a double dash sign (--) can either be without a value
     (like --nocheck) or with a value (like --mode=stateful). Session will tell you
-    when arguments are mandatory or optional. Use the special paramenters for the
+    when arguments are mandatory or optional. Use the special parameters for the
     list command to find out which values can be passed to certain arguments.
     " | sed 's/^[[:space:]]*//'
 }

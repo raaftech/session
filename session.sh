@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright © 2008-2016 RAAF Technology bv
+# Copyright © 2008-2026 RAAF Services bv
 #
 # This file is part of Session.
 #
@@ -75,7 +75,6 @@ if [ ! -e "$usropt" -a ! -e "$sysopt" ]; then
         titling='$titling'
         tabbed='$tabbed'
         color='$color'
-        agent='$agent'
         privy='$privy'
         debug='$debug'
         width='$width'
@@ -190,9 +189,6 @@ if [ "$tabbed" != 0 ]; then tabbed="true" ; else unset tabbed ; fi
 # Enable (*) or disable (0) color state output.
 if [ "$color" != 0 ]; then color="true" ; else unset color ; fi
 
-# Enable (*) or disable (0) ssh agent (ssh-agent).
-if [ "$agent" != 0 ]; then agent="$agent" ; else unset agent ; fi
-
 # Enable (*) or disable (0) privilege escalation for various routines.
 # This enables the (optional) use of sudo or runas when running commands
 # like nmap on unix-likes or when running tell --admin on localhost.
@@ -205,8 +201,8 @@ if [ "$privy" != 0 ]; then privy="$privesc" ; else unset privy ; fi
 # than calling parseParameters at this level.
 if [ "$debug" != 0  ]; then debug="true" ; elif [[ "$*" =~ "--debug" ]]; then debug="true" ; else unset debug; fi
 
-# Detect and initialize private key usage.
-handleSshPrivateKeys
+# Initialize ssh options.
+handleSshOptions
 
 
 # Main case statement.
@@ -261,7 +257,12 @@ case "$main" in
         tokenValidator "type,name,svmt,acmt,exmt,user,addr,port,host" || exit 1
         addConf "$type $name($svmt,$acmt,$exmt,$user,$addr,$port,$host)" || exit 1
 
-    elif [ "$type" = "service" -a "$svmt" != "none" ]; then
+    elif [ "$type" = "service" -a "$svmt" = "docker" ]; then
+        mandatories="type svmt host" optionals="debug acmt exmt user addr port" parseParameters "$@"
+        tokenValidator "type,name,svmt,acmt,exmt,user,addr,port,host" || exit 1
+        addConf "$type $name($svmt,$acmt,$exmt,$user,$addr,$port,$host)" || exit 1
+
+    elif [ "$type" = "service" -a "$svmt" = "scripted" ]; then
         mandatories="type svmt host svstatus svstart svstop" optionals="debug acmt exmt user addr port" parseParameters "$@"
         tokenValidator "type,name,svmt,acmt,exmt,user,addr,port,host" || exit 1
         addConf "$type $name($svmt,$acmt,$exmt,$user,$addr,$port,$host)" || exit 1
@@ -405,7 +406,7 @@ case "$main" in
         reportDebug "Got old svmt: $oldsvmt"
         if [ ! "$svmt" ]; then svmt="$oldsvmt" ; fi
 
-        if [ "$svmt" != "none" ]; then
+        if [ "$svmt" = "scripted" ]; then
             opts="$usrcfd/sys/$name/options.env"
             oldopts="$usrcfd/sys/$oldname/options.env"
             # Check for old options first if name changed, source if available
@@ -596,8 +597,8 @@ case "$main" in
             mandatories="type $mandatory_extras" optionals="debug name svmt acmt exmt user addr port host $optional_extras" parseParameters "$@"
         fi
 
-        # Write out svstatus, svstart and svstop when svmt is not none.
-        if [ ! "$svmt" = "none" ]; then
+        # Write out svstatus, svstart and svstop when svmt is scripted.
+        if [ "$svmt" = "scripted" ]; then
             reportInfo "Setting svstatus, svstart and svstop"
             printf "svstatus='$svstatus'\n" > "$opts"
             printf "svstart='$svstart'\n"  >> "$opts"

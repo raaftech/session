@@ -1,3 +1,109 @@
+rubin (2026-10-20)
+	* session.sh: version 1.5.0 for public release.
+	* session.sh: added win11 and android12 to android17 osmts.
+	* session.sh: added android osGlobals, fixed windows shutdown for all win* osmts.
+	* session.sh: added android vrmt: sdk emulator start, stop, restart, state and exec.
+	* session.sh: added vmname and vmopts guest options for the android emulator.
+	* session.sh: added adb access and execute methods (adbport option, default 5555).
+	* session.sh: added docker svmt for containers on a host or guest.
+	* session.sh: addconf and modconf ask svstatus, svstart, svstop only for scripted.
+	* session.sh: fixed docker state matching containers that contain the name.
+	* session.sh: added tmux and alacritty terminal handlers.
+	* session.sh: access with acmt adb opens an adb shell in all terminals but putty.
+	* session.sh: titling uses terminal title options, removed all xdotool use.
+	* session.sh: titles stay fixed in tmux, screen and alacritty.
+	* session.sh: gnome tabbed mode uses gnome-terminal --tab.
+	* session.sh: removed ssh agent handling and the agent option; use SSH_AUTH_SOCK.
+	* session.sh: ssh uses StrictHostKeyChecking=accept-new, no ~/.ssh/config changes.
+	* session.sh: removed -i ssh option on unix-likes, ssh selects the key.
+	* session.sh: key uses ssh-copy-id on unix-likes.
+	* session.sh: the create option now has an effect.
+	* session.sh: added urxvt and alacritty to toolFinder, fixed macos browser check.
+	* session.sh: fixed options.env paths in error messages.
+	* session.sh: documented the scantype option.
+	* session.sh: removed dead code and fixed typos.
+	* session.sh: fixed the nmap host timeout, the timeout option is in milliseconds.
+	* session.sh: removed the inactive tst test suite and test-definitions.txt.
+	* session.sh: updated all documentation, docs use LF line endings.
+	* session.sh: build.xml needs no downloads or javascript, only ant and git.
+	* session.sh: builds write the copyright sign as UTF-8.
+
+rubin (2024-02-13)
+	* session.sh: version 1.4.0 for public release.
+	* session.sh: added clipboard and sound redirection for xfreerdp.
+	* session.sh: added xfreerdp options against random disconnects.
+	* session.sh: esxVirtHandler state is silent for machines that do not exist.
+	* session.sh: added many osmts: reactos, alpine, void, guix, winnt and more.
+	* session.sh: fixed windows runas behaviour.
+	* session.sh: added gpg-agent support for ssh on windows and unix-likes.
+	* session.sh: added width and height options for rdesktop and xfreerdp.
+	* session.sh: added support for bash on windows (wsl).
+	* session.sh: fixed tools with spaces in their name, better IFS use in toolFinder.
+	* session.sh: fixed titling on macos.
+	* session.sh: fixed isLocal matching part of a hostname.
+	* session.sh: ping check does not resolve dns or scan ports.
+	* session.sh: fixed reversed vmstate for vmware fusion.
+	* session.sh: added docker vrmt with start, stop, restart and state.
+	* session.sh: options.conf is now options.env.
+	* session.sh: added include for .conf files and the expandVariables function.
+	* session.sh: removed parentstate.
+	* session.sh: fixed command escaping for plink, plink runs in batch mode.
+	* session.sh: also handle xdg-open as browser.
+	* session.sh: removed obsolete GSSAPIAuthentication setting for .ssh/config.
+	* session.sh: fixed osstop for several osmts.
+
+rubin (2016-02-02)
+	* session.sh: version 1.3.2 for public release.
+	* session.sh: fixed ssh key adding.
+	* session.sh: added esxi 6 and other osmts.
+	* session.sh: added urxvt terminal and xfreerdp desktop handlers.
+	* session.sh: screen is the default terminal, xfreerdp the default desktop on unix.
+
+rubin (2015-10-07)
+	* session.sh: version 1.3.1 for public release.
+	* session.sh: fixed ant build, removed the obsolete javascript rest adapter.
+	* session.sh: made command execution via tell more robust.
+
+rubin (2015-10-05)
+	* session.sh: version 1.3.0 for public release.
+	* session.sh: added support for vmware workstation shared mode.
+	* session.sh: added README.md.
+	* session.sh: added windows 10 osmt.
+	* session.sh: added preliminary bsd support.
+	* session.sh: fixed export usage in tokenReader and parseParameters.
+	* session.sh: fixed password escaping.
+	* session.sh: fixed the group variable issue.
+	* session.sh: made whitespace removal posix compliant.
+	* session.sh: fixed command escaping when " is used in a command.
+
+rubin (2014-11-05)
+	* session.sh: version 1.2.1 for public release.
+	* session.sh: added support for vmware workstation shared mode.
+
+rubin (2014-11-05)
+	* session.sh: version 1.2.0 for public release.
+	* session.sh: added a json and rest adapter for session (njs).
+	* session.sh: added session list type.
+	* session.sh: added support for powervm and ldom virtual hosts.
+	* session.sh: fixed screen reattach when the acmt of the last entity is not ssh.
+	* session.sh: added fbsd10 to the correct osGlobals case.
+	* session.sh: updated build.xml.
+
+rubin (2014-03-14)
+	* session.sh: version 1.1.1 for public release.
+	* session.sh: screen has 10000 lines of scrollback, shift-pgup/pgdn work in screen.
+
+rubin (2014-03-12)
+	* session.sh: version 1.1.0 for public release.
+	* session.sh: added ant build.xml and release.xml.
+	* session.sh: added tabbed option: new windows are the default unless tabbed=1.
+	* session.sh: terminal title of the first tab is only set in tabbed mode.
+	* session.sh: fixed gnome-open vs open.
+	* session.sh: added debian7 and fbsd10 osmts.
+	* session.sh: fixed output in listHelper and toLocalWindowsPath.
+	* session.sh: fixed escaping in the parseParameters wrapper.
+	* session.sh: reverted input-mode and output-mode work.
+
 rubin (2013-10-17)
 	* session.sh: started version 1.0.1 prework (branch)
 	* session.sh: added commit pre-hook checking to svn (for jira).

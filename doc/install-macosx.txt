@@ -7,16 +7,16 @@ dependencies for session. In the instructions below, we will describe the
 installation steps and dependencies for the Mac OS X platform. If you follow 
 these steps, you should have no troubles with running session!
 
-NOTE! On the website (http://www.raaftech.nl/session) we've also listed the
-dependencies described below, with links to where to get them! Make sure to
-check it out!
+NOTE! The source code and the latest version of session are on GitHub, at
+https://github.com/raaftech/session. Make sure to check it out!
 
 1: Make sure you have a Mac OS X 10.4, 10.5, 10.6 or 10.7 system. We've tested 
    mostly on 10.7, but older versions of Mac OS X should not pose a problem.
 
 2: Session's access command opens new Terminal windows when something has
-   an ssh access method. The Terminal.app application is standard in all
-   versions of Mac OS X that we know about.
+   an ssh, tel or adb access method. The Terminal.app application is standard
+   in all versions of Mac OS X that we know about. You can also set terminal
+   in options.env to alacritty, screen or tmux.
 
 3: To test for open ports on a system when determining a system's state, the
    program uses nmap. Make sure you have nmap installed.
@@ -35,25 +35,32 @@ check it out!
    command is installed by default; however, this is not the case starting
    with version 10.7.
 
-7: Install the session command somewhere in your path, like /usr/local/bin or
+7: Session uses OpenSSH (ssh, scp and ssh-copy-id) for the ssh access and
+   execute methods. It uses the keys of your ssh agent (SSH_AUTH_SOCK).
+
+8: Optional: adb (Android SDK platform-tools) for the adb access and execute
+   methods, the Android SDK emulator for the android vrmt, and docker for
+   the docker vrmt and svmt.
+
+9: Install the session command somewhere in your path, like /usr/local/bin or
    anywhere else you prefer. You are now ready to run session for the first
    time!
 
-8: Type 'session' at the command prompt. The session command will detect that
+10: Type 'session' at the command prompt. The session command will detect that
    it's being run for the first time and will do a search for all its needed
    dependencies. Next to that, it will create a default ~/.session directory
    layout with an empty session.conf (under ~/.session/cfg/session.conf).
 
-9: Copy the template files in the distibution archive's 'doc' directory to
+11: Copy the template files in the distribution archive's 'doc' directory to
    your personal template directory under ~/.session/tpl . These files use
-   the .stf (session template file) extention.
+   the .stf (session template file) extension.
 
 
 If session did not give an error about not being able to find any of its 
 dependencies, the above run of the session command will show you the standard
 help output. You are now ready to add systems to your session.conf! You can
-use the "session addconf" and "session delconf" commands to do so (see the
-standard session help output for addconf and delconf examples). Ofcourse, you
-can also edit the ~/.session/cfg/session.conf file directly.
+use the "session addconf" and "session delconf" commands to do so (run
+"session help" for their arguments). Of course, you can also edit the
+~/.session/cfg/session.conf file directly; see session.conf.example.
 
  

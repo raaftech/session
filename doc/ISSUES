@@ -83,7 +83,7 @@ To work around this issue, make sure you Enable the "Remote Service Management"
 rules. There are about 6 of them on Windows 7, 2 for each Profile (domain, public
 and private). Start "Windows Firewall with Advanced Security" by using the
 command 'wf.msc'. In the Advanced Firewall GUI, select "Inbound" and find the
-beforementioned "Remote Service Management" rules. Select them and Right Click,
+aforementioned "Remote Service Management" rules. Select them and Right Click,
 then select "Enable". Psexec and Winexe commands should now be fast.
 
 
@@ -94,7 +94,7 @@ make sure that the user that runs VMware Workstation is logged into the
 system all the way to a visible desktop. We've seen issues where the vmrun
 command does not correctly list and start virtual machines if the login screen
 is currently visible on the console. The regular user mentioned above should
-also be the user you've defined as the "user" in the session line decribing
+also be the user you've defined as the "user" in the session line describing
 your host.
 
 
