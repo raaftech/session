@@ -1331,7 +1331,7 @@ function checkNameOrAddress {
             return 1
         fi
 
-        maxLength=64
+        maxLength=253
         length=${#input}
         if [ "$length" -gt "$maxLength" ]; then
             if [ "$name" = "$input" ]; then
@@ -4181,7 +4181,7 @@ function gnomeBrowserHandler {
     reportDebugFuncEntry "$*"
 
     typeset url="$1"
-    open "$url" &
+    xdg-open "$url" &
 }
 
 # rdpFileWriter()
