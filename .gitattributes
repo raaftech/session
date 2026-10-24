@@ -2,7 +2,6 @@
 /build.xml -text
 doc/ChangeLog -text
 doc/ISSUES -text
-doc/LICENSE -text
 doc/MANUAL -text
 doc/NOTES -text
 doc/admin.pwd.example -text
@@ -23,6 +22,7 @@ doc/vmf.stf -text
 doc/vmw.stf -text
 /functions.sh -text
 /globals.sh -text
+/LICENSE -text
 /release.xml -text
 /session.bat -text
 /session.sh -text

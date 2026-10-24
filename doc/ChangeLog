@@ -1,3 +1,7 @@
+rubin (2026-10-25)
+	* LICENSE: moved from doc/ to the top directory.
+	* release.xml: license name is GPL-3.0-or-later (was GPLv3).
+
 rubin (2026-10-20)
 	* session.sh: version 1.5.0 for public release.
 	* session.sh: added win11 and android12 to android17 osmts.

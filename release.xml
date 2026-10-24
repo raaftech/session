@@ -2,7 +2,7 @@
 <release name="Session" package="session">
     <version major="1" minor="5" patch="0"/>
     <copyright toname="RAAF Services bv" daterange="2008-2026"/>
-    <license type="foss" name="GPLv3"/>
+    <license type="foss" name="GPL-3.0-or-later"/>
     <description>
         Session - A tool for checking the state of- and commanding systems and services.
     </description>
