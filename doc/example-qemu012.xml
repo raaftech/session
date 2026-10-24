@@ -6,38 +6,38 @@
   <vcpu>1</vcpu>
   <os>
     <type arch='x86_64' machine='pc-0.12'>hvm</type>
-    <boot dev='hd'/>
+    <boot dev='hd' />
   </os>
   <features>
-    <acpi/>
-    <apic/>
-    <pae/>
+    <acpi />
+    <apic />
+    <pae />
   </features>
-  <clock offset='utc'/>
+  <clock offset='utc' />
   <on_poweroff>destroy</on_poweroff>
   <on_reboot>restart</on_reboot>
   <on_crash>restart</on_crash>
   <devices>
     <emulator>/usr/bin/kvm</emulator>
     <disk type='file' device='disk'>
-      <driver name='qemu' type='qcow2'/>
-      <source file='/var/lib/libvirt/images/kant.img'/>
-      <target dev='hda' bus='ide'/>
+      <driver name='qemu' type='qcow2' />
+      <source file='/var/lib/libvirt/images/kant.img' />
+      <target dev='hda' bus='ide' />
     </disk>
     <interface type='network'>
-      <mac address='52:54:00:73:77:8e'/>
-      <source network='bridged'/>
+      <mac address='52:54:00:73:77:8e' />
+      <source network='bridged' />
     </interface>
     <console type='pty'>
-      <target port='0'/>
+      <target port='0' />
     </console>
     <console type='pty'>
-      <target port='0'/>
+      <target port='0' />
     </console>
-    <input type='mouse' bus='ps2'/>
-    <graphics type='vnc' port='-1' autoport='yes' keymap='en-us'/>
+    <input type='mouse' bus='ps2' />
+    <graphics type='vnc' port='-1' autoport='yes' keymap='en-us' />
     <video>
-      <model type='cirrus' vram='1024' heads='1'/>
+      <model type='cirrus' vram='1024' heads='1' />
     </video>
   </devices>
 </domain>

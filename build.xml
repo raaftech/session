@@ -1,184 +1,199 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <project name="Session" default="help" basedir=".">
 
-    <!-- Set global properties. -->
-    <property name="target" location="target"/>
-    <property name="build"  location="target/ant-build"/>
-    <property name="work"   location="target/ant-work"/>
+  <!-- Set global properties. -->
+  <property name="target" location="target" />
+  <property name="build" location="target/ant-build" />
+  <property name="work" location="target/ant-work" />
 
-    <!-- Do some basic initialization. -->
-    <target name="directories">
-           <mkdir dir="${target}"/>
-           <mkdir dir="${build}"/>
-           <mkdir dir="${work}"/>
-    </target>
+  <!-- Do some basic initialization. -->
+  <target name="directories">
+    <mkdir dir="${target}" />
+    <mkdir dir="${build}" />
+    <mkdir dir="${work}" />
+  </target>
 
-    <!-- Do some basic initialization. -->
-    <target name="version" depends="directories">
-        <!-- Read release properties from release.xml. -->
-        <xmlproperty file="release.xml" collapseAttributes="true"/>
+  <!-- Do some basic initialization. -->
+  <target name="version" depends="directories">
+    <!-- Read release properties from release.xml. -->
+    <xmlproperty file="release.xml" collapseAttributes="true" />
 
-        <!-- Extract latest commit date, formatted like the build date. -->
-        <exec dir="." executable="git" outputproperty="release.date.commit">
-            <env key="TZ" value="CET"/>
-            <env key="LC_ALL" value="C"/>
-            <arg value="show"/>
-            <arg value="-s"/>
-            <arg value="--format=%cd"/>
-            <arg value="--date=format-local:%B %d %Y %H:%M %Z"/>
-            <arg value="HEAD"/>
-        </exec>
+    <!-- Extract latest commit date, formatted like the build date. -->
+    <exec dir="." executable="git" outputproperty="release.date.commit">
+      <env key="TZ" value="CET" />
+      <env key="LC_ALL" value="C" />
+      <arg value="show" />
+      <arg value="-s" />
+      <arg value="--format=%cd" />
+      <arg value="--date=format-local:%B %d %Y %H:%M %Z" />
+      <arg value="HEAD" />
+    </exec>
 
-        <!-- Extract current commit hash and write to outputproperty. -->
-        <exec dir="." executable="git" outputproperty="git.commit">
-            <arg line="rev-parse --short HEAD"/>
-        </exec>
+    <!-- Extract current commit hash and write to outputproperty. -->
+    <exec dir="." executable="git" outputproperty="git.commit">
+      <arg line="rev-parse --short HEAD" />
+    </exec>
 
-        <!-- Extract current branch name and write to outputproperty. -->
-        <exec dir="." executable="git" outputproperty="git.branch">
-            <arg line="rev-parse --abbrev-ref HEAD"/>
-        </exec>
+    <!-- Extract current branch name and write to outputproperty. -->
+    <exec dir="." executable="git" outputproperty="git.branch">
+      <arg line="rev-parse --abbrev-ref HEAD" />
+    </exec>
 
-        <!-- Check if HEAD is a tagged commit. -->
-        <exec dir="." executable="git" outputproperty="git.tag" errorproperty="git.tag.error"
-              resultproperty="git.tag.result" failonerror="false">
-            <arg line="describe --exact-match --tags HEAD"/>
-        </exec>
+    <!-- Check if HEAD is a tagged commit. -->
+    <exec
+      dir="."
+      executable="git"
+      outputproperty="git.tag"
+      errorproperty="git.tag.error"
+      resultproperty="git.tag.result"
+      failonerror="false"
+    >
+      <arg line="describe --exact-match --tags HEAD" />
+    </exec>
 
-        <!-- Release tag: a tagged commit, master, a detached HEAD or a branch. -->
-        <condition property="release.tag" value="release">
-            <equals arg1="${git.tag.result}" arg2="0"/>
-        </condition>
-        <condition property="release.tag" value="trunk">
-            <equals arg1="${git.branch}" arg2="master"/>
-        </condition>
-        <condition property="release.tag" value="unknown">
-            <equals arg1="${git.branch}" arg2="HEAD"/>
-        </condition>
-        <property name="release.tag" value="branch"/>
+    <!-- Release tag: a tagged commit, master, a detached HEAD or a branch. -->
+    <condition property="release.tag" value="release">
+      <equals arg1="${git.tag.result}" arg2="0" />
+    </condition>
+    <condition property="release.tag" value="trunk">
+      <equals arg1="${git.branch}" arg2="master" />
+    </condition>
+    <condition property="release.tag" value="unknown">
+      <equals arg1="${git.branch}" arg2="HEAD" />
+    </condition>
+    <property name="release.tag" value="branch" />
 
-        <!-- Set the current time and date. -->
-        <tstamp>
-            <format property="release.date.built" pattern="MMMM dd yyyy HH:mm z" timezone="CET" locale="en,US"/>
-        </tstamp>
+    <!-- Set the current time and date. -->
+    <tstamp>
+      <format property="release.date.built" pattern="MMMM dd yyyy HH:mm z" timezone="CET" locale="en,US" />
+    </tstamp>
 
-        <!-- Create a few release properties. -->
-        <property name="release.number.full"      value="${release.version.major}.${release.version.minor}.${release.version.patch} (${git.commit})"/>
-        <property name="release.number.short"     value="${release.version.major}.${release.version.minor}.${release.version.patch}"/>
-        <property name="release.string.version"   value="${release.name} version ${release.number.full} ${release.tag}"/>
-        <property name="release.string.copyright" value="Copyright © ${release.copyright.daterange} ${release.copyright.toname}"/>
-        <property name="release.string.reldate"   value="Released ${release.date.commit}"/>
-        <property name="release.string.built"     value="Built ${release.date.built}"/>
-        <property name="release.string.license"   value="Licensed under ${release.license.name}"/>
+    <!-- Create a few release properties. -->
+    <property
+      name="release.number.full"
+      value="${release.version.major}.${release.version.minor}.${release.version.patch} (${git.commit})"
+    />
+    <property
+      name="release.number.short"
+      value="${release.version.major}.${release.version.minor}.${release.version.patch}"
+    />
+    <property name="release.string.version" value="${release.name} version ${release.number.full} ${release.tag}" />
+    <property
+      name="release.string.copyright"
+      value="Copyright © ${release.copyright.daterange} ${release.copyright.toname}"
+    />
+    <property name="release.string.reldate" value="Released ${release.date.commit}" />
+    <property name="release.string.built" value="Built ${release.date.built}" />
+    <property name="release.string.license" value="Licensed under ${release.license.name}" />
 
-        <!-- Show version details. -->
-        <echo>  Version string: ${release.string.version}</echo>
-        <echo>Copyright string: ${release.string.copyright}</echo>
-        <echo>  Release string: ${release.string.reldate}</echo>
-        <echo>  Builder string: ${release.string.built}</echo>
-        <echo>  License string: ${release.string.license}</echo>
-    </target>
+    <!-- Show version details. -->
+    <echo>  Version string: ${release.string.version}</echo>
+    <echo>Copyright string: ${release.string.copyright}</echo>
+    <echo>  Release string: ${release.string.reldate}</echo>
+    <echo>  Builder string: ${release.string.built}</echo>
+    <echo>  License string: ${release.string.license}</echo>
+  </target>
 
-    <!-- Build a release. -->
-    <target name="build" depends="version">
+  <!-- Build a release. -->
+  <target name="build" depends="version">
 
-        <!-- Copy data to build directory. -->
-        <copy todir="${build}">
-            <fileset dir=".">
-                <exclude name="target/**"/>
-                <exclude name=".*"/>
-                <exclude name=".git/**"/>
-                <exclude name=".idea/**"/>
-                <exclude name=".settings/**"/>
-                <exclude name="*.iml"/>
-                <exclude name="*.sln*"/>
-                <exclude name="*.suo*"/>
-                <exclude name="*.xml"/>
-                <exclude name="*.pyproj*"/>
-                <exclude name="*.project"/>
-                <exclude name="*.cproject"/>
-                <exclude name="*.classpath"/>
-                <exclude name="*.sublime-*"/>
-            </fileset>
-        </copy>
+    <!-- Copy data to build directory. -->
+    <copy todir="${build}">
+      <fileset dir=".">
+        <exclude name="target/**" />
+        <exclude name=".*" />
+        <exclude name=".git/**" />
+        <exclude name=".idea/**" />
+        <exclude name=".settings/**" />
+        <exclude name="*.iml" />
+        <exclude name="*.sln*" />
+        <exclude name="*.suo*" />
+        <exclude name="*.xml" />
+        <exclude name="*.pyproj*" />
+        <exclude name="*.project" />
+        <exclude name="*.cproject" />
+        <exclude name="*.classpath" />
+        <exclude name="*.sublime-*" />
+      </fileset>
+    </copy>
 
-        <!-- Replace version string name and number template stanza. -->
-        <replaceregexp byline="true" encoding="UTF-8">
-            <regexp pattern="RELEASE.STRING.VERSION"/>
-            <substitution expression="${release.string.version}"/>
-            <fileset dir="${build}" excludes="*.xml"/>
-        </replaceregexp>
+    <!-- Replace version string name and number template stanza. -->
+    <replaceregexp byline="true" encoding="UTF-8">
+      <regexp pattern="RELEASE.STRING.VERSION" />
+      <substitution expression="${release.string.version}" />
+      <fileset dir="${build}" excludes="*.xml" />
+    </replaceregexp>
 
-        <!-- Replace release copyright stanza. -->
-        <replaceregexp byline="true" encoding="UTF-8">
-            <regexp pattern="RELEASE.STRING.COPYRIGHT"/>
-            <substitution expression="${release.string.copyright}"/>
-            <fileset dir="${build}" excludes="*.xml"/>
-        </replaceregexp>
+    <!-- Replace release copyright stanza. -->
+    <replaceregexp byline="true" encoding="UTF-8">
+      <regexp pattern="RELEASE.STRING.COPYRIGHT" />
+      <substitution expression="${release.string.copyright}" />
+      <fileset dir="${build}" excludes="*.xml" />
+    </replaceregexp>
 
-        <!-- Replace release date stanza. -->
-        <replaceregexp byline="true" encoding="UTF-8">
-            <regexp pattern="RELEASE.STRING.RELDATE"/>
-            <substitution expression="${release.string.reldate}"/>
-            <fileset dir="${build}" excludes="*.xml"/>
-        </replaceregexp>
+    <!-- Replace release date stanza. -->
+    <replaceregexp byline="true" encoding="UTF-8">
+      <regexp pattern="RELEASE.STRING.RELDATE" />
+      <substitution expression="${release.string.reldate}" />
+      <fileset dir="${build}" excludes="*.xml" />
+    </replaceregexp>
 
-        <!-- Replace release built date stanza. -->
-        <replaceregexp byline="true" encoding="UTF-8">
-            <regexp pattern="RELEASE.STRING.BUILT"/>
-            <substitution expression="${release.string.built}"/>
-            <fileset dir="${build}" excludes="*.xml"/>
-        </replaceregexp>
+    <!-- Replace release built date stanza. -->
+    <replaceregexp byline="true" encoding="UTF-8">
+      <regexp pattern="RELEASE.STRING.BUILT" />
+      <substitution expression="${release.string.built}" />
+      <fileset dir="${build}" excludes="*.xml" />
+    </replaceregexp>
 
-        <!-- Replace release license stanza. -->
-        <replaceregexp byline="true" encoding="UTF-8">
-            <regexp pattern="RELEASE.STRING.LICENSE"/>
-            <substitution expression="${release.string.license}"/>
-            <fileset dir="${build}" excludes="*.xml"/>
-        </replaceregexp>
+    <!-- Replace release license stanza. -->
+    <replaceregexp byline="true" encoding="UTF-8">
+      <regexp pattern="RELEASE.STRING.LICENSE" />
+      <substitution expression="${release.string.license}" />
+      <fileset dir="${build}" excludes="*.xml" />
+    </replaceregexp>
 
-        <!-- Set readable bit. -->
-        <chmod perm="ugo+r">
-            <fileset dir="${build}"/>
-        </chmod>
-        <chmod perm="ugo+rx">
-            <dirset dir="${build}"/>
-        </chmod>
+    <!-- Set readable bit. -->
+    <chmod perm="ugo+r">
+      <fileset dir="${build}" />
+    </chmod>
+    <chmod perm="ugo+rx">
+      <dirset dir="${build}" />
+    </chmod>
 
-        <!-- Set executable bit. -->
-        <chmod perm="ugo+rx">
-            <fileset dir="${build}">
-                <include name="**/*.sh"/>
-            </fileset>
-        </chmod>
-    </target>
+    <!-- Set executable bit. -->
+    <chmod perm="ugo+rx">
+      <fileset dir="${build}">
+        <include name="**/*.sh" />
+      </fileset>
+    </chmod>
+  </target>
 
-    <!-- Generate all distributables. -->
-    <target name="dist-all" depends="dist-zip"/>
+  <!-- Generate all distributables. -->
+  <target name="dist-all" depends="dist-zip" />
 
-    <!-- Generate a .zip distributable. -->
-    <target name="dist-zip" depends="build">
+  <!-- Generate a .zip distributable. -->
+  <target name="dist-zip" depends="build">
 
-        <!-- Create zip file. -->
-        <zip destfile="${target}/${release.package}-${release.number.short}-${release.tag}.zip">
-            <fileset dir="${build}"/>
-        </zip>
+    <!-- Create zip file. -->
+    <zip destfile="${target}/${release.package}-${release.number.short}-${release.tag}.zip">
+      <fileset dir="${build}" />
+    </zip>
 
-        <!-- Create verification hashes. -->
-        <checksum file="${target}/${release.package}-${release.number.short}-${release.tag}.zip" algorithm="md5"/>
-        <checksum file="${target}/${release.package}-${release.number.short}-${release.tag}.zip" algorithm="sha1"/>
-        <checksum file="${target}/${release.package}-${release.number.short}-${release.tag}.zip" algorithm="sha-256"/>
-        <checksum file="${target}/${release.package}-${release.number.short}-${release.tag}.zip" algorithm="sha-512"/>
-    </target>
+    <!-- Create verification hashes. -->
+    <checksum file="${target}/${release.package}-${release.number.short}-${release.tag}.zip" algorithm="md5" />
+    <checksum file="${target}/${release.package}-${release.number.short}-${release.tag}.zip" algorithm="sha1" />
+    <checksum file="${target}/${release.package}-${release.number.short}-${release.tag}.zip" algorithm="sha-256" />
+    <checksum file="${target}/${release.package}-${release.number.short}-${release.tag}.zip" algorithm="sha-512" />
+  </target>
 
-    <!-- Clean up. -->
-    <target name="clean">
-        <delete dir="${target}"/>
-    </target>
+  <!-- Clean up. -->
+  <target name="clean">
+    <delete dir="${target}" />
+  </target>
 
-    <!-- Help. -->
-    <target name="help">
-        <echo>       Generic targets: clean build</echo>
-        <echo> Distributable targets: dist-all dist-zip</echo>
-    </target>
+  <!-- Help. -->
+  <target name="help">
+    <echo>       Generic targets: clean build</echo>
+    <echo> Distributable targets: dist-all dist-zip</echo>
+  </target>
 </project>

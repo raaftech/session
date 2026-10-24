@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Session. If not, see <https://www.gnu.org/licenses/>.
 
-
 # Function declarations have the following form:
 #
 # # foo(<parm1> [<parm2>])                      # Required and optional parameters
@@ -30,23 +29,22 @@
 # }
 #
 
-
 # report(<message_text>...)
 # Prints.
 #
 # Print <message_text>s with standard framing text.
 #
-function report { printf "$*\n" ; }
-function reportSession { report "Session: $*" ; }
-function reportInfo { reportSession "Info: $*" ; }
-function reportWarning { reportSession "Warning: $*" >&2 ; }
-function reportError { reportSession "Error: ${FUNCNAME[1]}(): $*" >&2 ; }
+function report { printf "$*\n"; }
+function reportSession { report "Session: $*"; }
+function reportInfo { reportSession "Info: $*"; }
+function reportWarning { reportSession "Warning: $*" >&2; }
+function reportError { reportSession "Error: ${FUNCNAME[1]}(): $*" >&2; }
 function reportDebug {
-    [ ! "$debug" -o  "$debug" = 0 ] && return
-    typeset msg
-    msg="Debug: ${FUNCNAME[1]}(): $*"
-    reportSession "$msg" >&2
-    [ ! "$logfile" ] || printf "%s\n" "$msg" >> "$logfile"
+  [ ! "$debug" -o "$debug" = 0 ] && return
+  typeset msg
+  msg="Debug: ${FUNCNAME[1]}(): $*"
+  reportSession "$msg" >&2
+  [ ! "$logfile" ] || printf "%s\n" "$msg" >>"$logfile"
 }
 
 # reportDebugFuncEntry(<argument_name_vector> <environment_variable_name_vector> <additional_message>)
@@ -62,26 +60,26 @@ function reportDebug {
 #     => Session: Debug: Entering foo(FOO1 FOO2) with environment bar=BARVAL baz=BAZVAL ; have a nice day.
 #
 function reportDebugFuncEntry {
-    [ ! "$debug" -o  "$debug" = 0 ] && return
+  [ ! "$debug" -o "$debug" = 0 ] && return
 
-    typeset funcname="${FUNCNAME[1]}"
-    typeset args="$1"
-    typeset varname
-    typeset varval
-    typeset envstr=""
-    typeset msg
+  typeset funcname="${FUNCNAME[1]}"
+  typeset args="$1"
+  typeset varname
+  typeset varval
+  typeset envstr=""
+  typeset msg
 
-    typeset IFS=" "
-    for varname in $2 ; do
-       varval="$(eval printf '%s\\n' "\$$varname")"
-       envstr="${envstr:+$envstr, }${varname}=${varval}"
-    done
+  typeset IFS=" "
+  for varname in $2; do
+    varval="$(eval printf '%s\\n' "\$$varname")"
+    envstr="${envstr:+$envstr, }${varname}=${varval}"
+  done
 
-    msg="Entering $funcname($args)${envstr:+ with environment $envstr${3:+; }}$3"
-    reportSession "Debug: $msg" >&2
-    [ ! "$logfile" ] || printf "%s\n" "$msg" >> "$logfile"
+  msg="Entering $funcname($args)${envstr:+ with environment $envstr${3:+; }}$3"
+  reportSession "Debug: $msg" >&2
+  [ ! "$logfile" ] || printf "%s\n" "$msg" >>"$logfile"
 
-    return
+  return
 }
 
 # isLoopback(<domain_name_or_address>)
@@ -90,10 +88,10 @@ function reportDebugFuncEntry {
 # Return 0 if address is loopback domain name or address; non-zero otherwise.
 #
 function isLoopback {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    # Handles only IPv4 at present
-    [[ "$1" =~ ^localhost\. ]] || [[ "$1" =~ ^127\. ]]
+  # Handles only IPv4 at present
+  [[ "$1" =~ ^localhost\. ]] || [[ "$1" =~ ^127\. ]]
 }
 
 # isLocal(<name>)
@@ -102,10 +100,10 @@ function isLoopback {
 # Return 0 if name matches non-null short local hostname, 1 otherwise.
 #
 function isLocal {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    [ "$hostname" ] || return 1
-    [ "$1" = "$hostname" ]
+  [ "$hostname" ] || return 1
+  [ "$1" = "$hostname" ]
 }
 
 # toLocalWindowsPath(<path>)
@@ -117,44 +115,49 @@ function isLocal {
 # Should only be used to generate path (string) arguments for local Windows commands.
 #
 function toLocalWindowsPath {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    typeset input="$1"
-    typeset output
-    typeset path
-    typeset file
+  typeset input="$1"
+  typeset output
+  typeset path
+  typeset file
 
-    if [ ! "$input" ]; then
-        reportError "No input given"
-        return 1
-    fi
+  if [ ! "$input" ]; then
+    reportError "No input given"
+    return 1
+  fi
 
-    if [[ "$input" =~ : ]]; then
-        # Windows path was passed (ie. contains colon). Only forward slashes.
-        reportDebug "Detected colon, only forwarding slashes"
-        output="$(printf "$input\n" | tr -d '\015' | sed 's|\\|/|g')"
-    elif [ -d "$input" ]; then
-        # Path exists locally and is a directory, enter, read out and forward slashes.
-        reportDebug "Path exists locally and is a directory. Entering, read out and forwarding slashes"
-        output="$(cd "$input" ; cmd.exe /c cd | tr -d '\015' | sed 's|\\|/|g')"
-    elif [ -f "$input" -o "$(dirname "$input")" != "/" ]; then
-        # Path exists locally and is a file, enter parent, read out and forward slashes.
-        reportDebug "Path exists locally and is a file. Entering, read out and forwarding slashes"
-        path="$(cd "$(dirname "$input")" ; cmd.exe /c cd | tr -d '\015' | sed 's|\\|/|g')"
-        file="$(basename "$input")"
-        output="$path/$file"
-    else
-        # File does not exist locally, and contains no colon. Prepend C: and forward slashes.
-        reportDebug "File does not exist locally and contains no colon. Prepending C: and forwarding slashes"
-        output="$(printf "C:$input\n" | tr -d '\015' | sed 's|\\|/|g' )"
-    fi
+  if [[ "$input" =~ : ]]; then
+    # Windows path was passed (ie. contains colon). Only forward slashes.
+    reportDebug "Detected colon, only forwarding slashes"
+    output="$(printf "$input\n" | tr -d '\015' | sed 's|\\|/|g')"
+  elif [ -d "$input" ]; then
+    # Path exists locally and is a directory, enter, read out and forward slashes.
+    reportDebug "Path exists locally and is a directory. Entering, read out and forwarding slashes"
+    output="$(
+      cd "$input"
+      cmd.exe /c cd | tr -d '\015' | sed 's|\\|/|g'
+    )"
+  elif [ -f "$input" -o "$(dirname "$input")" != "/" ]; then
+    # Path exists locally and is a file, enter parent, read out and forward slashes.
+    reportDebug "Path exists locally and is a file. Entering, read out and forwarding slashes"
+    path="$(
+      cd "$(dirname "$input")"
+      cmd.exe /c cd | tr -d '\015' | sed 's|\\|/|g'
+    )"
+    file="$(basename "$input")"
+    output="$path/$file"
+  else
+    # File does not exist locally, and contains no colon. Prepend C: and forward slashes.
+    reportDebug "File does not exist locally and contains no colon. Prepending C: and forwarding slashes"
+    output="$(printf "C:$input\n" | tr -d '\015' | sed 's|\\|/|g')"
+  fi
 
-    reportDebug "Incoming: $input"
-    reportDebug "Outgoing: $output"
-    report "$output"
-    return 0
+  reportDebug "Incoming: $input"
+  reportDebug "Outgoing: $output"
+  report "$output"
+  return 0
 }
-
 
 # toRemoteWindowsPath(<path>)
 # Prints.
@@ -162,25 +165,25 @@ function toLocalWindowsPath {
 # Convert path to Windows-style but with forward slashes.
 #
 function toRemoteWindowsPath {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    typeset input="$1"
+  typeset input="$1"
 
-    if [ ! "$input" ]; then
-        reportError "No input given"
-        return 1
-    fi
+  if [ ! "$input" ]; then
+    reportError "No input given"
+    return 1
+  fi
 
-    if [[ "$input" =~ : ]]; then
-        output="$(printf "$input\n" | sed 's|\\|/|g')"
-    else
-        output="$(printf "C:$input\n" | sed 's|\\|/|g' )"
-    fi
+  if [[ "$input" =~ : ]]; then
+    output="$(printf "$input\n" | sed 's|\\|/|g')"
+  else
+    output="$(printf "C:$input\n" | sed 's|\\|/|g')"
+  fi
 
-    reportDebug "Incoming: $input"
-    reportDebug "Outgoing: $output"
-    report "$output"
-    return 0
+  reportDebug "Incoming: $input"
+  reportDebug "Outgoing: $output"
+  report "$output"
+  return 0
 }
 
 # viaScript(<command>)
@@ -189,54 +192,55 @@ function toRemoteWindowsPath {
 # Handle execution of <command> via a platform's native scripting method.
 #
 function viaScript {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    typeset command="$*"
-    typeset retval
-    typeset nametmp="${name}.$$"
+  typeset command="$*"
+  typeset retval
+  typeset nametmp="${name}.$$"
 
-    [ "$nametmp" ] || nametmp=local
+  [ "$nametmp" ] || nametmp=local
 
-    if [ "$platform" = "linux" -o "$platform" = "bsd" -o "$platform" = "macosx" ]; then
-        reportDebug "Writing UNIX shell script"
-        echo "#!/bin/sh" > "$usrcfd/tmp/session.tell.$nametmp.sh"
-        echo "$command" | sed 's/^[[:space:]]*//' 2> /dev/null >> "$usrcfd/tmp/session.tell.$nametmp.sh"
+  if [ "$platform" = "linux" -o "$platform" = "bsd" -o "$platform" = "macosx" ]; then
+    reportDebug "Writing UNIX shell script"
+    echo "#!/bin/sh" >"$usrcfd/tmp/session.tell.$nametmp.sh"
+    echo "$command" | sed 's/^[[:space:]]*//' 2>/dev/null >>"$usrcfd/tmp/session.tell.$nametmp.sh"
 
-        reportDebug "Executing $usrcfd/tmp/session.tell.$nametmp.sh"
-        sh "$usrcfd/tmp/session.tell.$nametmp.sh"
-        retval="$?"
+    reportDebug "Executing $usrcfd/tmp/session.tell.$nametmp.sh"
+    sh "$usrcfd/tmp/session.tell.$nametmp.sh"
+    retval="$?"
 
-        if [ "$debug" ]; then
-            reportDebug "Not removing $usrcfd/tmp/session.tell.$nametmp.sh"
-        else
-            rm "$usrcfd/tmp/session.tell.$nametmp.sh"
-        fi
-    elif [ "$platform" = "windows" ]; then
-        reportDebug "Writing DOS batch script"
-        printf "@echo off\n" > "$usrcfd/tmp/session.tell.$nametmp.bat.unix"
-        printf '%s\n' "$command" | sed 's/^[[:space:]]*//' 2> /dev/null >> "$usrcfd/tmp/session.tell.$nametmp.bat.unix"
-
-        reportDebug "Correcting for DOS style line endings"
-        sed 's/$/\r/' "$usrcfd/tmp/session.tell.$nametmp.bat.unix" > "$usrcfd/tmp/session.tell.$nametmp.bat"
-        rm "$usrcfd/tmp/session.tell.$nametmp.bat.unix"
-
-        reportDebug "Executing $usrcfd/tmp/session.tell.$nametmp.bat"
-        cd "$usrcfd/tmp" ; cmd.exe /c "session.tell.$nametmp.bat" ; cd - > /dev/null
-        retval="$?"
-
-        if [ "$debug" ]; then
-            reportDebug "Not removing $usrcfd/tmp/session.tell.$nametmp.bat"
-        else
-            rm "$usrcfd/tmp/session.tell.$nametmp.bat"
-        fi
+    if [ "$debug" ]; then
+      reportDebug "Not removing $usrcfd/tmp/session.tell.$nametmp.sh"
     else
-        reportError "Unknown platform specified: $platform"
-        return 1
+      rm "$usrcfd/tmp/session.tell.$nametmp.sh"
     fi
+  elif [ "$platform" = "windows" ]; then
+    reportDebug "Writing DOS batch script"
+    printf "@echo off\n" >"$usrcfd/tmp/session.tell.$nametmp.bat.unix"
+    printf '%s\n' "$command" | sed 's/^[[:space:]]*//' 2>/dev/null >>"$usrcfd/tmp/session.tell.$nametmp.bat.unix"
 
-    return $retval
+    reportDebug "Correcting for DOS style line endings"
+    sed 's/$/\r/' "$usrcfd/tmp/session.tell.$nametmp.bat.unix" >"$usrcfd/tmp/session.tell.$nametmp.bat"
+    rm "$usrcfd/tmp/session.tell.$nametmp.bat.unix"
+
+    reportDebug "Executing $usrcfd/tmp/session.tell.$nametmp.bat"
+    cd "$usrcfd/tmp"
+    cmd.exe /c "session.tell.$nametmp.bat"
+    cd - >/dev/null
+    retval="$?"
+
+    if [ "$debug" ]; then
+      reportDebug "Not removing $usrcfd/tmp/session.tell.$nametmp.bat"
+    else
+      rm "$usrcfd/tmp/session.tell.$nametmp.bat"
+    fi
+  else
+    reportError "Unknown platform specified: $platform"
+    return 1
+  fi
+
+  return $retval
 }
-
 
 # viaWscript(<command>)
 # Writes a Visual Basic Script to execute a command in the background, executes and cleans up.
@@ -244,46 +248,47 @@ function viaScript {
 # Handle execution of <command> via a visual basic wrapper.
 #
 function viaWscript {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    typeset command="$*"
-    typeset retval
-    typeset nametmp="${name}.$$"
+  typeset command="$*"
+  typeset retval
+  typeset nametmp="${name}.$$"
 
-    [ "$nametmp" ] || nametmp=local
+  [ "$nametmp" ] || nametmp=local
 
-    if [ "$platform" = "windows" ]; then
-        reportDebug "Writing DOS batch script"
-        printf "@echo off\n" > "$usrcfd/tmp/session.tell.$nametmp.bat.unix"
-        printf '%s\n' "$command" | sed 's/^[[:space:]]*//' 2> /dev/null >> "$usrcfd/tmp/session.tell.$nametmp.bat.unix"
+  if [ "$platform" = "windows" ]; then
+    reportDebug "Writing DOS batch script"
+    printf "@echo off\n" >"$usrcfd/tmp/session.tell.$nametmp.bat.unix"
+    printf '%s\n' "$command" | sed 's/^[[:space:]]*//' 2>/dev/null >>"$usrcfd/tmp/session.tell.$nametmp.bat.unix"
 
-        reportDebug "Correcting for DOS style line endings"
-        sed 's/$/\r/' "$usrcfd/tmp/session.tell.$nametmp.bat.unix" > "$usrcfd/tmp/session.tell.$nametmp.bat"
-        rm "$usrcfd/tmp/session.tell.$nametmp.bat.unix"
+    reportDebug "Correcting for DOS style line endings"
+    sed 's/$/\r/' "$usrcfd/tmp/session.tell.$nametmp.bat.unix" >"$usrcfd/tmp/session.tell.$nametmp.bat"
+    rm "$usrcfd/tmp/session.tell.$nametmp.bat.unix"
 
-        reportDebug "Writing Wscript execution wrapper"
-        printf 'CreateObject("Wscript.Shell").Run """" & WScript.Arguments(0) & """", 0, False' > "$usrcfd/tmp/session.tell.$nametmp.vbs"
+    reportDebug "Writing Wscript execution wrapper"
+    printf 'CreateObject("Wscript.Shell").Run """" & WScript.Arguments(0) & """", 0, False' >"$usrcfd/tmp/session.tell.$nametmp.vbs"
 
-        reportDebug "Executing $usrcfd/tmp/session.tell.$nametmp.bat via Wscript execution wrapper"
-        cd "$usrcfd/tmp" ; wscript.exe "session.tell.$nametmp.vbs" "session.tell.$nametmp.bat" //nologo ; cd - > /dev/null
-        retval="$?"
+    reportDebug "Executing $usrcfd/tmp/session.tell.$nametmp.bat via Wscript execution wrapper"
+    cd "$usrcfd/tmp"
+    wscript.exe "session.tell.$nametmp.vbs" "session.tell.$nametmp.bat" //nologo
+    cd - >/dev/null
+    retval="$?"
 
-        if [ "$debug" ]; then
-            reportDebug "Not removing $usrcfd/tmp/session.tell.$nametmp.vbs"
-            reportDebug "Not removing $usrcfd/tmp/session.tell.$nametmp.bat"
-        else
-            sleep 1
-            rm "$usrcfd/tmp/session.tell.$nametmp.bat"
-            rm "$usrcfd/tmp/session.tell.$nametmp.vbs"
-        fi
+    if [ "$debug" ]; then
+      reportDebug "Not removing $usrcfd/tmp/session.tell.$nametmp.vbs"
+      reportDebug "Not removing $usrcfd/tmp/session.tell.$nametmp.bat"
     else
-        reportError "Visual Basic Script wrapper not supported on platform: $platform"
-        return 1
+      sleep 1
+      rm "$usrcfd/tmp/session.tell.$nametmp.bat"
+      rm "$usrcfd/tmp/session.tell.$nametmp.vbs"
     fi
+  else
+    reportError "Visual Basic Script wrapper not supported on platform: $platform"
+    return 1
+  fi
 
-    return $retval
+  return $retval
 }
-
 
 # localTellCommandWriter(<command>)
 # Prints.
@@ -291,11 +296,11 @@ function viaWscript {
 # Print <command> for immediate local execution.
 #
 function localTellCommandWriter {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    typeset command="$*"
+  typeset command="$*"
 
-    printf '%s\n' "$command"
+  printf '%s\n' "$command"
 }
 
 # psexecTellCommandWriter(<addr> <user> <pass> <command>)
@@ -304,17 +309,17 @@ function localTellCommandWriter {
 # Print <command> for execution over smb using psexec.
 #
 function psexecTellCommandWriter {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    typeset addr="$1"
-    typeset user="$2"
-    typeset pass="$3"
-    typeset command="$4"
+  typeset addr="$1"
+  typeset user="$2"
+  typeset pass="$3"
+  typeset command="$4"
 
-    # Older version of psexec?
-    if [ "$user" ]; then user="-u \"$user\"" ; fi
-    if [ "$pass" ]; then pass="-p \"$pass\"" ; fi
-    printf "$psexec \\\\\\\\$addr -h $user $pass cmd.exe /c $command\n"
+  # Older version of psexec?
+  if [ "$user" ]; then user="-u \"$user\""; fi
+  if [ "$pass" ]; then pass="-p \"$pass\""; fi
+  printf "$psexec \\\\\\\\$addr -h $user $pass cmd.exe /c $command\n"
 }
 
 # winexeTellCommandWriter(<addr> <user> <pass> <command>)
@@ -323,19 +328,19 @@ function psexecTellCommandWriter {
 # Print <command> for execution over smb using winexe.
 #
 function winexeTellCommandWriter {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    typeset addr="$1"
-    typeset user="$2"
-    typeset pass="$3"
-    typeset command="$4"
+  typeset addr="$1"
+  typeset user="$2"
+  typeset pass="$3"
+  typeset command="$4"
 
-    # Make sure we only pass --password when pass was not empty.
-    if [ ! -z "$pass" ]; then
-        echo   "winexe -U '$user%$pass' //$addr 'cmd.exe /c \"$command\"' 2> /dev/null"
-    else
-        echo   "winexe -U '$user' //$addr 'cmd.exe /c \"$command\"' 2> /dev/null"
-    fi
+  # Make sure we only pass --password when pass was not empty.
+  if [ ! -z "$pass" ]; then
+    echo "winexe -U '$user%$pass' //$addr 'cmd.exe /c \"$command\"' 2> /dev/null"
+  else
+    echo "winexe -U '$user' //$addr 'cmd.exe /c \"$command\"' 2> /dev/null"
+  fi
 }
 
 # plinkTellCommandWriter(<addr> <user> <command>)
@@ -344,18 +349,18 @@ function winexeTellCommandWriter {
 # Print <command> for execution over ssh using plink.
 #
 function plinkTellCommandWriter {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    typeset addr="$1"
-    typeset user="$2"
-    typeset command="$3"
-    typeset escapedCommand="$(echo $command | sed -e 's#\(\^\)#^\1#g' -e 's#\([\]\)#^\1#g' -e 's#\([&]\)#^\1#g' -e 's#\([>]\)#^\1#g' -e 's#\([<]\)#^\1#g' -e 's#\([|]\)#^\1#g' -e 's#"#^"#g')"
+  typeset addr="$1"
+  typeset user="$2"
+  typeset command="$3"
+  typeset escapedCommand="$(echo $command | sed -e 's#\(\^\)#^\1#g' -e 's#\([\]\)#^\1#g' -e 's#\([&]\)#^\1#g' -e 's#\([>]\)#^\1#g' -e 's#\([<]\)#^\1#g' -e 's#\([|]\)#^\1#g' -e 's#"#^"#g')"
 
-    typeset nametmp="${name}.$$"
-    [ "$nametmp" ] || nametmp=local
+  typeset nametmp="${name}.$$"
+  [ "$nametmp" ] || nametmp=local
 
-    printf "echo $escapedCommand > \"session.tell.$nametmp.command\"\n"
-    printf "$plink -batch -x $sshopts -l \"$user\" $addr -m \"session.tell.$nametmp.command\"\n"
+  printf "echo $escapedCommand > \"session.tell.$nametmp.command\"\n"
+  printf "$plink -batch -x $sshopts -l \"$user\" $addr -m \"session.tell.$nametmp.command\"\n"
 }
 
 # sshTellCommandWriter(<host> <user> <command>)
@@ -364,13 +369,13 @@ function plinkTellCommandWriter {
 # Print <command> for execution using ssh on <host> as <user>.
 #
 function sshTellCommandWriter {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    typeset host="$1"
-    typeset user="$2"
-    typeset command="$3"
+  typeset host="$1"
+  typeset user="$2"
+  typeset command="$3"
 
-    printf "ssh $sshopts -l '$user' '$host' -q '$command'\n"
+  printf "ssh $sshopts -l '$user' '$host' -q '$command'\n"
 }
 
 # localSendCommandWriter(<source> <target>)
@@ -379,25 +384,25 @@ function sshTellCommandWriter {
 # Print a command for sending data using the appropriate local copy command.
 #
 function localSendCommandWriter {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    typeset source
-    typeset target
+  typeset source
+  typeset target
 
-    if [ "$platform" = "linux" -o "$platform" = "bsd" -o "$platform" = "macosx" ]; then
-        source="$1"
-        target="$2"
-        printf "cp -Rpd \"$source\" \"$target\" >/dev/null 2>&1 </dev/null\n"
-    elif [ "$platform" = "windows" ]; then
-        source="$(toLocalWindowsPath "$1")"
-        target="$(toLocalWindowsPath "$2")"
-        printf "$robocopy /e \"$source\" \"$target\" >nul 2>&1\n"
-    else
-        reportError "Unknown platform specified: $platform"
-        return 1
-    fi
+  if [ "$platform" = "linux" -o "$platform" = "bsd" -o "$platform" = "macosx" ]; then
+    source="$1"
+    target="$2"
+    printf "cp -Rpd \"$source\" \"$target\" >/dev/null 2>&1 </dev/null\n"
+  elif [ "$platform" = "windows" ]; then
+    source="$(toLocalWindowsPath "$1")"
+    target="$(toLocalWindowsPath "$2")"
+    printf "$robocopy /e \"$source\" \"$target\" >nul 2>&1\n"
+  else
+    reportError "Unknown platform specified: $platform"
+    return 1
+  fi
 
-    return 0
+  return 0
 }
 
 # robocopySendCommandWriter(<addr> <user> <pass> <source> <target>)
@@ -406,23 +411,23 @@ function localSendCommandWriter {
 # Print a command for sending data using robocopy remotely.
 #
 function robocopySendCommandWriter {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    typeset addr="$1"
-    typeset user="$2"
-    typeset pass="$3"
-    typeset source="$(toLocalWindowsPath "$4")"
-    typeset target="$(toLocalWindowsPath "$5")"
-    typeset driveLetter
+  typeset addr="$1"
+  typeset user="$2"
+  typeset pass="$3"
+  typeset source="$(toLocalWindowsPath "$4")"
+  typeset target="$(toLocalWindowsPath "$5")"
+  typeset driveLetter
 
-    driveLetter="$(printf "$target\n" | cut -d ':' -f 1)"
-    reportDebug "Extracted drive letter $driveLetter from $target"
+  driveLetter="$(printf "$target\n" | cut -d ':' -f 1)"
+  reportDebug "Extracted drive letter $driveLetter from $target"
 
-    target="$(printf "$target\n" | sed "s|$driveLetter:|//${addr}/${driveLetter}\$|" | sed 's|/|\\|g')"
-    reportDebug  "Target is now $target"
+  target="$(printf "$target\n" | sed "s|$driveLetter:|//${addr}/${driveLetter}\$|" | sed 's|/|\\|g')"
+  reportDebug "Target is now $target"
 
-    if [ "$pass" ]; then pass="\"$pass\"" ; fi
-    printf %s "
+  if [ "$pass" ]; then pass="\"$pass\""; fi
+  printf %s "
         net use \\\\$addr\\$driveLetter\$ /user:\"${user}\" ${pass} 2>nul
         $robocopy /e \"$source\" \"$target\" >nul 2>&1
         net use \\\\$addr\\$driveLetter\$ /delete >nul 2>&1
@@ -435,22 +440,22 @@ function robocopySendCommandWriter {
 # Print a command for sending data using smbclient remotely.
 #
 function smbclientSendCommandWriter {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    typeset addr="$1"
-    typeset user="$2"
-    typeset pass="$3"
-    typeset source="$4"
-    typeset target="$(toRemoteWindowsPath "$5")"
-    typeset share
-    typeset smbcommand
+  typeset addr="$1"
+  typeset user="$2"
+  typeset pass="$3"
+  typeset source="$4"
+  typeset target="$(toRemoteWindowsPath "$5")"
+  typeset share
+  typeset smbcommand
 
-    share="$(printf "$target\n" | sed "s|:|$|" | cut -d/ -f 1 | sed 's|"||g')"
-    target="$(printf "$target\n" | sed 's|/|\\\\|g' | cut -d: -f2- | sed 's|"||g')"
-    smbcommand="mkdir \"$target\";cd \"$target\";lcd \"$source\";prompt off;recurse on;mput *;quit"
+  share="$(printf "$target\n" | sed "s|:|$|" | cut -d/ -f 1 | sed 's|"||g')"
+  target="$(printf "$target\n" | sed 's|/|\\\\|g' | cut -d: -f2- | sed 's|"||g')"
+  smbcommand="mkdir \"$target\";cd \"$target\";lcd \"$source\";prompt off;recurse on;mput *;quit"
 
-    if [ "$pass" ]; then pass="%$pass" ; fi
-    printf "smbclient //$addr/$share -U \"${user}${pass}\" -c '$smbcommand' 2>/dev/null\n"
+  if [ "$pass" ]; then pass="%$pass"; fi
+  printf "smbclient //$addr/$share -U \"${user}${pass}\" -c '$smbcommand' 2>/dev/null\n"
 }
 
 # pscpSendCommandWriter(<addr> <uopts> <source> <target>)
@@ -459,14 +464,14 @@ function smbclientSendCommandWriter {
 # Print a command for sending data using pscp remotely.
 #
 function pscpSendCommandWriter {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    typeset addr="$1"
-    typeset uopts="$2"
-    typeset source="$(toLocalWindowsPath "$3")"
-    typeset target="$4"
+  typeset addr="$1"
+  typeset uopts="$2"
+  typeset source="$(toLocalWindowsPath "$3")"
+  typeset target="$4"
 
-    printf "$pscp $sshopts -scp -p -q -r -l \"$uopts\" \"$source\" $addr:\"$target\"\n"
+  printf "$pscp $sshopts -scp -p -q -r -l \"$uopts\" \"$source\" $addr:\"$target\"\n"
 }
 
 # scpSendCommandWriter(<addr> <uopts> <source> <target>)
@@ -475,16 +480,16 @@ function pscpSendCommandWriter {
 # Print a command for sending data using scp remotely.
 #
 function scpSendCommandWriter {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    typeset addr="$1"
-    typeset uopts="$2"
-    typeset source="$3"
-    typeset target="$4"
-    typeset sshuser
+  typeset addr="$1"
+  typeset uopts="$2"
+  typeset source="$3"
+  typeset target="$4"
+  typeset sshuser
 
-    sshuser="$(printf "$uopts\n" | sed 's|\ |\\ |g'| sed 's|\\|\\\\|g')"
-    printf "scp -q $sshopts -r \"$source\" $sshuser@$addr:\"$target\"\n"
+  sshuser="$(printf "$uopts\n" | sed 's|\ |\\ |g' | sed 's|\\|\\\\|g')"
+  printf "scp -q $sshopts -r \"$source\" $sshuser@$addr:\"$target\"\n"
 }
 
 # toolFinder()
@@ -493,120 +498,120 @@ function scpSendCommandWriter {
 # Detect required and optional tools.
 #
 function toolFinder {
-    reportDebugFuncEntry "$*" "usrcfd color"
+  reportDebugFuncEntry "$*" "usrcfd color"
 
-    typeset IFS=","
+  typeset IFS=","
 
-    typeset tools_terminal
-    typeset tools_desktop
-    typeset tools_browser
-    typeset tools_access_result
-    typeset tooltypes
-    typeset tooltype
-    typeset values
-    typeset tool
+  typeset tools_terminal
+  typeset tools_desktop
+  typeset tools_browser
+  typeset tools_access_result
+  typeset tooltypes
+  typeset tooltype
+  typeset values
+  typeset tool
 
-    # Make sure color is off if requested.
-    if [ "$color" = 0 ]; then unset color; fi
+  # Make sure color is off if requested.
+  if [ "$color" = 0 ]; then unset color; fi
 
-    # First write out tools.required.
-    if [ "$platform" = "linux" -o "$platform" = "bsd" -o "$platform" = "macosx" ]; then
-        printf "tools_session='awk,cut,grep,host,lsof,$nmap,sed,tr,ps'\n" > "$usrcfd/cfg/tools.required"
-        printf "tools_execute='ssh,winexe'\n" >> "$usrcfd/cfg/tools.required"
-        printf "tools_send='cp,scp,smbclient'\n" >> "$usrcfd/cfg/tools.required"
-    elif [ "$platform" = "windows" ]; then
-        printf "tools_session='awk,cut,grep,$nmap,nslookup.exe,sed,tr,$pslist'\n" > "$usrcfd/cfg/tools.required"
-        printf "tools_execute='$plink,$psexec'\n" >> "$usrcfd/cfg/tools.required"
-        printf "tools_send='$pscp,$robocopy'\n" >> "$usrcfd/cfg/tools.required"
+  # First write out tools.required.
+  if [ "$platform" = "linux" -o "$platform" = "bsd" -o "$platform" = "macosx" ]; then
+    printf "tools_session='awk,cut,grep,host,lsof,$nmap,sed,tr,ps'\n" >"$usrcfd/cfg/tools.required"
+    printf "tools_execute='ssh,winexe'\n" >>"$usrcfd/cfg/tools.required"
+    printf "tools_send='cp,scp,smbclient'\n" >>"$usrcfd/cfg/tools.required"
+  elif [ "$platform" = "windows" ]; then
+    printf "tools_session='awk,cut,grep,$nmap,nslookup.exe,sed,tr,$pslist'\n" >"$usrcfd/cfg/tools.required"
+    printf "tools_execute='$plink,$psexec'\n" >>"$usrcfd/cfg/tools.required"
+    printf "tools_send='$pscp,$robocopy'\n" >>"$usrcfd/cfg/tools.required"
+  else
+    printf "# unidentified platform specified: $platform\n" >"$usrcfd/cfg/tools.required"
+    printf "# toolFinder says you need to define tools_ variables!\n" >>"$usrcfd/cfg/tools.required"
+  fi
+  if [ "$terminal" = "putty" ]; then
+    tools_terminal="$putty"
+  elif [ "$terminal" = "apple" ]; then
+    PATH="${PATH}:/Applications/Utilities/Terminal.app/Contents/MacOS"
+    tools_terminal="osascript,Terminal"
+  elif [ "$terminal" = "gnome" ]; then
+    tools_terminal="gnome-terminal"
+  elif [ "$terminal" = "urxvt" ]; then
+    tools_terminal="urxvt"
+  elif [ "$terminal" = "alacritty" ]; then
+    tools_terminal="alacritty"
+  elif [ "$terminal" = "screen" ]; then
+    tools_terminal="screen"
+  elif [ "$terminal" = "tmux" ]; then
+    tools_terminal="tmux"
+  fi
+
+  if [ "$desktop" = "mstsc" ]; then
+    tools_desktop="$cryptrdp5,$mstsc"
+  elif [ "$desktop" = "amsrdc" ]; then
+    PATH="${PATH}:/Applications/Microsoft Remote Desktop.app/Contents/MacOS"
+    tools_desktop="Microsoft Remote Desktop"
+  elif [ "$desktop" = "rdesktop" ]; then
+    tools_desktop="rdesktop"
+  fi
+
+  if [ "$browser" = "windows" ]; then
+    tools_browser="$explorer"
+  elif [ "$browser" = "macos" ]; then
+    tools_browser="open"
+  elif [ "$browser" = "gnome" ]; then
+    # Some linux distributions name 'open' differently. Quick fix.
+    if [ -x "/usr/bin/xdg-open" ]; then
+      tools_browser="xdg-open"
+    elif [ -x "/usr/bin/gnome-open" ]; then
+      tools_browser="gnome-open"
     else
-        printf "# unidentified platform specified: $platform\n" > "$usrcfd/cfg/tools.required"
-        printf "# toolFinder says you need to define tools_ variables!\n" >> "$usrcfd/cfg/tools.required"
+      tools_browser="open"
     fi
-    if [ "$terminal" = "putty" ]; then
-        tools_terminal="$putty"
-    elif [ "$terminal" = "apple" ]; then
-        PATH="${PATH}:/Applications/Utilities/Terminal.app/Contents/MacOS"
-        tools_terminal="osascript,Terminal"
-    elif [ "$terminal" = "gnome" ]; then
-        tools_terminal="gnome-terminal"
-    elif [ "$terminal" = "urxvt" ]; then
-        tools_terminal="urxvt"
-    elif [ "$terminal" = "alacritty" ]; then
-        tools_terminal="alacritty"
-    elif [ "$terminal" = "screen" ]; then
-        tools_terminal="screen"
-    elif [ "$terminal" = "tmux" ]; then
-        tools_terminal="tmux"
-    fi
+  fi
 
-    if [ "$desktop" = "mstsc" ]; then
-        tools_desktop="$cryptrdp5,$mstsc"
-    elif [ "$desktop" = "amsrdc" ]; then
-        PATH="${PATH}:/Applications/Microsoft Remote Desktop.app/Contents/MacOS"
-        tools_desktop="Microsoft Remote Desktop"
-    elif [ "$desktop" = "rdesktop" ]; then
-        tools_desktop="rdesktop"
+  # Construct tools_access_result from tools_terminal, tools_desktop and tools_browser
+  for tools_access_type in tools_terminal tools_desktop tools_browser; do
+    typeset current="$(eval printf '%s\\n' "\$$tools_access_type" | tr '\r\n' ',' | sed 's|,$||g')"
+    if [ "$current" ]; then
+      tools_access_result="$current,$tools_access_result"
     fi
+  done
 
-    if [ "$browser" = "windows" ]; then
-        tools_browser="$explorer"
-    elif [ "$browser" = "macos" ]; then
-        tools_browser="open"
-    elif [ "$browser" = "gnome" ]; then
-        # Some linux distributions name 'open' differently. Quick fix.
-        if [ -x "/usr/bin/xdg-open" ];then
-            tools_browser="xdg-open"
-        elif [ -x "/usr/bin/gnome-open" ];then
-            tools_browser="gnome-open"
-        else
-            tools_browser="open"
-        fi
-    fi
+  printf "tools_access='$tools_access_result'\n" | sed "s|,'$|'|" >>"$usrcfd/cfg/tools.required"
 
-    # Construct tools_access_result from tools_terminal, tools_desktop and tools_browser
-    for tools_access_type in tools_terminal tools_desktop tools_browser; do
-        typeset current="$(eval printf '%s\\n' "\$$tools_access_type" | tr '\r\n' ',' | sed 's|,$||g')"
-        if [ "$current" ]; then
-            tools_access_result="$current,$tools_access_result"
-        fi
+  # Clean up old tools.found first.
+  rm -f "$usrcfd/cfg/tools.found"
+
+  # Read tooltypes from generated tools.required, create comma-separated list.
+  tooltypes="$(cat "$usrcfd/cfg/tools.required" | cut -d "=" -f 1 | tr '\r\n' ',' | sed 's|,$||g')"
+
+  # Loop over all tooltypes and for each tooltype over its values.
+  for tooltype in $tooltypes; do
+    values="$(cat "$usrcfd/cfg/tools.required" | grep $tooltype | cut -d '=' -f 2 | sed "s|'||g")"
+
+    printf "$(printf "$tooltype\n" | cut -d "_" -f 2): "
+    printf "${tooltype}_found='" >>"$usrcfd/cfg/tools.found"
+
+    for tool in $values; do
+      if [ ! "$color" ]; then
+        unset color_red color_green color_yellow color_blue color_end
+      fi
+
+      if [ "$(basename "$(which $tool 2>/dev/null)")" ]; then
+        printf "${color_green}${tool}${color_end} "
+        printf "$tool," >>"$usrcfd/cfg/tools.found"
+      else
+        printf "(${color_red}${tool}${color_end}) "
+      fi
     done
-
-    printf "tools_access='$tools_access_result'\n" | sed "s|,'$|'|" >> "$usrcfd/cfg/tools.required"
-
-    # Clean up old tools.found first.
-    rm -f "$usrcfd/cfg/tools.found"
-
-    # Read tooltypes from generated tools.required, create comma-separated list.
-    tooltypes="$(cat "$usrcfd/cfg/tools.required" | cut -d "=" -f 1 | tr '\r\n' ',' | sed 's|,$||g')"
-
-    # Loop over all tooltypes and for each tooltype over its values.
-    for tooltype in $tooltypes ; do
-        values="$(cat "$usrcfd/cfg/tools.required" | grep $tooltype | cut -d '=' -f 2 | sed "s|'||g")"
-
-        printf "$(printf "$tooltype\n" | cut -d "_" -f 2): "
-        printf "${tooltype}_found='" >> "$usrcfd/cfg/tools.found"
-
-        for tool in $values ; do
-            if [ ! "$color" ]; then
-                unset color_red color_green color_yellow color_blue color_end
-            fi
-
-            if [ "$(basename "$(which $tool 2>/dev/null)")" ]; then
-                printf "${color_green}${tool}${color_end} "
-                printf "$tool," >> "$usrcfd/cfg/tools.found"
-            else
-                printf "(${color_red}${tool}${color_end}) "
-            fi
-        done
-        printf "\n"
-        printf "'\n" >> "$usrcfd/cfg/tools.found"
-    done
-
     printf "\n"
+    printf "'\n" >>"$usrcfd/cfg/tools.found"
+  done
 
-    # Remove trailing commas from tools.found.
-    sed -e "s|,'$|'|" "$usrcfd/cfg/tools.found" > "$usrcfd/tmp/tools.found" 2>/dev/null
-    mv "$usrcfd/tmp/tools.found" "$usrcfd/cfg/tools.found"
+  printf "\n"
+
+  # Remove trailing commas from tools.found.
+  sed -e "s|,'$|'|" "$usrcfd/cfg/tools.found" >"$usrcfd/tmp/tools.found" 2>/dev/null
+  mv "$usrcfd/tmp/tools.found" "$usrcfd/cfg/tools.found"
 }
 
 # handleSshOptions()
@@ -616,24 +621,24 @@ function toolFinder {
 # PuTTY tools do not look for a default key.
 #
 function handleSshOptions {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    if [ "$platform" = "linux" -o "$platform" = "bsd" -o "$platform" = "macosx" ]; then
-        # Accept keys of new hosts, refuse changed keys.
-        sshopts="-o StrictHostKeyChecking=accept-new${sshopts:+ $sshopts}"
+  if [ "$platform" = "linux" -o "$platform" = "bsd" -o "$platform" = "macosx" ]; then
+    # Accept keys of new hosts, refuse changed keys.
+    sshopts="-o StrictHostKeyChecking=accept-new${sshopts:+ $sshopts}"
 
-    elif [ "$platform" = "windows" ]; then
-        # Look for PuTTY style public/private keypair.
-        if [ -e "$usrcfd/../.ssh/id_dsa.ppk" ]; then
-            sshkey="$(toLocalWindowsPath "$usrcfd/../.ssh/id_dsa.ppk")"
-            sshpub="$(toLocalWindowsPath "$usrcfd/../.ssh/id_dsa.pub")"
-            sshopts="-i \"$sshkey\""
-        elif [ -e "$usrcfd/../.ssh/id_rsa.ppk" ]; then
-            sshkey="$(toLocalWindowsPath "$usrcfd/../.ssh/id_rsa.ppk")"
-            sshpub="$(toLocalWindowsPath "$usrcfd/../.ssh/id_rsa.pub")"
-            sshopts="-i \"$sshkey\""
-        fi
+  elif [ "$platform" = "windows" ]; then
+    # Look for PuTTY style public/private keypair.
+    if [ -e "$usrcfd/../.ssh/id_dsa.ppk" ]; then
+      sshkey="$(toLocalWindowsPath "$usrcfd/../.ssh/id_dsa.ppk")"
+      sshpub="$(toLocalWindowsPath "$usrcfd/../.ssh/id_dsa.pub")"
+      sshopts="-i \"$sshkey\""
+    elif [ -e "$usrcfd/../.ssh/id_rsa.ppk" ]; then
+      sshkey="$(toLocalWindowsPath "$usrcfd/../.ssh/id_rsa.ppk")"
+      sshpub="$(toLocalWindowsPath "$usrcfd/../.ssh/id_rsa.pub")"
+      sshopts="-i \"$sshkey\""
     fi
+  fi
 }
 
 # handleQuotedRegExpBehaviour()
@@ -642,40 +647,40 @@ function handleSshOptions {
 # Check quoted regexp behaviour and take appropriate action.
 #
 function handleQuotedRegExpBehaviour {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    # http://dougbarton.us/Bash/Bash-FAQ.html, see E15
-    # http://ftp.gnu.org/gnu/bash/bash-3.2-patches/bash32-010, regarding quoted regexp matching
-    # http://ftp.gnu.org/gnu/bash/bash-3.2-patches/bash32-039, regarding compat31 shopt
+  # http://dougbarton.us/Bash/Bash-FAQ.html, see E15
+  # http://ftp.gnu.org/gnu/bash/bash-3.2-patches/bash32-010, regarding quoted regexp matching
+  # http://ftp.gnu.org/gnu/bash/bash-3.2-patches/bash32-039, regarding compat31 shopt
 
-    typeset major="${BASH_VERSINFO[0]}"
-    typeset minor="${BASH_VERSINFO[1]}"
-    typeset patch="${BASH_VERSINFO[2]}"
+  typeset major="${BASH_VERSINFO[0]}"
+  typeset minor="${BASH_VERSINFO[1]}"
+  typeset patch="${BASH_VERSINFO[2]}"
 
-    if [ "$major" -lt 3 ]; then # Major is lower than 3
-        reportError "Bash major version lower than 3, exiting"
+  if [ "$major" -lt 3 ]; then # Major is lower than 3
+    reportError "Bash major version lower than 3, exiting"
+    exit 1
+  elif [ "$major" = 3 ]; then   # Major is 3
+    if [ "$minor" -lt 2 ]; then # Version 3.0 and 3.1 will work
+      reportDebug "Bash version is old but will work with quoted regexp matching"
+    elif [ "$minor" -eq 2 ]; then                   # Handle 3.2 idiosyncrasies
+      if [ 0 -le "$patch" -a "$patch" -le 9 ]; then # Version 3.2.0 to 3.2.9 is broken
+        reportError "Bash version has known unfixed issues with quoted regexp matching"
         exit 1
-    elif [ "$major" = 3 ]; then # Major is 3
-        if [ "$minor" -lt 2 ]; then # Version 3.0 and 3.1 will work
-            reportDebug "Bash version is old but will work with quoted regexp matching"
-        elif [ "$minor" -eq 2 ]; then  # Handle 3.2 idiosyncrasies
-            if [ 0 -le "$patch" -a "$patch" -le 9 ]; then # Version 3.2.0 to 3.2.9 is broken
-                reportError "Bash version has known unfixed issues with quoted regexp matching"
-                exit 1
-            elif [ "$patch" -lt 39 ]; then # Version 3.2.10 to 3.2.38 might work
-                reportDebug "Bash version is old but may work with quoted regexp matching"
-            else # Version 3.2.39 and higher has compat31
-                reportDebug "Setting shell option compat31 to handle quoted regexp matching"
-                shopt -s compat31
-            fi
-        elif [ "$minor" -gt 2 ]; then # Currently non-existing version of bash 3.3 or higher but not 4
-            reportDebug "Setting shell option compat31 to handle quoted regexp matching"
-            shopt -s compat31
-        fi
-    else # 4 and higher.
+      elif [ "$patch" -lt 39 ]; then # Version 3.2.10 to 3.2.38 might work
+        reportDebug "Bash version is old but may work with quoted regexp matching"
+      else # Version 3.2.39 and higher has compat31
         reportDebug "Setting shell option compat31 to handle quoted regexp matching"
         shopt -s compat31
+      fi
+    elif [ "$minor" -gt 2 ]; then # Currently non-existing version of bash 3.3 or higher but not 4
+      reportDebug "Setting shell option compat31 to handle quoted regexp matching"
+      shopt -s compat31
     fi
+  else # 4 and higher.
+    reportDebug "Setting shell option compat31 to handle quoted regexp matching"
+    shopt -s compat31
+  fi
 }
 
 # sshSendKey(<username>)
@@ -688,52 +693,58 @@ function handleQuotedRegExpBehaviour {
 # executes the commandlist routine below to install the key.
 #
 function sshSendKey {
-    reportDebugFuncEntry "$*" "sshpub addr"
+  reportDebugFuncEntry "$*" "sshpub addr"
 
-    typeset source="$sshpub"
-    typeset target="/tmp/pubkey"
-    typeset user="$1"
-    typeset retval
-    typeset commandlist
+  typeset source="$sshpub"
+  typeset target="/tmp/pubkey"
+  typeset user="$1"
+  typeset retval
+  typeset commandlist
 
-    [ "$addr" ] || { reportError "\$addr is empty; aborting" ; return 1 ; }
+  [ "$addr" ] || {
+    reportError "\$addr is empty; aborting"
+    return 1
+  }
 
-    if [ "$platform" != "windows" ]; then
-        reportInfo "Attempting to install public key(s) for $user on $addr"
-        ssh-copy-id $sshopts "$user@$addr"
-        retval="$?"
-        if [ "$retval" != 0 ]; then
-            reportError "Installation attempt failed with return code: $retval"
-            return 1
-        fi
-        reportInfo "Key installed"
-        return 0
-    fi
-
-    [ "$sshpub" ] || { reportError "\$sshpub is empty; aborting" ; return 1 ; }
-
-    reportInfo "Attempting to send public key $sshpub"
-
-    viaScript "$(${sshsend}SendCommandWriter "$addr" "$user" "$source" "$target")"
+  if [ "$platform" != "windows" ]; then
+    reportInfo "Attempting to install public key(s) for $user on $addr"
+    ssh-copy-id $sshopts "$user@$addr"
     retval="$?"
     if [ "$retval" != 0 ]; then
-        reportError "Failed to send $sshpub with return code: $retval"
-        return 1
+      reportError "Installation attempt failed with return code: $retval"
+      return 1
     fi
-
-    reportInfo "Key sent successfully; will now attempt to install it"
-
-    # Keep commandlist as one line, plink will go crazy if you do not.
-    commandlist='[ "$HOME" ] || exit 1 ; mkdir -p $HOME/.ssh ; touch $HOME/.ssh/authorized_keys ; cat $HOME/.ssh/authorized_keys /tmp/pubkey | sort | uniq > /tmp/authorized_keys ; mv /tmp/authorized_keys $HOME/.ssh/authorized_keys ; rm /tmp/pubkey ; chmod 755 $HOME ; chmod 755 $HOME/.ssh ; chmod 600 $HOME/.ssh/authorized_keys'
-    viaScript "$(${sshtell}TellCommandWriter "$addr" "$user" "$commandlist")"
-    retval="$?"
-    if [ "$retval" != 0 ]; then
-        reportError "Installation attempt failed with return code: $retval"
-        return 1
-    fi
-
     reportInfo "Key installed"
     return 0
+  fi
+
+  [ "$sshpub" ] || {
+    reportError "\$sshpub is empty; aborting"
+    return 1
+  }
+
+  reportInfo "Attempting to send public key $sshpub"
+
+  viaScript "$(${sshsend}SendCommandWriter "$addr" "$user" "$source" "$target")"
+  retval="$?"
+  if [ "$retval" != 0 ]; then
+    reportError "Failed to send $sshpub with return code: $retval"
+    return 1
+  fi
+
+  reportInfo "Key sent successfully; will now attempt to install it"
+
+  # Keep commandlist as one line, plink will go crazy if you do not.
+  commandlist='[ "$HOME" ] || exit 1 ; mkdir -p $HOME/.ssh ; touch $HOME/.ssh/authorized_keys ; cat $HOME/.ssh/authorized_keys /tmp/pubkey | sort | uniq > /tmp/authorized_keys ; mv /tmp/authorized_keys $HOME/.ssh/authorized_keys ; rm /tmp/pubkey ; chmod 755 $HOME ; chmod 755 $HOME/.ssh ; chmod 600 $HOME/.ssh/authorized_keys'
+  viaScript "$(${sshtell}TellCommandWriter "$addr" "$user" "$commandlist")"
+  retval="$?"
+  if [ "$retval" != 0 ]; then
+    reportError "Installation attempt failed with return code: $retval"
+    return 1
+  fi
+
+  reportInfo "Key installed"
+  return 0
 }
 
 # winStoreCreds(<type> <name>)
@@ -742,41 +753,41 @@ function sshSendKey {
 # Store credentials for services that talk smb or rdp.
 #
 function winStoreCreds {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    typeset store_type="$1"
-    typeset store_name="$2"
-    typeset store_pass1="unset1"
-    typeset store_pass2="unset2"
+  typeset store_type="$1"
+  typeset store_name="$2"
+  typeset store_pass1="unset1"
+  typeset store_pass2="unset2"
 
-    while [ "$store_pass1" != "$store_pass2" ]; do
-        printf "Please supply password for $store_type $store_name: "
-        stty -echo
-        read store_pass1
-        stty echo
-        printf "\n"
+  while [ "$store_pass1" != "$store_pass2" ]; do
+    printf "Please supply password for $store_type $store_name: "
+    stty -echo
+    read store_pass1
+    stty echo
+    printf "\n"
 
-        printf "Retype password for confirmation: "
-        stty -echo
-        read store_pass2
-        stty echo
-        printf "\n"
+    printf "Retype password for confirmation: "
+    stty -echo
+    read store_pass2
+    stty echo
+    printf "\n"
 
-        if [ "$store_pass1" != "$store_pass2" ]; then
-            reportError "Passwords do not match"
-            return 1
-        fi
-    done
-
-    mkdir -p "$usrcfd/sys/$name"
-    if [ "$user" = "$admin" ]; then
-        printf "$store_pass2\n" > "$usrcfd/sys/$name/user.pwd"
-        printf "$store_pass2\n" > "$usrcfd/sys/$name/admin.pwd"
-    else
-        printf "$store_pass2\n" > "$usrcfd/sys/$name/$store_type.pwd"
+    if [ "$store_pass1" != "$store_pass2" ]; then
+      reportError "Passwords do not match"
+      return 1
     fi
+  done
 
-    return 0
+  mkdir -p "$usrcfd/sys/$name"
+  if [ "$user" = "$admin" ]; then
+    printf "$store_pass2\n" >"$usrcfd/sys/$name/user.pwd"
+    printf "$store_pass2\n" >"$usrcfd/sys/$name/admin.pwd"
+  else
+    printf "$store_pass2\n" >"$usrcfd/sys/$name/$store_type.pwd"
+  fi
+
+  return 0
 }
 
 # osglobals(<osmt>)
@@ -786,42 +797,42 @@ function winStoreCreds {
 # with the given operating system.
 #
 function osGlobals {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    # Defaults
-    osstop="/sbin/shutdown -h now"
-    osreboot="reboot"
-    oslisten="netstat -na|grep \"LISTEN\"|grep -w -e \"0\.0\.0\.0:$port\" -e \":::$port\" -e \"$addr:$port\" "
+  # Defaults
+  osstop="/sbin/shutdown -h now"
+  osreboot="reboot"
+  oslisten="netstat -na|grep \"LISTEN\"|grep -w -e \"0\.0\.0\.0:$port\" -e \":::$port\" -e \"$addr:$port\" "
 
-    # Override defaults given above for certain operating systems.
-    case "$1" in
-      alpine*)
-        osstop="/sbin/poweroff"
-        ;;
-      android*)
-        osstop="reboot -p"
-        ;;
-      haiku)
-        osstop="/bin/shutdown"
-        ;;
-      aix*|hpux*)
-        osstop="/sbin/shutdown -hy 0"
-        ;;
-      dfbsd*|fbsd*)
-        osstop="/sbin/shutdown -p now"
-        ;;
-      nbsd*|obsd*)
-        osstop="/sbin/shutdown -h -p now"
-        ;;
-      chimera|sol10|sol11)
-        osstop="/usr/sbin/poweroff"
-        ;;
-      windows-like|win*|reactos)
-        osstop="shutdown -s -t 01"
-        osreboot="shutdown -r -t 01"
-        oslisten="netstat -na|findstr \"LISTEN\"|findstr \"\<0\.0\.0\.0:$port\> \<$addr:$port\>\" "
-        ;;
-    esac
+  # Override defaults given above for certain operating systems.
+  case "$1" in
+  alpine*)
+    osstop="/sbin/poweroff"
+    ;;
+  android*)
+    osstop="reboot -p"
+    ;;
+  haiku)
+    osstop="/bin/shutdown"
+    ;;
+  aix* | hpux*)
+    osstop="/sbin/shutdown -hy 0"
+    ;;
+  dfbsd* | fbsd*)
+    osstop="/sbin/shutdown -p now"
+    ;;
+  nbsd* | obsd*)
+    osstop="/sbin/shutdown -h -p now"
+    ;;
+  chimera | sol10 | sol11)
+    osstop="/usr/sbin/poweroff"
+    ;;
+  windows-like | win* | reactos)
+    osstop="shutdown -s -t 01"
+    osreboot="shutdown -r -t 01"
+    oslisten="netstat -na|findstr \"LISTEN\"|findstr \"\<0\.0\.0\.0:$port\> \<$addr:$port\>\" "
+    ;;
+  esac
 }
 
 # capsFirst(<arg>...)
@@ -830,22 +841,25 @@ function osGlobals {
 # Echo all args with first one capitalized if it starts with a letter.
 #
 function capsFirst {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    typeset input="$*"
-    typeset upr
+  typeset input="$*"
+  typeset upr
 
-    case "$input" in
-      a*) upr=A ;;  b*) upr=B  ;; c*) upr=C ;; d*) upr=D ;;
-      e*) upr=E ;;  f*) upr=F  ;; g*) upr=G ;; h*) upr=H ;;
-      i*) upr=I ;;  j*) upr=J  ;; k*) upr=K ;; l*) upr=L ;;
-      m*) upr=M ;;  n*) upr=N  ;; o*) upr=O ;; p*) upr=P ;;
-      q*) upr=Q ;;  r*) upr=R  ;; s*) upr=S ;; t*) upr=T ;;
-      u*) upr=U ;;  v*) upr=V  ;; w*) upr=W ;; x*) upr=X ;;
-      y*) upr=Y ;;  z*) upr=Z  ;;
-       *) printf "$input\n" ; return ; ;;
-    esac
-    printf "${upr}${input#?}\n"
+  case "$input" in
+  a*) upr=A ;; b*) upr=B ;; c*) upr=C ;; d*) upr=D ;;
+  e*) upr=E ;; f*) upr=F ;; g*) upr=G ;; h*) upr=H ;;
+  i*) upr=I ;; j*) upr=J ;; k*) upr=K ;; l*) upr=L ;;
+  m*) upr=M ;; n*) upr=N ;; o*) upr=O ;; p*) upr=P ;;
+  q*) upr=Q ;; r*) upr=R ;; s*) upr=S ;; t*) upr=T ;;
+  u*) upr=U ;; v*) upr=V ;; w*) upr=W ;; x*) upr=X ;;
+  y*) upr=Y ;; z*) upr=Z ;;
+  *)
+    printf "$input\n"
+    return
+    ;;
+  esac
+  printf "${upr}${input#?}\n"
 }
 
 # rndGen(<count> <split_char>)
@@ -854,38 +868,38 @@ function capsFirst {
 # Print <count> random 2-digit hex numerals separated by <split_char>.
 #
 function rndGen {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    typeset count=1
-    typeset split
-    typeset part
-    typeset length
+  typeset count=1
+  typeset split
+  typeset part
+  typeset length
 
-    if [ "$1" ]; then
-        count="$1"
+  if [ "$1" ]; then
+    count="$1"
+  fi
+  if [ "$2" ]; then
+    split="$2"
+  fi
+
+  while [ "$count" -gt 0 ]; do
+    part="$(printf '%02X' $RANDOM | cut -c2-3)"
+    length=${#part}
+
+    if [ "$length" -lt 2 ]; then
+      part="$part$part"
     fi
-    if [ "$2" ]; then
-        split="$2"
+
+    printf "$part"
+
+    if [ "$count" != 1 ]; then
+      printf "$split"
     fi
 
-    while [ "$count" -gt 0 ]; do
-        part="$(printf '%02X' $RANDOM | cut -c2-3)"
-        length=${#part}
+    let count-=1
+  done
 
-        if [ "$length" -lt 2 ]; then
-            part="$part$part"
-        fi
-
-        printf "$part"
-
-        if [ "$count" != 1 ]; then
-            printf "$split"
-        fi
-
-        let count-=1
-    done
-
-    printf "\n"
+  printf "\n"
 }
 
 # macGen(<type>)
@@ -894,56 +908,56 @@ function rndGen {
 # Generate a MAC address for adapter of the give type.
 #
 function macGen {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    typeset vendor_vmw="00:50:56"
-    typeset vendor_xen="00:16:3E"
-    typeset vendor_kvm="54:52:00"
+  typeset vendor_vmw="00:50:56"
+  typeset vendor_xen="00:16:3E"
+  typeset vendor_kvm="54:52:00"
 
-    typeset first
-    typeset newfirst
-    typeset genmac
-    typeset venmac
-    typeset indec
-    typeset check
+  typeset first
+  typeset newfirst
+  typeset genmac
+  typeset venmac
+  typeset indec
+  typeset check
 
-    case "$1" in
-      global)
-        genmac="$(rndGen 6 :)"
-        first="$(printf "$genmac\n" | cut -d : -f 1)"
-        indec="$(printf "%d" 0x$first)"
-        check="$(( $indec % 2 ))"
-        if [ "$check" != 0 ]; then
-            newfirst="$(printf "%x" $(( $indec + 1)))"
-            genmac="$(printf "$genmac\n" | sed "s|^$first|$newfirst|")"
-        fi
-        macaddr="$genmac"
-        ;;
-      vmw|vmf|esx)
-        venmac="$vendor_vmw"
-        genmac="$(rndGen 3 :)"
-        macaddr="$venmac:$genmac"
-        ;;
-      xen)
-        venmac="$vendor_xen"
-        genmac="$(rndGen 3 :)"
-        macaddr="$venmac:$genmac"
-        ;;
-      kvm)
-        venmac="$vendor_kvm"
-        genmac="$(rndGen 3 :)"
-        macaddr="$venmac:$genmac"
-        ;;
-      *)
-        reportError "No macGen method specified; expected any of global|vmw|vmf|esx|xen|kvm"
-        return 1
-        ;;
-    esac
+  case "$1" in
+  global)
+    genmac="$(rndGen 6 :)"
+    first="$(printf "$genmac\n" | cut -d : -f 1)"
+    indec="$(printf "%d" 0x$first)"
+    check="$(($indec % 2))"
+    if [ "$check" != 0 ]; then
+      newfirst="$(printf "%x" $(($indec + 1)))"
+      genmac="$(printf "$genmac\n" | sed "s|^$first|$newfirst|")"
+    fi
+    macaddr="$genmac"
+    ;;
+  vmw | vmf | esx)
+    venmac="$vendor_vmw"
+    genmac="$(rndGen 3 :)"
+    macaddr="$venmac:$genmac"
+    ;;
+  xen)
+    venmac="$vendor_xen"
+    genmac="$(rndGen 3 :)"
+    macaddr="$venmac:$genmac"
+    ;;
+  kvm)
+    venmac="$vendor_kvm"
+    genmac="$(rndGen 3 :)"
+    macaddr="$venmac:$genmac"
+    ;;
+  *)
+    reportError "No macGen method specified; expected any of global|vmw|vmf|esx|xen|kvm"
+    return 1
+    ;;
+  esac
 
-    mkdir -p "$usrcfd/sys/$name"
-    printf "$macaddr\n" > "$usrcfd/sys/$name/generated.mac"
+  mkdir -p "$usrcfd/sys/$name"
+  printf "$macaddr\n" >"$usrcfd/sys/$name/generated.mac"
 
-    return 0
+  return 0
 }
 
 # printPortState(<address> <port>)
@@ -953,60 +967,60 @@ function macGen {
 # with as little response time as possible.
 #
 function printPortState {
-    reportDebugFuncEntry "$*" "timeout"
+  reportDebugFuncEntry "$*" "timeout"
 
-    typeset addr
-    typeset port
-    typeset command
-    typeset match
+  typeset addr
+  typeset port
+  typeset command
+  typeset match
 
-    if [ "$1" ]; then
-        addr="$1"
+  if [ "$1" ]; then
+    addr="$1"
+  else
+    addr="none"
+  fi
+  if [ "$2" ]; then
+    port="$2"
+  else
+    port="none"
+  fi
+
+  if [ "$addr" = "none" -o "$port" = "none" ]; then
+    reportDebug "IP address or port was none, will return none"
+    printf "none\n"
+    return
+  fi
+
+  if isLoopback "$addr" || isLocal "$name"; then
+    reportDebug "IP address or name was considered local, will return open"
+    printf "open\n"
+    return
+  fi
+
+  if [ "$resilient" ]; then
+    reportDebug "Enabled resilient mode"
+    command="$nmap -n -T1 -PN -sT -p $port $addr"
+    match=" open "
+  else
+    if [ "$scantype" = "connect" ]; then
+      reportDebug "Scantype was set to connect"
+      command="$nmap -n -T5 --host-timeout ${timeout}ms -PN -sT -p $port $addr"
+      match=" open "
     else
-        addr="none"
+      command="$nmap -n -T5 --host-timeout ${timeout}ms -PN -p $port $addr"
+      match=" open "
     fi
-    if [ "$2" ]; then
-        port="$2"
-    else
-        port="none"
-    fi
+  fi
 
-    if [ "$addr" = "none" -o "$port" = "none" ]; then
-        reportDebug "IP address or port was none, will return none"
-        printf "none\n"
-        return
-    fi
-
-    if isLoopback "$addr" || isLocal "$name" ; then
-        reportDebug "IP address or name was considered local, will return open"
-        printf "open\n"
-        return
-    fi
-
-    if [ "$resilient" ]; then
-        reportDebug "Enabled resilient mode"
-        command="$nmap -n -T1 -PN -sT -p $port $addr"
-        match=" open "
-    else
-        if [ "$scantype" = "connect" ]; then
-            reportDebug "Scantype was set to connect"
-            command="$nmap -n -T5 --host-timeout ${timeout}ms -PN -sT -p $port $addr"
-            match=" open "
-        else
-            command="$nmap -n -T5 --host-timeout ${timeout}ms -PN -p $port $addr"
-            match=" open "
-        fi
-    fi
-
-    reportDebug "Command is: $privy $command"
-    $privy $command 2>/dev/null | grep -q "$match" >/dev/null
-    if [ "$?" = 0 ]; then
-        reportDebug "Port $port on $addr is open"
-        printf "open\n"
-    else
-        reportDebug "Port $port on $addr is closed"
-        printf "closed\n"
-    fi
+  reportDebug "Command is: $privy $command"
+  $privy $command 2>/dev/null | grep -q "$match" >/dev/null
+  if [ "$?" = 0 ]; then
+    reportDebug "Port $port on $addr is open"
+    printf "open\n"
+  else
+    reportDebug "Port $port on $addr is closed"
+    printf "closed\n"
+  fi
 }
 
 # printPingState(<address>)
@@ -1016,46 +1030,46 @@ function printPortState {
 # with as little response time as possible.
 #
 function printPingState {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    typeset addr
-    typeset command
+  typeset addr
+  typeset command
 
-    if [ "$1" ]; then
-        addr="$1"
-    else
-        addr="none"
-    fi
+  if [ "$1" ]; then
+    addr="$1"
+  else
+    addr="none"
+  fi
 
-    if [ "$addr" = "none" ]; then
-        reportDebug "IP address was none, will return none"
-        printf "none\n"
-        return
-    fi
+  if [ "$addr" = "none" ]; then
+    reportDebug "IP address was none, will return none"
+    printf "none\n"
+    return
+  fi
 
-    if isLoopback "$addr" || isLocal "$name" ; then
-        reportDebug "IP address or name was considered local, will return open"
-        printf "open\n"
-        return
-    fi
+  if isLoopback "$addr" || isLocal "$name"; then
+    reportDebug "IP address or name was considered local, will return open"
+    printf "open\n"
+    return
+  fi
 
-    if [ "$platform" = "bsd" -o "$platform" = "macosx" ]; then
-        command="ping -c1 -t1 $addr"
-    elif [ "$platform" = "linux" ]; then
-        command="ping -c1 -W1 $addr"
-    elif [ "$platform" = "windows" ]; then
-        command="ping.exe -n 1 -w 1000 $addr"
-    fi
+  if [ "$platform" = "bsd" -o "$platform" = "macosx" ]; then
+    command="ping -c1 -t1 $addr"
+  elif [ "$platform" = "linux" ]; then
+    command="ping -c1 -W1 $addr"
+  elif [ "$platform" = "windows" ]; then
+    command="ping.exe -n 1 -w 1000 $addr"
+  fi
 
-    reportDebug "Command is: $privy $command"
-    $privy $command >/dev/null 2>&1
-    if [ "$?" = 0 ]; then
-        reportDebug "$addr is reachable"
-        printf "reachable\n"
-    else
-        reportDebug "$addr is unreachable"
-        printf "unreachable\n"
-    fi
+  reportDebug "Command is: $privy $command"
+  $privy $command >/dev/null 2>&1
+  if [ "$?" = 0 ]; then
+    reportDebug "$addr is reachable"
+    printf "reachable\n"
+  else
+    reportDebug "$addr is unreachable"
+    printf "unreachable\n"
+  fi
 }
 
 # adbSerial()
@@ -1066,15 +1080,15 @@ function printPingState {
 # unless set in options.env.
 #
 function adbSerial {
-    reportDebugFuncEntry "$*" "vrmt addr adbport"
+  reportDebugFuncEntry "$*" "vrmt addr adbport"
 
-    typeset port="${adbport:-5555}"
+  typeset port="${adbport:-5555}"
 
-    if [ "$vrmt" = "android" ]; then
-        printf "emulator-$((port - 1))\n"
-    else
-        printf "$addr:$port\n"
-    fi
+  if [ "$vrmt" = "android" ]; then
+    printf "emulator-$((port - 1))\n"
+  else
+    printf "$addr:$port\n"
+  fi
 }
 
 # printAdbState()
@@ -1085,24 +1099,24 @@ function adbSerial {
 # The device is active only when it has completed its boot.
 #
 function printAdbState {
-    reportDebugFuncEntry "$*" "vrmt addr adbport"
+  reportDebugFuncEntry "$*" "vrmt addr adbport"
 
-    typeset serial="$(adbSerial)"
+  typeset serial="$(adbSerial)"
 
-    if [ "$vrmt" != "android" ]; then
-        if [ "$(printPortState "$addr" "${adbport:-5555}")" != "open" ]; then
-            printf "inactive\n"
-            return
-        fi
-        adb connect "$serial" >/dev/null 2>&1
+  if [ "$vrmt" != "android" ]; then
+    if [ "$(printPortState "$addr" "${adbport:-5555}")" != "open" ]; then
+      printf "inactive\n"
+      return
     fi
+    adb connect "$serial" >/dev/null 2>&1
+  fi
 
-    if [ "$(adb -s "$serial" get-state 2>/dev/null)" = "device" ] &&
-       [ "$(adb -s "$serial" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ]; then
-        printf "active\n"
-    else
-        printf "inactive\n"
-    fi
+  if [ "$(adb -s "$serial" get-state 2>/dev/null)" = "device" ] &&
+    [ "$(adb -s "$serial" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ]; then
+    printf "active\n"
+  else
+    printf "inactive\n"
+  fi
 }
 
 # printState(<name> <returnFormat>)
@@ -1111,139 +1125,152 @@ function printAdbState {
 # Print a long or short version of the state of a given machine, service or group thereof.
 #
 function printState {
-    reportDebugFuncEntry "$*" "state acstate exstate vmstate svstate svrunning svlistening host type osmt acmt exmt svmt vrmt addr port user admin members"
+  reportDebugFuncEntry "$*" "state acstate exstate vmstate svstate svrunning svlistening host type osmt acmt exmt svmt vrmt addr port user admin members"
 
-    typeset name="$1"
-    typeset returnFormat="$2"
-    typeset sysopts
-    typeset usropts
+  typeset name="$1"
+  typeset returnFormat="$2"
+  typeset sysopts
+  typeset usropts
 
-    if [ ! "$returnFormat" ]; then
-        returnFormat="short"
+  if [ ! "$returnFormat" ]; then
+    returnFormat="short"
+  fi
+
+  case "$returnFormat" in
+  long)
+    printf "# main config:\n"
+    printf "type='$type'\n"
+    printf "name='$name'\n"
+
+    if [ "$type" = "host" -o "$type" = "guest" ]; then
+      printf "osmt='$osmt'\n"
+    elif [ "$type" = "service" ]; then
+      printf "svmt='$svmt'\n"
+      printf "port='$port'\n"
     fi
 
-    case "$returnFormat" in
-      long)
-        printf "# main config:\n"
-        printf "type='$type'\n"
-        printf "name='$name'\n"
+    if [ "$type" != "group" ]; then
+      printf "acmt='$acmt'\n"
+      printf "exmt='$exmt'\n"
+      printf "user='$user'\n"
+      printf "admin='$admin'\n"
+      printf "addr='$addr'\n"
+      printf "vrmt='$vrmt'\n"
+      printf "host='$host'\n"
+    fi
+    printf "\n"
 
-        if [ "$type" = "host" -o "$type" = "guest" ]; then
-            printf "osmt='$osmt'\n"
-        elif [ "$type" = "service" ]; then
-            printf "svmt='$svmt'\n"
-            printf "port='$port'\n"
-        fi
+    sysopts="$syscfd/sys/$name/options.env"
+    usropts="$usrcfd/sys/$name/options.env"
 
-        if [ "$type" != "group" ]; then
-            printf "acmt='$acmt'\n"
-            printf "exmt='$exmt'\n"
-            printf "user='$user'\n"
-            printf "admin='$admin'\n"
-            printf "addr='$addr'\n"
-            printf "vrmt='$vrmt'\n"
-            printf "host='$host'\n"
-        fi
-        printf "\n"
+    if [ -e "$usropts" ]; then
+      printf "# extra options (set locally):\n"
+      cat "$usropts" | sed '/^$/d' | grep -v "^#"
+      printf "\n"
+    elif [ -e "$sysopts" -a ! -e "$usropts" ]; then
+      printf "# extra options (set globally):\n"
+      cat "$sysopts" | sed '/^$/d' | grep -v "^#"
+      printf "\n"
+    fi
 
-        sysopts="$syscfd/sys/$name/options.env"
-        usropts="$usrcfd/sys/$name/options.env"
+    sysopts="$syscfd/sys/$host/options.env"
+    usropts="$usrcfd/sys/$host/options.env"
 
-        if [ -e "$usropts" ]; then
-            printf "# extra options (set locally):\n"
-            cat "$usropts" | sed '/^$/d' | grep -v "^#"
-            printf "\n"
-        elif [ -e "$sysopts" -a ! -e "$usropts" ]; then
-            printf "# extra options (set globally):\n"
-            cat "$sysopts" | sed '/^$/d' | grep -v "^#"
-            printf "\n"
-        fi
+    if [ -e "$usropts" ]; then
+      printf "# inherited options (from host, set locally):\n"
+      cat "$usropts" | sed '/^$/d' | grep -v "^#"
+      printf "\n"
+    elif [ -e "$sysopts" -a ! -e "$usropts" ]; then
+      printf "# inherited options (from host, set globally):\n"
+      cat "$sysopts" | sed '/^$/d' | grep -v "^#"
+      printf "\n"
+    fi
 
-        sysopts="$syscfd/sys/$host/options.env"
-        usropts="$usrcfd/sys/$host/options.env"
+    if [ "$type" = "host" -o "$type" = "guest" ]; then
+      printf "# inherited os options:\n"
+      printf "osstop='$osstop'\n"
+      printf "osreboot='$osreboot'\n"
+      printf "oslisten='$oslisten'\n"
+      printf "\n"
+    fi
 
-        if [ -e "$usropts" ]; then
-            printf "# inherited options (from host, set locally):\n"
-            cat "$usropts" | sed '/^$/d' | grep -v "^#"
-            printf "\n"
-        elif [ -e "$sysopts" -a ! -e "$usropts" ]; then
-            printf "# inherited options (from host, set globally):\n"
-            cat "$sysopts" | sed '/^$/d' | grep -v "^#"
-            printf "\n"
-        fi
+    if [ "$type" != "group" ]; then
+      printf "# current state:\n"
+      printf "acstate='$acstate'\n"
+      printf "exstate='$exstate'\n"
+      if [ "$type" = "service" ]; then
+        printf "svrunning='$svrunning'\n"
+        printf "svlistening='$svlistening'\n"
+        printf "svstate='$svstate'\n"
+      fi
+      if [ "$type" = "guest" ]; then
+        printf "vmstate='$vmstate'\n"
+      fi
+      printf "state='$state'\n"
+      printf "\n"
+    fi
 
-        if [ "$type" = "host" -o "$type" = "guest" ]; then
-            printf "# inherited os options:\n"
-            printf "osstop='$osstop'\n"
-            printf "osreboot='$osreboot'\n"
-            printf "oslisten='$oslisten'\n"
-            printf "\n"
-        fi
+    printf "# relations:\n"
+    if [ "$type" != "group" ]; then
+      printf "groups="
+      typeset groups="$(
+        unset debug
+        verbose=1
+        listHelper group | grep "$name" | cut -d " " -f 2 | cut -d "(" -f 1 | tr '\n' ',' | sed "s|,$||" 2>/dev/null
+      )"
+      if [ "$groups" ]; then printf "'$groups'\n"; else printf "'none'\n"; fi
+    fi
 
-        if [ "$type" != "group" ]; then
-            printf "# current state:\n"
-            printf "acstate='$acstate'\n"
-            printf "exstate='$exstate'\n"
-            if [ "$type" = "service" ]; then
-                printf "svrunning='$svrunning'\n"
-                printf "svlistening='$svlistening'\n"
-                printf "svstate='$svstate'\n"
-            fi
-            if [ "$type" = "guest" ]; then
-                printf "vmstate='$vmstate'\n"
-            fi
-            printf "state='$state'\n"
-            printf "\n"
-        fi
+    if [ "$type" = "host" -o "$type" = "guest" ]; then
+      printf "services="
+      typeset services="$(
+        unset debug
+        verbose=1
+        listHelper service | grep "$name" | cut -d " " -f 2 | cut -d "(" -f 1 | tr '\n' ',' | sed "s|,$||" 2>/dev/null
+      )"
+      if [ "$services" ]; then printf "'$services'\n"; else printf "'none'\n"; fi
+    fi
 
-        printf "# relations:\n"
-        if [ "$type" != "group" ]; then
-            printf "groups="
-            typeset groups="$(unset debug ; verbose=1 ; listHelper group | grep "$name" | cut -d " " -f 2 | cut -d "(" -f 1 | tr '\n' ',' | sed "s|,$||" 2> /dev/null)"
-            if [ "$groups" ]; then printf "'$groups'\n"; else printf "'none'\n"; fi
-        fi
+    if [ "$type" = "host" -a "$vrmt" != "none" ]; then
+      printf "guests="
+      typeset guests="$(
+        unset debug
+        verbose=1
+        listHelper guest | grep "$name" | cut -d " " -f 2 | cut -d "(" -f 1 | tr '\n' ',' | sed "s|,$||" 2>/dev/null
+      )"
+      if [ "$guests" ]; then printf "'$guests'\n"; else printf "'none'\n"; fi
+    fi
 
-        if [ "$type" = "host" -o "$type" = "guest" ]; then
-            printf "services="
-            typeset services="$(unset debug ; verbose=1 ; listHelper service | grep "$name" | cut -d " " -f 2 | cut -d "(" -f 1 | tr '\n' ',' | sed  "s|,$||" 2> /dev/null)"
-            if [ "$services" ]; then printf "'$services'\n"; else printf "'none'\n"; fi
-        fi
-
-        if [ "$type" = "host" -a "$vrmt" != "none" ]; then
-            printf "guests="
-            typeset guests="$(unset debug ; verbose=1 ; listHelper guest | grep "$name" | cut -d " " -f 2 | cut -d "(" -f 1 | tr '\n' ',' | sed  "s|,$||" 2> /dev/null)"
-            if [ "$guests" ]; then printf "'$guests'\n"; else printf "'none'\n"; fi
-        fi
-
-        if [ "$type" = "group" ]; then
-            printf "members="
-            typeset members="$(tokenReader printVals "$name" "members")"
-            if [ "$members" ]; then printf "'$members'\n"; else printf "'none'\n"; fi
-        fi
-        ;;
-      short)
-        if [ ! "$color" ]; then
-            unset color_red color_green color_yellow color_blue color_end
-        fi
-        case "$state" in
-          on|booting|created|destroyed|restarting|starting|stopping)
-            report "$name: ${color_green}${state}${color_end}"
-            return 0
-            ;;
-          off)
-            report "$name: ${color_blue}${state}${color_end}"
-            return 4
-            ;;
-          busy)
-            report "$name: ${color_yellow}${state}${color_end}"
-            return 2
-            ;;
-          *)
-            report "$name: ${color_red}${state}${color_end}"
-            return 1
-        esac
-        ;;
+    if [ "$type" = "group" ]; then
+      printf "members="
+      typeset members="$(tokenReader printVals "$name" "members")"
+      if [ "$members" ]; then printf "'$members'\n"; else printf "'none'\n"; fi
+    fi
+    ;;
+  short)
+    if [ ! "$color" ]; then
+      unset color_red color_green color_yellow color_blue color_end
+    fi
+    case "$state" in
+    on | booting | created | destroyed | restarting | starting | stopping)
+      report "$name: ${color_green}${state}${color_end}"
+      return 0
+      ;;
+    off)
+      report "$name: ${color_blue}${state}${color_end}"
+      return 4
+      ;;
+    busy)
+      report "$name: ${color_yellow}${state}${color_end}"
+      return 2
+      ;;
+    *)
+      report "$name: ${color_red}${state}${color_end}"
+      return 1
+      ;;
     esac
+    ;;
+  esac
 }
 
 # addConf(<entry>)
@@ -1252,35 +1279,35 @@ function printState {
 # Add an <entry> to session.conf.
 #
 function addConf {
-    reportDebugFuncEntry "$*" "type name"
+  reportDebugFuncEntry "$*" "type name"
 
-    typeset entryFound
-    typeset addConfEntry
+  typeset entryFound
+  typeset addConfEntry
 
-    entry="$*"
-    addConfEntry="$entry"
-    type="${entry%%[[:space:]]*}"
+  entry="$*"
+  addConfEntry="$entry"
+  type="${entry%%[[:space:]]*}"
 
-    # Check for name collision
-    entryFound="$(grep -v '^#' "$usrcff" | grep " $name(")"
+  # Check for name collision
+  entryFound="$(grep -v '^#' "$usrcff" | grep " $name(")"
+  if [ "$entryFound" ]; then
+    reportError "An entry with name $name is already present in $usrcff"
+    return 1
+  fi
+
+  # Check for addr collision, excluding services.
+  if [ "$type" = "host" -o "$type" = "guest" ]; then
+    entryFound="$(grep -v '^#' "$usrcff" | grep -v '^service' | grep -v '^group' | grep "$addr")"
     if [ "$entryFound" ]; then
-        reportError "An entry with name $name is already present in $usrcff"
-        return 1
+      reportError "An entry with addr $addr is already present in $usrcff"
+      return 1
     fi
+  fi
 
-    # Check for addr collision, excluding services.
-    if [ "$type" = "host" -o "$type" = "guest" ]; then
-        entryFound="$(grep -v '^#' "$usrcff" | grep -v '^service' | grep -v '^group' | grep "$addr")"
-        if [ "$entryFound" ]; then
-            reportError "An entry with addr $addr is already present in $usrcff"
-            return 1
-        fi
-    fi
-
-    # Add new entry.
-    printf "$addConfEntry\n" >> "$usrcff"
-    reportInfo "Successfully added entry $*"
-    return 0
+  # Add new entry.
+  printf "$addConfEntry\n" >>"$usrcff"
+  reportInfo "Successfully added entry $*"
+  return 0
 }
 
 # delConf(<name>)
@@ -1289,23 +1316,23 @@ function addConf {
 # Remove the named configuration entry from session.conf.
 #
 function delConf {
-    reportDebugFuncEntry "$*" "usrcff"
+  reportDebugFuncEntry "$*" "usrcff"
 
-    typeset name="$1"
-    typeset entryFound="$(entryReader "$name" "$usrcff")"
-    typeset deletion
+  typeset name="$1"
+  typeset entryFound="$(entryReader "$name" "$usrcff")"
+  typeset deletion
 
-    if [ ! "$entryFound" ]; then
-        reportError "No entry with name $name is present in $usrcff"
-        return 1
-    fi
+  if [ ! "$entryFound" ]; then
+    reportError "No entry with name $name is present in $usrcff"
+    return 1
+  fi
 
-    # Delete the entry.
-    deletion="$(printf "$entryFound\n" | sed 's|\\|\\\\|g')"
-    cat "$usrcff" | sed -e "/$deletion/d" > "$usrcfd/tmp/session.conf.tmp"
-    mv -f "$usrcfd/tmp/session.conf.tmp" "$usrcff"
-    reportInfo "Removed $entryFound"
-    return 0
+  # Delete the entry.
+  deletion="$(printf "$entryFound\n" | sed 's|\\|\\\\|g')"
+  cat "$usrcff" | sed -e "/$deletion/d" >"$usrcfd/tmp/session.conf.tmp"
+  mv -f "$usrcfd/tmp/session.conf.tmp" "$usrcff"
+  reportInfo "Removed $entryFound"
+  return 0
 }
 
 # checkNameOrAddress(<nameOrAddress>)
@@ -1315,60 +1342,61 @@ function delConf {
 # Return 0 if it's OK, 1 if it's not OK.
 #
 function checkNameOrAddress {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    typeset input="$1"
-    typeset maxLength
-    typeset length
-    typeset seq
+  typeset input="$1"
+  typeset maxLength
+  typeset length
+  typeset seq
 
-    if [ "${input//[[:digit:].]/}" ]; then
-        # It's not a numeral (possibly with some dots)
-        # Treat it as an (attempted) host name
+  if [ "${input//[[:digit:].]/}" ]; then
+    # It's not a numeral (possibly with some dots)
+    # Treat it as an (attempted) host name
 
-        if [ "${input//[[:word:]-.]/}" ]; then
-            reportError "Name '$input' contains invalid characters"
-            return 1
-        fi
-
-        maxLength=253
-        length=${#input}
-        if [ "$length" -gt "$maxLength" ]; then
-            if [ "$name" = "$input" ]; then
-                reportError "Name '$input' is too long: it is $length characters long but the maximum is $maxLength"
-            elif [ "$addr" = "$input" ]; then
-                reportError "Address '$input' is too long: it is $length characters long but the maximum is $maxLength"
-            else
-                reportError "String '$input' is too long: it is $length characters long but the maximum is $maxLength"
-            fi
-            return 1
-        fi
-
-        return 0
+    if [ "${input//[[:word:]-.]/}" ]; then
+      reportError "Name '$input' contains invalid characters"
+      return 1
     fi
 
-    # It's a numeral, possibly with some dots
-    # Treat it as an (attempted) IP address
-
-    typeset IFS="." ; set -- $input
-    if [ "$#" != 4 ]; then
-        reportError "Invalid IP address '$input' specified for '$name'"
-        return 1
+    maxLength=253
+    length=${#input}
+    if [ "$length" -gt "$maxLength" ]; then
+      if [ "$name" = "$input" ]; then
+        reportError "Name '$input' is too long: it is $length characters long but the maximum is $maxLength"
+      elif [ "$addr" = "$input" ]; then
+        reportError "Address '$input' is too long: it is $length characters long but the maximum is $maxLength"
+      else
+        reportError "String '$input' is too long: it is $length characters long but the maximum is $maxLength"
+      fi
+      return 1
     fi
-    for seq do
-        case "$seq" in
-          ""|*[!0-9]*)
-            reportError "Invalid IP address '$input' specified for '$name'"
-            return 1
-            ;;
-        esac
-        if [ "$seq" -gt 255 ]; then
-            reportError "Invalid IP address '$input' specified for '$name'"
-            return 1
-        fi
-    done
 
     return 0
+  fi
+
+  # It's a numeral, possibly with some dots
+  # Treat it as an (attempted) IP address
+
+  typeset IFS="."
+  set -- $input
+  if [ "$#" != 4 ]; then
+    reportError "Invalid IP address '$input' specified for '$name'"
+    return 1
+  fi
+  for seq; do
+    case "$seq" in
+    "" | *[!0-9]*)
+      reportError "Invalid IP address '$input' specified for '$name'"
+      return 1
+      ;;
+    esac
+    if [ "$seq" -gt 255 ]; then
+      reportError "Invalid IP address '$input' specified for '$name'"
+      return 1
+    fi
+  done
+
+  return 0
 }
 
 # listHelper(<name>)
@@ -1379,79 +1407,79 @@ function checkNameOrAddress {
 # Can list all sorts of session related entities.
 #
 function listHelper {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    name="$1"
+  name="$1"
 
-    case "$name" in
-      group|groups|guest|guests|host|hosts|service|services|all)
-        match="$(printf "$name\n" | sed 's|s$||')"
-        if [ "$verbose" ]; then
-            if [ "$name" = "all" ]; then
-                grep -ve "^$" -ve "^#" "$config"
-            else
-                grep "^$match" "$config" | sed '/^$/d'
-            fi
-        else
-            if  [ "$name" = "all" ]; then
-                grep -ve "^$" -ve "^#" "$config" | cut -d '(' -f 1 | awk '{print $2}'
-            else
-                grep "^$match" "$config" | sed "s|^$match ||g" | cut -d '(' -f 1
-            fi
-        fi
-        ;;
-      mode|modes)
-        if [ "$default" ]; then
-            printf "$defaultmode\n"
-        else
-        for item in $known_modes ; do
-            printf "$item\n" $(if [ "$item" = "$defaultmode" ]; then printf "(default)\n" ; fi)
-        done
-        fi
-        ;;
-      osmt|osmts)
-        for item in $known_osmts ; do
-            printf "$item\n"
-        done
-        ;;
-      acmt|acmts)
-        for item in $known_acmts ; do
-            printf "$item\n"
-        done
-        ;;
-      exmt|exmts)
-        for item in $known_exmts ; do
-            printf "$item\n"
-        done
-        ;;
-      svmt|svmts)
-        for item in $known_svmts ; do
-            printf "$item\n"
-        done
-        ;;
-      vrmt|vrmts)
-        for item in $known_vrmts ; do
-            printf "$item\n"
-        done
-        ;;
-      crmt|crmts)
-        for item in $known_crmts ; do
-            printf "$item\n"
-        done
-        ;;
-      type|types)
-        for item in $known_types ; do
-            printf "$item\n"
-        done
-        ;;
-      *)
-        if [ "$verbose" ]; then
-            entryReader "$name" "$config"
-        else
-            tokenReader printVals "$name" "name"
-        fi
-        ;;
-    esac
+  case "$name" in
+  group | groups | guest | guests | host | hosts | service | services | all)
+    match="$(printf "$name\n" | sed 's|s$||')"
+    if [ "$verbose" ]; then
+      if [ "$name" = "all" ]; then
+        grep -ve "^$" -ve "^#" "$config"
+      else
+        grep "^$match" "$config" | sed '/^$/d'
+      fi
+    else
+      if [ "$name" = "all" ]; then
+        grep -ve "^$" -ve "^#" "$config" | cut -d '(' -f 1 | awk '{print $2}'
+      else
+        grep "^$match" "$config" | sed "s|^$match ||g" | cut -d '(' -f 1
+      fi
+    fi
+    ;;
+  mode | modes)
+    if [ "$default" ]; then
+      printf "$defaultmode\n"
+    else
+      for item in $known_modes; do
+        printf "$item\n" $(if [ "$item" = "$defaultmode" ]; then printf "(default)\n"; fi)
+      done
+    fi
+    ;;
+  osmt | osmts)
+    for item in $known_osmts; do
+      printf "$item\n"
+    done
+    ;;
+  acmt | acmts)
+    for item in $known_acmts; do
+      printf "$item\n"
+    done
+    ;;
+  exmt | exmts)
+    for item in $known_exmts; do
+      printf "$item\n"
+    done
+    ;;
+  svmt | svmts)
+    for item in $known_svmts; do
+      printf "$item\n"
+    done
+    ;;
+  vrmt | vrmts)
+    for item in $known_vrmts; do
+      printf "$item\n"
+    done
+    ;;
+  crmt | crmts)
+    for item in $known_crmts; do
+      printf "$item\n"
+    done
+    ;;
+  type | types)
+    for item in $known_types; do
+      printf "$item\n"
+    done
+    ;;
+  *)
+    if [ "$verbose" ]; then
+      entryReader "$name" "$config"
+    else
+      tokenReader printVals "$name" "name"
+    fi
+    ;;
+  esac
 }
 
 # discoveryHelper(<range>)
@@ -1460,97 +1488,96 @@ function listHelper {
 # Discover hosts on a network and addConf them.
 #
 function discoveryHelper {
-    reportDebugFuncEntry "$*" "name userDblBacksl"
+  reportDebugFuncEntry "$*" "name userDblBacksl"
 
-    typeset range="$1"
+  typeset range="$1"
 
-    typeset addr
-    typeset type
-    typeset name
-    typeset osmt
-    typeset acmt
-    typeset exmt
-    typeset user
-    typeset admin
-    typeset file
+  typeset addr
+  typeset type
+  typeset name
+  typeset osmt
+  typeset acmt
+  typeset exmt
+  typeset user
+  typeset admin
+  typeset file
 
-    if [ ! "$range" ]; then
-        reportError "I was called without range being set"
-        return 1
-    fi
+  if [ ! "$range" ]; then
+    reportError "I was called without range being set"
+    return 1
+  fi
+
+  if [ "$platform" = "linux" -o "$platform" = "bsd" -o "$platform" = "macosx" ]; then
+    file="$usrcfd/tmp/session.discover.out"
+  elif [ "$platform" = "windows" ]; then
+    file="$(toLocalWindowsPath "$usrcfd/tmp/session.discover.out")"
+  fi
+
+  $privy $nmap -n -T5 -PE -oG "$file" -sP $range >/dev/null 2>&1 </dev/null
+  reportDebug "Called nmap as: $privy $nmap -n -T5 -PE -oG \"$file\" -sP $range"
+  for addr in $($privy cat "$usrcfd/tmp/session.discover.out" | grep Up | cut -d " " -f 2 | sed -e 's/^[[:space:]]*//'); do
+    type="host"
 
     if [ "$platform" = "linux" -o "$platform" = "bsd" -o "$platform" = "macosx" ]; then
-        file="$usrcfd/tmp/session.discover.out"
+      name="$(host $addr 2>/dev/null | grep "domain name pointer" | cut -d " " -f 5 | cut -d "." -f 1 | head -n 1 | sed -e 's/^[[:space:]]*//' | tr A-Z a-z)"
+      reportDebug "Got name from DNS for $addr: $name"
     elif [ "$platform" = "windows" ]; then
-        file="$(toLocalWindowsPath "$usrcfd/tmp/session.discover.out")"
+      name="$(nslookup $addr 2>/dev/null | grep Name | cut -d ":" -f 2 | cut -d "." -f 1 | sed -e 's/^[[:space:]]*//' | tr A-Z a-z)"
+      reportDebug "Got name from DNS for $addr: $name"
     fi
 
-    $privy $nmap -n -T5 -PE -oG "$file" -sP $range >/dev/null 2>&1 </dev/null
-    reportDebug "Called nmap as: $privy $nmap -n -T5 -PE -oG \"$file\" -sP $range"
-    for addr in $($privy cat "$usrcfd/tmp/session.discover.out" | grep Up | cut -d " " -f 2 | sed -e 's/^[[:space:]]*//') ; do
-        type="host"
-
-        if [ "$platform" = "linux" -o "$platform" = "bsd" -o "$platform" = "macosx" ]; then
-            name="$(host $addr 2>/dev/null | grep "domain name pointer" | cut -d " " -f 5  | cut -d "." -f 1 | head -n 1 | sed -e 's/^[[:space:]]*//' | tr A-Z a-z)"
-            reportDebug "Got name from DNS for $addr: $name"
-        elif [ "$platform" = "windows" ]; then
-            name="$(nslookup $addr 2>/dev/null | grep Name | cut -d ":" -f 2 | cut -d "." -f 1 | sed -e 's/^[[:space:]]*//' | tr A-Z a-z)"
-            reportDebug "Got name from DNS for $addr: $name"
-        fi
-
-        if [ ! "$name" ]; then
-            name="unknown$(printf "$addr\n" | awk 'BEGIN {FS="."}{print "-" $3 "-" $4}')"
-            reportDebug "Got no name from DNS for $addr, created name: $name"
-        fi
-
-        osmt="embedded-like"
-        acmt="none"
-        exmt="none"
-        user="unknown"
-        admin="unknown"
-        if [ "$(printPortState "$addr" 22)" = "open" ]; then
-            osmt="unix-like"
-            acmt="ssh"
-            exmt="ssh"
-            user="$userDblBacksl"
-            admin="root"
-        elif [ "$(printPortState "$addr" 23)" = "open" ]; then
-            osmt="embedded-like"
-            acmt="tel"
-            exmt="none"
-            user="unknown"
-            admin="unknown"
-        elif [ "$(printPortState "$addr" 445)" = "open" ]; then
-            osmt="windows-like"
-            acmt="rdp"
-            exmt="smb"
-            user="$userDblBacksl"
-            admin="administrator"
-        elif [ "$(printPortState "$addr" 443)" = "open" ]; then
-            osmt="embedded-like"
-            acmt="http"
-            exmt="none"
-            user="$userDblBacksl"
-            admin="root"
-        elif [ "$(printPortState "$addr" 80)" = "open" ]; then
-            osmt="embedded-like"
-            acmt="http"
-            exmt="none"
-            user="$userDblBacksl"
-            admin="root"
-        fi
-        addConf "$type $name($osmt,$acmt,$exmt,$user,$admin,$addr,none)"
-    done
-
-    if [ "$debug" ]; then
-        reportDebug "Not removing $usrcfd/tmp/session.discover.out"
-    else
-        $privy rm "$usrcfd/tmp/session.discover.out"
+    if [ ! "$name" ]; then
+      name="unknown$(printf "$addr\n" | awk 'BEGIN {FS="."}{print "-" $3 "-" $4}')"
+      reportDebug "Got no name from DNS for $addr, created name: $name"
     fi
 
-    return 0
+    osmt="embedded-like"
+    acmt="none"
+    exmt="none"
+    user="unknown"
+    admin="unknown"
+    if [ "$(printPortState "$addr" 22)" = "open" ]; then
+      osmt="unix-like"
+      acmt="ssh"
+      exmt="ssh"
+      user="$userDblBacksl"
+      admin="root"
+    elif [ "$(printPortState "$addr" 23)" = "open" ]; then
+      osmt="embedded-like"
+      acmt="tel"
+      exmt="none"
+      user="unknown"
+      admin="unknown"
+    elif [ "$(printPortState "$addr" 445)" = "open" ]; then
+      osmt="windows-like"
+      acmt="rdp"
+      exmt="smb"
+      user="$userDblBacksl"
+      admin="administrator"
+    elif [ "$(printPortState "$addr" 443)" = "open" ]; then
+      osmt="embedded-like"
+      acmt="http"
+      exmt="none"
+      user="$userDblBacksl"
+      admin="root"
+    elif [ "$(printPortState "$addr" 80)" = "open" ]; then
+      osmt="embedded-like"
+      acmt="http"
+      exmt="none"
+      user="$userDblBacksl"
+      admin="root"
+    fi
+    addConf "$type $name($osmt,$acmt,$exmt,$user,$admin,$addr,none)"
+  done
+
+  if [ "$debug" ]; then
+    reportDebug "Not removing $usrcfd/tmp/session.discover.out"
+  else
+    $privy rm "$usrcfd/tmp/session.discover.out"
+  fi
+
+  return 0
 }
-
 
 # expandVariables(<input>)
 # Prints.
@@ -1558,10 +1585,10 @@ function discoveryHelper {
 # Returns string with expanded variables.
 #
 function expandVariables {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    typeset command="cat <<< \"$*\""
-    eval "$command"
+  typeset command="cat <<< \"$*\""
+  eval "$command"
 }
 
 # cutParentheses(<input>)
@@ -1570,12 +1597,14 @@ function expandVariables {
 # Return the part of <input> between parentheses.
 #
 function cutParentheses {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    typeset input="$*"
-    typeset mangle="$input"; mangle="${mangle#*\(}"; mangle="${mangle%%\)*}"
-    typeset output="$mangle"
-    printf "$output\n"
+  typeset input="$*"
+  typeset mangle="$input"
+  mangle="${mangle#*\(}"
+  mangle="${mangle%%\)*}"
+  typeset output="$mangle"
+  printf "$output\n"
 }
 
 # entryReader(<name> <file>)
@@ -1584,34 +1613,34 @@ function cutParentheses {
 # Print the (last) entry for <name> in <file>.
 #
 function entryReader {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    typeset name="$1"
-    typeset file="$2"
-    typeset entry=$(grep -e "^[[:space:]]*[[:alnum:]]\+[[:space:]]\+$name(" "$file" | sed -e "s/^[[:space:]]*//;s/[[:space:]]*$//" | tail -n 1)
+  typeset name="$1"
+  typeset file="$2"
+  typeset entry=$(grep -e "^[[:space:]]*[[:alnum:]]\+[[:space:]]\+$name(" "$file" | sed -e "s/^[[:space:]]*//;s/[[:space:]]*$//" | tail -n 1)
+
+  if [ "$entry" ]; then
+    printf "$entry\n"
+  elif [ "$platform" != "windows" ]; then
+    reportDebug "Entry returned empty, see if file was opened and retry when closed + available"
+    typeset fileOpen="$(lsof "$file")"
+    while [ "$fileOpen" ]; do
+      fileOpen="$(lsof "$file")"
+      reportInfo "Waiting to open $file"
+    done
+
+    entry=$(grep -e "^[[:space:]]*[[:alnum:]]\+[[:space:]]\+$name(" "$file" | sed -e "s/^[[:space:]]*//;s/[[:space:]]*$//" | tail -n 1)
 
     if [ "$entry" ]; then
-        printf "$entry\n"
-    elif [ "$platform" != "windows" ]; then
-        reportDebug "Entry returned empty, see if file was opened and retry when closed + available"
-        typeset fileOpen="$(lsof "$file")"
-        while [ "$fileOpen" ]; do
-            fileOpen="$(lsof "$file")"
-            reportInfo "Waiting to open $file"
-        done
-
-        entry=$(grep -e "^[[:space:]]*[[:alnum:]]\+[[:space:]]\+$name(" "$file" | sed -e "s/^[[:space:]]*//;s/[[:space:]]*$//" | tail -n 1)
-
-        if  [ "$entry" ]; then
-            printf "$entry\n"
-         else
-             reportError "Entry with name $name not found in $file"
-             return 1
-        fi
-     else
-         reportError "Entry with name $name not found in $file"
-         return 1
+      printf "$entry\n"
+    else
+      reportError "Entry with name $name not found in $file"
+      return 1
     fi
+  else
+    reportError "Entry with name $name not found in $file"
+    return 1
+  fi
 }
 
 # tokenReader(<function> <name> <keys>)
@@ -1625,97 +1654,115 @@ function entryReader {
 # values (if <function> is "setVars").
 #
 function tokenReader {
-    reportDebugFuncEntry "$*" "config entry"
+  reportDebugFuncEntry "$*" "config entry"
 
-    [ "$3" ] || { reportError "Not enough arguments passed" ; return 1 ; }
+  [ "$3" ] || {
+    reportError "Not enough arguments passed"
+    return 1
+  }
 
-    typeset function="$1"
-    typeset name="$2"
-    typeset keys="$3"
+  typeset function="$1"
+  typeset name="$2"
+  typeset keys="$3"
 
-    typeset enttype
-    typeset key
-    typeset -a values
-    typeset -i indx
-    typeset varname
-    typeset position
-    typeset value
-    typeset output
-    typeset nametmp="tokens.$$"
+  typeset enttype
+  typeset key
+  typeset -a values
+  typeset -i indx
+  typeset varname
+  typeset position
+  typeset value
+  typeset output
+  typeset nametmp="tokens.$$"
 
-    # Reuse a previously set entry if it is about the same entry.
-    case "$entry" in
-      *" ${name}("*)
-        reportDebug "Using previously set entry for $name"
-        ;;
-      *)
-        reportDebug "Reading entry for $name"
-        entry="$(entryReader "$name" "$config")"
-        ;;
-    esac
+  # Reuse a previously set entry if it is about the same entry.
+  case "$entry" in
+  *" ${name}("*)
+    reportDebug "Using previously set entry for $name"
+    ;;
+  *)
+    reportDebug "Reading entry for $name"
+    entry="$(entryReader "$name" "$config")"
+    ;;
+  esac
 
-    # Check if the necessary parameters are set.
-    [ "$function" ] || { reportDebug "Function not specified"    ; return 1 ; }
-    [ "$name" ]     || { reportDebug "Name not passed"           ; return 1 ; }
-    [ "$keys" ]     || { reportDebug "Keys not passed for $name" ; return 1 ; }
-    [ "$entry" ]    || { reportDebug "Entry not set for $name"   ; return 1 ; }
+  # Check if the necessary parameters are set.
+  [ "$function" ] || {
+    reportDebug "Function not specified"
+    return 1
+  }
+  [ "$name" ] || {
+    reportDebug "Name not passed"
+    return 1
+  }
+  [ "$keys" ] || {
+    reportDebug "Keys not passed for $name"
+    return 1
+  }
+  [ "$entry" ] || {
+    reportDebug "Entry not set for $name"
+    return 1
+  }
 
-    # Read type from entry
-    enttype="${entry%%[[:space:]]*}"
-    members="$enttype,$name,$(cutParentheses "$entry")"
+  # Read type from entry
+  enttype="${entry%%[[:space:]]*}"
+  members="$enttype,$name,$(cutParentheses "$entry")"
 
-    if [ -e "$usrcfd/tmp/session.$nametmp" ]; then
-        reportDebug "Removing old $usrcfd/tmp/session.$nametmp"
-        rm -f "$usrcfd/tmp/session.$nametmp"
-    fi
-    let indx=0
-    typeset IFS=","
-    for key in $keys ; do
-        # Try to read the positional index number from defined syntax.
-        varname="syntax_${enttype}_${key}"
-        position="$(eval printf '%s\\n' "\$$varname")"
+  if [ -e "$usrcfd/tmp/session.$nametmp" ]; then
+    reportDebug "Removing old $usrcfd/tmp/session.$nametmp"
+    rm -f "$usrcfd/tmp/session.$nametmp"
+  fi
+  let indx=0
+  typeset IFS=","
+  for key in $keys; do
+    # Try to read the positional index number from defined syntax.
+    varname="syntax_${enttype}_${key}"
+    position="$(eval printf '%s\\n' "\$$varname")"
 
-        reportDebug "Looking up $key for $name at position $position"
-        if [ "$key" != "members" ]; then
-            # Not looking for group members, use position.
-            value="$(printf "$members\n" | cut -d ',' -f "$position")"
-        else
-            # Looking for members, which is a csv list in itself.
-            value="$(cutParentheses "$entry")"
-        fi
-
-        (( "$position" )) || { reportError "Position $position for $varname unset" ; return 1 ; }
-
-        if [ "$function" = "printVals" ]; then
-            values[indx]="$value"
-            let indx+=1
-        elif [ "$function" = "setVars" ]; then
-            reportDebug "Writing variable \"$key\" with value: \"$value\" to $usrcfd/tmp/session.$nametmp"
-            echo "$key='$value'" >> "$usrcfd/tmp/session.$nametmp"
-        else
-            reportError "Invalid function passed: $function"
-            return 1
-        fi
-    done
-    if [ -e "$usrcfd/tmp/session.$nametmp" ]; then
-        reportDebug "Sourcing $usrcfd/tmp/session.$nametmp"
-        source "$usrcfd/tmp/session.$nametmp"
-        if [ "$debug" ]; then
-            reportDebug "Moving $usrcfd/tmp/session.$nametmp to $usrcfd/tmp/session.debug.$nametmp"
-            mv "$usrcfd/tmp/session.$nametmp" "$usrcfd/tmp/session.debug.$nametmp"
-        else
-            rm -f "$usrcfd/tmp/session.$nametmp"
-        fi
+    reportDebug "Looking up $key for $name at position $position"
+    if [ "$key" != "members" ]; then
+      # Not looking for group members, use position.
+      value="$(printf "$members\n" | cut -d ',' -f "$position")"
+    else
+      # Looking for members, which is a csv list in itself.
+      value="$(cutParentheses "$entry")"
     fi
 
-    typeset IFS=" "
+    (("$position")) || {
+      reportError "Position $position for $varname unset"
+      return 1
+    }
+
     if [ "$function" = "printVals" ]; then
-        output="${values[*]}"
-        reportDebug "Output: $output"
-        printf "$output\n"
+      values[indx]="$value"
+      let indx+=1
+    elif [ "$function" = "setVars" ]; then
+      reportDebug "Writing variable \"$key\" with value: \"$value\" to $usrcfd/tmp/session.$nametmp"
+      echo "$key='$value'" >>"$usrcfd/tmp/session.$nametmp"
+    else
+      reportError "Invalid function passed: $function"
+      return 1
     fi
+  done
+  if [ -e "$usrcfd/tmp/session.$nametmp" ]; then
+    reportDebug "Sourcing $usrcfd/tmp/session.$nametmp"
+    source "$usrcfd/tmp/session.$nametmp"
+    if [ "$debug" ]; then
+      reportDebug "Moving $usrcfd/tmp/session.$nametmp to $usrcfd/tmp/session.debug.$nametmp"
+      mv "$usrcfd/tmp/session.$nametmp" "$usrcfd/tmp/session.debug.$nametmp"
+    else
+      rm -f "$usrcfd/tmp/session.$nametmp"
+    fi
+  fi
 
-    return 0
+  typeset IFS=" "
+  if [ "$function" = "printVals" ]; then
+    output="${values[*]}"
+    reportDebug "Output: $output"
+    printf "$output\n"
+  fi
+
+  return 0
 }
 
 # tokenValidator(<keys>)
@@ -1725,63 +1772,67 @@ function tokenReader {
 # Returns 0 if valid, 1 if invalid.
 #
 function tokenValidator {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    typeset keys="$1"
-    typeset varname
-    typeset value
-    typeset list
+  typeset keys="$1"
+  typeset varname
+  typeset value
+  typeset list
 
-    # Check if the necessary parameters are set.
-    [ "$keys" ]     || { reportDebug "Keys not passed" ; return 1 ; }
+  # Check if the necessary parameters are set.
+  [ "$keys" ] || {
+    reportDebug "Keys not passed"
+    return 1
+  }
 
-    typeset IFS=","
-    for key in $keys ; do
-        varname="known_${key}s"
-        value="$(eval printf '%s\\n' "\$$key")"
-        list="$(eval printf '%s\\n' "\$$varname")"
+  typeset IFS=","
+  for key in $keys; do
+    varname="known_${key}s"
+    value="$(eval printf '%s\\n' "\$$key")"
+    list="$(eval printf '%s\\n' "\$$varname")"
 
-        if [ -z "$value" ]; then
-            reportError "Empty value for $key"
-            return 1
-        fi
+    if [ -z "$value" ]; then
+      reportError "Empty value for $key"
+      return 1
+    fi
 
-        case "$key" in
-          name|host)
-            if [ "$key" = "name" -a "$value" = "none" ]; then
-                reportError "You cannot use none as a name"
-                return 1
-            fi
-            ;;
-          addr)
-            reportDebug "Verifying $key for $name with value $value"
-            if [ "$value" != "none" ]; then
-                checkNameOrAddress "$value" || return 1
-            fi
-            ;;
-          user|admin)
-            reportDebug "Verifying $key for $name with value $value"
-            ;;
-          type|mode|osmt|acmt|exmt|svmt|vrmt)
-            reportDebug "Verifying $key for $name with value $value"
-            if [[ ! "$list" =~ "$value" ]]; then
-                reportError "Unknown $key method $value specified for $key"
-                return 1
-            fi
-            ;;
-          port)
-            reportDebug "Verifying $key for $name with value $value"
-            ;;
-          members)
-            reportDebug "Verifying $key for $name with value $value"
-            ;;
-          *)
-            reportError "Unknown key $key passed"
-            return 1
-        esac
-    done
+    case "$key" in
+    name | host)
+      if [ "$key" = "name" -a "$value" = "none" ]; then
+        reportError "You cannot use none as a name"
+        return 1
+      fi
+      ;;
+    addr)
+      reportDebug "Verifying $key for $name with value $value"
+      if [ "$value" != "none" ]; then
+        checkNameOrAddress "$value" || return 1
+      fi
+      ;;
+    user | admin)
+      reportDebug "Verifying $key for $name with value $value"
+      ;;
+    type | mode | osmt | acmt | exmt | svmt | vrmt)
+      reportDebug "Verifying $key for $name with value $value"
+      if [[ ! "$list" =~ "$value" ]]; then
+        reportError "Unknown $key method $value specified for $key"
+        return 1
+      fi
+      ;;
+    port)
+      reportDebug "Verifying $key for $name with value $value"
+      ;;
+    members)
+      reportDebug "Verifying $key for $name with value $value"
+      ;;
+    *)
+      reportError "Unknown key $key passed"
+      return 1
+      ;;
+    esac
+  done
 
-    return 0
+  return 0
 }
 
 # parseParameters(<parameters>)
@@ -1806,137 +1857,136 @@ function tokenValidator {
 # Option names may not contain spaces.
 #
 function parseParameters {
-    reportDebugFuncEntry "$*" "mandatories optionals silence"
+  reportDebugFuncEntry "$*" "mandatories optionals silence"
 
-    typeset -a variables
-    typeset -a values
-    typeset -i indx
-    typeset -i numVariables
-    typeset found
-    typeset mandatoriesMissing
-    typeset optionalsOmitted
-    typeset illegalsPresent
-    typeset parameter
-    typeset variable
-    typeset mandatory
-    typeset optional
-    typeset value
+  typeset -a variables
+  typeset -a values
+  typeset -i indx
+  typeset -i numVariables
+  typeset found
+  typeset mandatoriesMissing
+  typeset optionalsOmitted
+  typeset illegalsPresent
+  typeset parameter
+  typeset variable
+  typeset mandatory
+  typeset optional
+  typeset value
 
-    # First omit any non-option parameters
-    while [ "$1" ]; do
-        case "$1" in
-          --*)
-            # Found the first well formed option.
-            break
-            ;;
-          *)
-            # Not a well formed option.  Next!
-            reportWarning "Unrecognized parameter $1"
-            shift
-            ;;
-        esac
-    done
+  # First omit any non-option parameters
+  while [ "$1" ]; do
+    case "$1" in
+    --*)
+      # Found the first well formed option.
+      break
+      ;;
+    *)
+      # Not a well formed option.  Next!
+      reportWarning "Unrecognized parameter $1"
+      shift
+      ;;
+    esac
+  done
 
-    # From options extract variables;
-    # i.e., strings between initial "--" and either first "=" or eol
-    let indx=0
-    typeset IFS=" "
-    for parameter in "$@" ; do
-        parameterWithoutHyphens="${parameter#--}"
-        if [ "$parameterWithoutHyphens" = "$parameter" ]; then
-            # Not a well-formed option
-            reportWarning "Unrecognized parameter $parameter"
-            continue
-        fi
-        case "$parameterWithoutHyphens" in
-          *=*)
-            variable="${parameterWithoutHyphens%%=*}"
-            value="${parameterWithoutHyphens#$variable=}"
-            ;;
-          *)
-            variable="$parameterWithoutHyphens"
-            value=1  # Default value
-            ;;
-        esac
-        variables[indx]="$variable"
-        values[indx]="$value"
-        let indx+=1
-    done
-    let numVariables=indx
-    reportDebug "Variables=${variables[*]}, Values=${values[*]}"
-
-    # Check that mandatories are present
-    mandatoriesMissing=""
-    for mandatory in $mandatories ; do
-        found=""  # (False)
-        for variable in "${variables[@]}" ; do
-            if [ "$variable" = "$mandatory" ]; then
-                found="y"
-                break
-            fi
-        done
-        [ "$found" ] || mandatoriesMissing="${mandatoriesMissing:+$mandatoriesMissing }--$mandatory"
-    done
-
-    if [ ! "$silence" ]; then
-        optionalsOmitted=""
-        # Check that optionals are present
-        for optional in $optionals ; do
-            found=""  # (False)
-            for variable in "${variables[@]}" ; do
-                if [ "$variable" = "$optional" ]; then
-                    found="y"
-                    break
-                fi
-            done
-            [ "$found" ] || optionalsOmitted="${optionalsOmitted:+$optionalsOmitted }--$optional"
-        done
+  # From options extract variables;
+  # i.e., strings between initial "--" and either first "=" or eol
+  let indx=0
+  typeset IFS=" "
+  for parameter in "$@"; do
+    parameterWithoutHyphens="${parameter#--}"
+    if [ "$parameterWithoutHyphens" = "$parameter" ]; then
+      # Not a well-formed option
+      reportWarning "Unrecognized parameter $parameter"
+      continue
     fi
+    case "$parameterWithoutHyphens" in
+    *=*)
+      variable="${parameterWithoutHyphens%%=*}"
+      value="${parameterWithoutHyphens#$variable=}"
+      ;;
+    *)
+      variable="$parameterWithoutHyphens"
+      value=1 # Default value
+      ;;
+    esac
+    variables[indx]="$variable"
+    values[indx]="$value"
+    let indx+=1
+  done
+  let numVariables=indx
+  reportDebug "Variables=${variables[*]}, Values=${values[*]}"
 
-    # Set variables (if legal)
-    if [ "$mandatories" -o "$optionals" ]; then
-        acceptAllVariables=""  # (False)
-        legalVariables=" $mandatories $optionals " # With initial, intermediate and final space!
+  # Check that mandatories are present
+  mandatoriesMissing=""
+  for mandatory in $mandatories; do
+    found="" # (False)
+    for variable in "${variables[@]}"; do
+      if [ "$variable" = "$mandatory" ]; then
+        found="y"
+        break
+      fi
+    done
+    [ "$found" ] || mandatoriesMissing="${mandatoriesMissing:+$mandatoriesMissing }--$mandatory"
+  done
+
+  if [ ! "$silence" ]; then
+    optionalsOmitted=""
+    # Check that optionals are present
+    for optional in $optionals; do
+      found="" # (False)
+      for variable in "${variables[@]}"; do
+        if [ "$variable" = "$optional" ]; then
+          found="y"
+          break
+        fi
+      done
+      [ "$found" ] || optionalsOmitted="${optionalsOmitted:+$optionalsOmitted }--$optional"
+    done
+  fi
+
+  # Set variables (if legal)
+  if [ "$mandatories" -o "$optionals" ]; then
+    acceptAllVariables=""                      # (False)
+    legalVariables=" $mandatories $optionals " # With initial, intermediate and final space!
+  else
+    # No mandatories or optionals specified
+    # Accept any variable (extremely unsafe)
+    acceptAllVariables="y"
+  fi
+
+  let indx=0
+  while [[ indx -lt numVariables ]]; do
+    variable="${variables[indx]}"
+    if [ "$acceptAllVariables" ] || [[ "$legalVariables" =~ " $variable " ]]; then
+      value="${values[indx]}"
+      reportDebug "Setting variable \"$variable\" with value: \"$value\""
+      export "$variable"="$value"
     else
-        # No mandatories or optionals specified
-        # Accept any variable (extremely unsafe)
-        acceptAllVariables="y"
+      illegalsPresent="${illegalsPresent:+$illegalsPresent }--$variable"
     fi
+    let indx+=1
+  done
 
-    let indx=0
-    while [[ indx -lt numVariables ]]; do
-        variable="${variables[indx]}"
-        if [ "$acceptAllVariables" ] || [[ "$legalVariables" =~ " $variable " ]]; then
-            value="${values[indx]}"
-            reportDebug "Setting variable \"$variable\" with value: \"$value\""
-            export "$variable"="$value"
-        else
-            illegalsPresent="${illegalsPresent:+$illegalsPresent }--$variable"
-        fi
-        let indx+=1
-    done
+  if [ "$illegalsPresent" ]; then
+    reportError "Illegal parameter(s): $illegalsPresent"
+  fi
 
+  if [ "$mandatoriesMissing" ]; then
+    reportError "Mandatory parameter(s) missing: $mandatoriesMissing"
+  fi
 
-    if [ "$illegalsPresent" ]; then
-        reportError "Illegal parameter(s): $illegalsPresent"
-    fi
+  if [ ! "$silence" ] && [ "$optionalsOmitted" ]; then
+    reportInfo "Optional parameter(s) omitted: $optionalsOmitted"
+  fi
 
-    if [ "$mandatoriesMissing" ]; then
-        reportError "Mandatory parameter(s) missing: $mandatoriesMissing"
-    fi
+  if [ "$illegalsPresent" ] || [ "$mandatoriesMissing" ]; then
+    exit 1
+  fi
 
-    if [ ! "$silence" ] && [ "$optionalsOmitted" ]; then
-        reportInfo "Optional parameter(s) omitted: $optionalsOmitted"
-    fi
-
-    if [ "$illegalsPresent" ] || [ "$mandatoriesMissing" ]; then
-        exit 1
-    fi
-
-    # Unset extra parameters to this function
-    unset mandatories
-    unset optionals
-    unset silence
+  # Unset extra parameters to this function
+  unset mandatories
+  unset optionals
+  unset silence
 }
 
 # parseEntry(<name>)
@@ -1945,17 +1995,21 @@ function parseParameters {
 # Call appropriate parse*(<name>).
 #
 function parseEntry {
-    reportDebugFuncEntry "$*" "config"
+  reportDebugFuncEntry "$*" "config"
 
-    name="$1" ; [ "$name" ] || { reportError "No name passed" ; return 1 ; }
+  name="$1"
+  [ "$name" ] || {
+    reportError "No name passed"
+    return 1
+  }
 
-    entry="$(entryReader "$name" "$config")"
-    type="${entry%%[[:space:]]*}"
-    tokenValidator type || return 1
+  entry="$(entryReader "$name" "$config")"
+  type="${entry%%[[:space:]]*}"
+  tokenValidator type || return 1
 
-    parse$(capsFirst "$type") "$name"
+  parse$(capsFirst "$type") "$name"
 
-    return $?
+  return $?
 }
 
 # parseGroup(<name>)
@@ -1964,27 +2018,31 @@ function parseEntry {
 # Read group entry <name> from <config>.
 #
 function parseGroup {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    typeset opts
+  typeset opts
 
-    name="$1" ; [ "$name" ] || { reportError "No name passed" ; return 1 ; }
+  name="$1"
+  [ "$name" ] || {
+    reportError "No name passed"
+    return 1
+  }
 
-    # Source group extra options from global settings.
-    opts="$syscfd/sys/$name/options.env"
-    if [ -e "$opts" ]; then
-        . "$opts"
-    fi
+  # Source group extra options from global settings.
+  opts="$syscfd/sys/$name/options.env"
+  if [ -e "$opts" ]; then
+    . "$opts"
+  fi
 
-    # Source group extra options from local settings (might override global options).
-    opts="$usrcfd/sys/$name/options.env"
-    if [ -e "$opts" ]; then
-        . "$opts"
-    fi
+  # Source group extra options from local settings (might override global options).
+  opts="$usrcfd/sys/$name/options.env"
+  if [ -e "$opts" ]; then
+    . "$opts"
+  fi
 
-    tokenReader setVars "$name" "members" || return 1
+  tokenReader setVars "$name" "members" || return 1
 
-    return 0
+  return 0
 }
 
 # parseHost(<name>)
@@ -1993,58 +2051,64 @@ function parseGroup {
 # Read host entry <name> from <config>.
 #
 function parseHost {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    typeset opts
+  typeset opts
 
-    name="$1" ; [ "$name" ] || { reportError "No name passed" ; return 1 ; }
+  name="$1"
+  [ "$name" ] || {
+    reportError "No name passed"
+    return 1
+  }
 
-    # Read all key values and set them.
-    tokenReader setVars "$name" "osmt,acmt,exmt,user,admin,addr,vrmt" || return 1
-    port="none" ; host="none" ; svmt="none"
+  # Read all key values and set them.
+  tokenReader setVars "$name" "osmt,acmt,exmt,user,admin,addr,vrmt" || return 1
+  port="none"
+  host="none"
+  svmt="none"
 
-    # Validate all key values.
-    tokenValidator "type,name,osmt,acmt,exmt,user,admin,addr,vrmt,port,host,svmt" || return 1
+  # Validate all key values.
+  tokenValidator "type,name,osmt,acmt,exmt,user,admin,addr,vrmt,port,host,svmt" || return 1
 
-    # If an entry is about the local system, rewrite $privesc and $privy with correct admin user.
-    if isLoopback "$addr" || isLocal "$name" ; then
-        reportDebug "Rewriting privesc to $privesc"
-        privesc="$(printf "$privesc\n" | sed -e "s|root|$admin|g" -e "s|administrator|$admin|g")"
-        [ "$privy" ] && privy="$privesc"
-    fi
+  # If an entry is about the local system, rewrite $privesc and $privy with correct admin user.
+  if isLoopback "$addr" || isLocal "$name"; then
+    reportDebug "Rewriting privesc to $privesc"
+    privesc="$(printf "$privesc\n" | sed -e "s|root|$admin|g" -e "s|administrator|$admin|g")"
+    [ "$privy" ] && privy="$privesc"
+  fi
 
-    # Initialize os specific globals.
-    osGlobals "$osmt" || return 1
+  # Initialize os specific globals.
+  osGlobals "$osmt" || return 1
 
-    # Check for global password files and set variables.
-    if [ -e "$syscfd/sys/$name/user.pwd" ]; then
-        upwd="$(tr -d '\r' < "$syscfd/sys/$name/user.pwd")"
-    fi
-    if [ -e "$syscfd/sys/$name/admin.pwd" ]; then
-        apwd="$(tr -d '\r' < "$syscfd/sys/$name/admin.pwd")"
-    fi
+  # Check for global password files and set variables.
+  if [ -e "$syscfd/sys/$name/user.pwd" ]; then
+    upwd="$(tr -d '\r' <"$syscfd/sys/$name/user.pwd")"
+  fi
+  if [ -e "$syscfd/sys/$name/admin.pwd" ]; then
+    apwd="$(tr -d '\r' <"$syscfd/sys/$name/admin.pwd")"
+  fi
 
-    # Check for local password files and set variables (might override global options).
-    if [ -e "$usrcfd/sys/$name/user.pwd" ]; then
-        upwd="$(tr -d '\r' < "$usrcfd/sys/$name/user.pwd")"
-    fi
-    if [ -e "$usrcfd/sys/$name/admin.pwd" ]; then
-        apwd="$(tr -d '\r' < "$usrcfd/sys/$name/admin.pwd")"
-    fi
+  # Check for local password files and set variables (might override global options).
+  if [ -e "$usrcfd/sys/$name/user.pwd" ]; then
+    upwd="$(tr -d '\r' <"$usrcfd/sys/$name/user.pwd")"
+  fi
+  if [ -e "$usrcfd/sys/$name/admin.pwd" ]; then
+    apwd="$(tr -d '\r' <"$usrcfd/sys/$name/admin.pwd")"
+  fi
 
-    # Source host extra options from global settings.
-    opts="$syscfd/sys/$name/options.env"
-    if [ -e "$opts" ]; then
-        . "$opts"
-    fi
+  # Source host extra options from global settings.
+  opts="$syscfd/sys/$name/options.env"
+  if [ -e "$opts" ]; then
+    . "$opts"
+  fi
 
-    # Source host extra options from local settings (might override global options).
-    opts="$usrcfd/sys/$name/options.env"
-    if [ -e "$opts" ]; then
-        . "$opts"
-    fi
+  # Source host extra options from local settings (might override global options).
+  opts="$usrcfd/sys/$name/options.env"
+  if [ -e "$opts" ]; then
+    . "$opts"
+  fi
 
-    return 0
+  return 0
 }
 
 # parseGuest(<name>)
@@ -2053,59 +2117,64 @@ function parseHost {
 # Read guest entry <name> from <config>.
 #
 function parseGuest {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    typeset opts
+  typeset opts
 
-    name="$1" ; [ "$name" ] || { reportError "No name passed" ; return 1 ; }
+  name="$1"
+  [ "$name" ] || {
+    reportError "No name passed"
+    return 1
+  }
 
-    # Read all key values and set them.
-    tokenReader setVars "$name" "osmt,acmt,exmt,user,admin,addr,host" || return 1
-    tokenReader setVars "$host" "vrmt" || return 1
-    port="none" ; svmt="none"
+  # Read all key values and set them.
+  tokenReader setVars "$name" "osmt,acmt,exmt,user,admin,addr,host" || return 1
+  tokenReader setVars "$host" "vrmt" || return 1
+  port="none"
+  svmt="none"
 
-    # Validate all key values.
-    tokenValidator "type,name,osmt,acmt,exmt,user,admin,addr,host,vrmt,port,svmt" || return 1
+  # Validate all key values.
+  tokenValidator "type,name,osmt,acmt,exmt,user,admin,addr,host,vrmt,port,svmt" || return 1
 
-    # If an entry is about the local system, rewrite $privesc and $privy with correct admin user.
-    if isLoopback "$addr" || isLocal "$name" ; then
-        reportDebug "Rewriting privesc to $privesc"
-        privesc="$(printf "$privesc\n" | sed -e "s|root|$admin|g" -e "s|administrator|$admin|g")"
-        [ "$privy" ] && privy="$privesc"
-    fi
+  # If an entry is about the local system, rewrite $privesc and $privy with correct admin user.
+  if isLoopback "$addr" || isLocal "$name"; then
+    reportDebug "Rewriting privesc to $privesc"
+    privesc="$(printf "$privesc\n" | sed -e "s|root|$admin|g" -e "s|administrator|$admin|g")"
+    [ "$privy" ] && privy="$privesc"
+  fi
 
-    # Initialize os specific globals
-    osGlobals "$osmt" || return 1
+  # Initialize os specific globals
+  osGlobals "$osmt" || return 1
 
-    # Check for global password files and set variables.
-    if [ -e "$syscfd/sys/$name/user.pwd" ]; then
-        upwd="$(tr -d '\r' < "$syscfd/sys/$name/user.pwd")"
-    fi
-    if [ -e "$syscfd/sys/$name/admin.pwd" ]; then
-        apwd="$(tr -d '\r' < "$syscfd/sys/$name/admin.pwd")"
-    fi
+  # Check for global password files and set variables.
+  if [ -e "$syscfd/sys/$name/user.pwd" ]; then
+    upwd="$(tr -d '\r' <"$syscfd/sys/$name/user.pwd")"
+  fi
+  if [ -e "$syscfd/sys/$name/admin.pwd" ]; then
+    apwd="$(tr -d '\r' <"$syscfd/sys/$name/admin.pwd")"
+  fi
 
-    # Check for local password files and set variables (might override global options).
-    if [ -e "$usrcfd/sys/$name/user.pwd" ]; then
-        upwd="$(tr -d '\r' < "$usrcfd/sys/$name/user.pwd")"
-    fi
-    if [ -e "$usrcfd/sys/$name/admin.pwd" ]; then
-        apwd="$(tr -d '\r' < "$usrcfd/sys/$name/admin.pwd")"
-    fi
+  # Check for local password files and set variables (might override global options).
+  if [ -e "$usrcfd/sys/$name/user.pwd" ]; then
+    upwd="$(tr -d '\r' <"$usrcfd/sys/$name/user.pwd")"
+  fi
+  if [ -e "$usrcfd/sys/$name/admin.pwd" ]; then
+    apwd="$(tr -d '\r' <"$usrcfd/sys/$name/admin.pwd")"
+  fi
 
-    # Source both parent host and guest extra options from global settings.
-    opts="$syscfd/sys/$host/options.env"
-    if [ -e "$opts" ]; then . "$opts" ; fi
-    opts="$syscfd/sys/$name/options.env"
-    if [ -e "$opts" ]; then . "$opts" ; fi
+  # Source both parent host and guest extra options from global settings.
+  opts="$syscfd/sys/$host/options.env"
+  if [ -e "$opts" ]; then . "$opts"; fi
+  opts="$syscfd/sys/$name/options.env"
+  if [ -e "$opts" ]; then . "$opts"; fi
 
-    # Source both parent host and guest extra options from local settings.
-    opts="$usrcfd/sys/$host/options.env"
-    if [ -e "$opts" ]; then . "$opts" ; fi
-    opts="$usrcfd/sys/$name/options.env"
-    if [ -e "$opts" ]; then . "$opts" ; fi
+  # Source both parent host and guest extra options from local settings.
+  opts="$usrcfd/sys/$host/options.env"
+  if [ -e "$opts" ]; then . "$opts"; fi
+  opts="$usrcfd/sys/$name/options.env"
+  if [ -e "$opts" ]; then . "$opts"; fi
 
-    return 0
+  return 0
 }
 
 # parseService(<name>)
@@ -2114,91 +2183,97 @@ function parseGuest {
 # Read service entry <name> from <config>.
 #
 function parseService {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    typeset opts
-    typeset value
-    typeset htype
+  typeset opts
+  typeset value
+  typeset htype
 
-    name="$1" ; [ "$name" ] || { reportError "No name passed" ; return 1 ; }
+  name="$1"
+  [ "$name" ] || {
+    reportError "No name passed"
+    return 1
+  }
 
-    # Read all key values and set them.
-    tokenReader setVars "$name" "svmt,acmt,exmt,user,addr,port,host" || return 1
-    osmt="none" ; admin="none" ; vrmt="none"
+  # Read all key values and set them.
+  tokenReader setVars "$name" "svmt,acmt,exmt,user,addr,port,host" || return 1
+  osmt="none"
+  admin="none"
+  vrmt="none"
 
-    # Inherit parent host values. The vrmt value is only inherited if parent type is host.
-    htype="$(tokenReader printVals "$host" type)"
-    for key in osmt vrmt acmt exmt user admin addr; do
-        value="$(eval printf '%s\\n' "\$$key")"
-        if [ "$htype" = "host" -a "$key" = "vrmt" ]; then
-            tokenReader setVars "$host" "$key" || return 1
-        elif [ "$value" = "none" -a "$key" != "vrmt" ]; then
-            tokenReader setVars "$host" "$key" || return 1
-        elif [ "$console" = "true" -a "$key" = "acmt" ]; then
-            tokenReader setVars "$host" "$key" || return 1
-        elif [ "$console" = "true" -a "$key" = "exmt" ]; then
-            tokenReader setVars "$host" "$key" || return 1
-        fi
-    done
-
-    # Validate all key values.
-    tokenValidator "type,name,svmt,acmt,exmt,user,addr,port,host,osmt,admin,vrmt" || return 1
-
-    # If an entry is about the local system, rewrite $privesc and $privy with correct service user.
-    if isLoopback "$addr" || isLocal "$name" ; then
-        reportDebug "Loopback address detected for \"$name\""
-        if [ "$userDblBacksl" = "$user" ]; then
-            reportDebug "Service user is equal to current user, erasing privesc"
-            privesc=""
-            [ "$privy" ] && privy="$privesc"
-        else
-            reportDebug "Service user differs from current user, rewriting privesc to $privesc"
-            privesc="$(printf "$privesc\n" | sed -e "s|root|$user|g" -e "s|administrator|$user|g")"
-            [ "$privy" ] && privy="$privesc"
-        fi
+  # Inherit parent host values. The vrmt value is only inherited if parent type is host.
+  htype="$(tokenReader printVals "$host" type)"
+  for key in osmt vrmt acmt exmt user admin addr; do
+    value="$(eval printf '%s\\n' "\$$key")"
+    if [ "$htype" = "host" -a "$key" = "vrmt" ]; then
+      tokenReader setVars "$host" "$key" || return 1
+    elif [ "$value" = "none" -a "$key" != "vrmt" ]; then
+      tokenReader setVars "$host" "$key" || return 1
+    elif [ "$console" = "true" -a "$key" = "acmt" ]; then
+      tokenReader setVars "$host" "$key" || return 1
+    elif [ "$console" = "true" -a "$key" = "exmt" ]; then
+      tokenReader setVars "$host" "$key" || return 1
     fi
+  done
 
-    # Check for global password files and set variables.
-    if [ -e "$syscfd/sys/$host/user.pwd" ]; then
-        upwd="$(tr -d '\r' < "$syscfd/sys/$host/user.pwd")"
-    fi
-    if [ -e "$syscfd/sys/$name/user.pwd" ]; then
-        upwd="$(tr -d '\r' < "$syscfd/sys/$name/user.pwd")"
-    fi
-    if [ -e "$syscfd/sys/$host/admin.pwd" ]; then
-        apwd="$(tr -d '\r' < "$syscfd/sys/$host/admin.pwd")"
-    fi
-    if [ -e "$syscfd/sys/$name/admin.pwd" ]; then
-        apwd="$(tr -d '\r' < "$syscfd/sys/$name/admin.pwd")"
-    fi
+  # Validate all key values.
+  tokenValidator "type,name,svmt,acmt,exmt,user,addr,port,host,osmt,admin,vrmt" || return 1
 
-    # Check for local password files and set variables (might override global options).
-    if [ -e "$usrcfd/sys/$host/user.pwd" ]; then
-        upwd="$(tr -d '\r' < "$usrcfd/sys/$host/user.pwd")"
+  # If an entry is about the local system, rewrite $privesc and $privy with correct service user.
+  if isLoopback "$addr" || isLocal "$name"; then
+    reportDebug "Loopback address detected for \"$name\""
+    if [ "$userDblBacksl" = "$user" ]; then
+      reportDebug "Service user is equal to current user, erasing privesc"
+      privesc=""
+      [ "$privy" ] && privy="$privesc"
+    else
+      reportDebug "Service user differs from current user, rewriting privesc to $privesc"
+      privesc="$(printf "$privesc\n" | sed -e "s|root|$user|g" -e "s|administrator|$user|g")"
+      [ "$privy" ] && privy="$privesc"
     fi
-    if [ -e "$usrcfd/sys/$name/user.pwd" ]; then
-        upwd="$(tr -d '\r' < "$usrcfd/sys/$name/user.pwd")"
-    fi
-    if [ -e "$usrcfd/sys/$host/admin.pwd" ]; then
-        apwd="$(tr -d '\r' < "$usrcfd/sys/$host/admin.pwd")"
-    fi
-    if [ -e "$usrcfd/sys/$name/admin.pwd" ]; then
-        apwd="$(tr -d '\r' < "$usrcfd/sys/$name/admin.pwd")"
-    fi
+  fi
 
-    # Source both parent host and service extra options from global settings.
-    opts="$syscfd/sys/$host/options.env"
-    if [ -e "$opts" ]; then . "$opts" ; fi
-    opts="$syscfd/sys/$name/options.env"
-    if [ -e "$opts" ]; then . "$opts" ; fi
+  # Check for global password files and set variables.
+  if [ -e "$syscfd/sys/$host/user.pwd" ]; then
+    upwd="$(tr -d '\r' <"$syscfd/sys/$host/user.pwd")"
+  fi
+  if [ -e "$syscfd/sys/$name/user.pwd" ]; then
+    upwd="$(tr -d '\r' <"$syscfd/sys/$name/user.pwd")"
+  fi
+  if [ -e "$syscfd/sys/$host/admin.pwd" ]; then
+    apwd="$(tr -d '\r' <"$syscfd/sys/$host/admin.pwd")"
+  fi
+  if [ -e "$syscfd/sys/$name/admin.pwd" ]; then
+    apwd="$(tr -d '\r' <"$syscfd/sys/$name/admin.pwd")"
+  fi
 
-    # Source both parent host and service extra options from local settings.
-    opts="$usrcfd/sys/$host/options.env"
-    if [ -e "$opts" ]; then . "$opts" ; fi
-    opts="$usrcfd/sys/$name/options.env"
-    if [ -e "$opts" ]; then . "$opts" ; fi
+  # Check for local password files and set variables (might override global options).
+  if [ -e "$usrcfd/sys/$host/user.pwd" ]; then
+    upwd="$(tr -d '\r' <"$usrcfd/sys/$host/user.pwd")"
+  fi
+  if [ -e "$usrcfd/sys/$name/user.pwd" ]; then
+    upwd="$(tr -d '\r' <"$usrcfd/sys/$name/user.pwd")"
+  fi
+  if [ -e "$usrcfd/sys/$host/admin.pwd" ]; then
+    apwd="$(tr -d '\r' <"$usrcfd/sys/$host/admin.pwd")"
+  fi
+  if [ -e "$usrcfd/sys/$name/admin.pwd" ]; then
+    apwd="$(tr -d '\r' <"$usrcfd/sys/$name/admin.pwd")"
+  fi
 
-    return 0
+  # Source both parent host and service extra options from global settings.
+  opts="$syscfd/sys/$host/options.env"
+  if [ -e "$opts" ]; then . "$opts"; fi
+  opts="$syscfd/sys/$name/options.env"
+  if [ -e "$opts" ]; then . "$opts"; fi
+
+  # Source both parent host and service extra options from local settings.
+  opts="$usrcfd/sys/$host/options.env"
+  if [ -e "$opts" ]; then . "$opts"; fi
+  opts="$usrcfd/sys/$name/options.env"
+  if [ -e "$opts" ]; then . "$opts"; fi
+
+  return 0
 }
 
 # checkState()
@@ -2208,99 +2283,99 @@ function parseService {
 # Also, initialize state variables and variables in options.env.
 #
 function checkState {
-    reportDebugFuncEntry "$*" "type acmt exmt"
+  reportDebugFuncEntry "$*" "type acmt exmt"
 
-    acstate="unset"
-    exstate="unset"
-    svstate="unset"
-    vmstate="unset"
-    state="unset"
+  acstate="unset"
+  exstate="unset"
+  svstate="unset"
+  vmstate="unset"
+  state="unset"
 
-    # Determine if we're sane.
-    if [ ! "$type" ]; then
-        reportError "Variable type not set"
-        return 1
-    elif [ "$type" = "group" ]; then
-        reportError "Passed invalid type $type"
-        return 1
-    fi
+  # Determine if we're sane.
+  if [ ! "$type" ]; then
+    reportError "Variable type not set"
+    return 1
+  elif [ "$type" = "group" ]; then
+    reportError "Passed invalid type $type"
+    return 1
+  fi
 
-    # Invoke state handlers to set acstate and exstate.
-    ${acmt}AccessHandler state
-    if [ "$acmt" = "$exmt" ]; then
-        exstate="$acstate"
+  # Invoke state handlers to set acstate and exstate.
+  ${acmt}AccessHandler state
+  if [ "$acmt" = "$exmt" ]; then
+    exstate="$acstate"
+  else
+    ${exmt}ExecHandler state
+  fi
+
+  # Determine final state for host entities.
+  if [ "$type" = "host" ]; then
+    if [ "$acstate" = "active" -a "$exstate" = "active" ]; then
+      state="on"
+    elif [ "$acstate" = "active" -a "$exstate" = "none" ]; then
+      state="on"
+    elif [ "$acstate" = "none" -a "$exstate" = "active" ]; then
+      state="on"
+    elif [ "$acstate" = "inactive" -a "$exstate" = "inactive" ]; then
+      state="$(printPingState "$addr")"
+      if [ "$state" = "reachable" ]; then state="busy"; fi
+    elif [ "$acstate" = "inactive" -a "$exstate" = "none" ]; then
+      state="$(printPingState "$addr")"
+      if [ "$state" = "reachable" ]; then state="busy"; fi
+    elif [ "$acstate" = "none" -a "$exstate" = "inactive" ]; then
+      state="$(printPingState "$addr")"
+      if [ "$state" = "reachable" ]; then state="busy"; fi
+    elif [ "$acstate" = "none" -a "$exstate" = "none" ]; then
+      state="$(printPingState "$addr")"
+      if [ "$state" = "reachable" ]; then state="on"; fi
     else
-        ${exmt}ExecHandler state
+      state="busy"
     fi
 
-    # Determine final state for host entities.
-    if [ "$type" = "host" ]; then
-        if [ "$acstate" = "active" -a "$exstate" = "active" ]; then
-            state="on"
-        elif [ "$acstate" = "active" -a "$exstate" = "none" ]; then
-            state="on"
-        elif [ "$acstate" = "none" -a "$exstate" = "active" ]; then
-            state="on"
-        elif [ "$acstate" = "inactive" -a "$exstate" = "inactive" ]; then
-            state="$(printPingState "$addr")"
-            if [ "$state" = "reachable" ]; then state="busy"; fi;
-        elif [ "$acstate" = "inactive" -a "$exstate" = "none" ]; then
-            state="$(printPingState "$addr")"
-            if [ "$state" = "reachable" ]; then state="busy"; fi;
-        elif [ "$acstate" = "none" -a "$exstate" = "inactive" ]; then
-            state="$(printPingState "$addr")"
-            if [ "$state" = "reachable" ]; then state="busy"; fi;
-        elif [ "$acstate" = "none" -a "$exstate" = "none" ]; then
-            state="$(printPingState "$addr")"
-            if [ "$state" = "reachable" ]; then state="on"; fi;
-        else
-            state="busy"
-        fi
+  # Determine final state for guest entities.
+  elif [ "$type" = "guest" ]; then
+    if [ "$acstate" = "active" -a "$exstate" = "active" ]; then
+      state="on"
+    elif [ "$acstate" = "active" -a "$exstate" = "none" ]; then
+      state="on"
+    elif [ "$acstate" = "none" -a "$exstate" = "active" ]; then
+      state="on"
+    else
+      # If exmt is vmn (virtual machine native), ${vrmt}VirtHandler state was already called, so skip.
+      if [ "$exmt" != "vmn" ]; then
+        ${vrmt}VirtHandler state
+      fi
 
-    # Determine final state for guest entities.
-    elif [ "$type" = "guest" ]; then
-        if [ "$acstate" = "active" -a "$exstate" = "active" ]; then
-            state="on"
-        elif [ "$acstate" = "active" -a "$exstate" = "none" ]; then
-            state="on"
-        elif [ "$acstate" = "none" -a "$exstate" = "active" ]; then
-            state="on"
-        else
-            # If exmt is vmn (virtual machine native), ${vrmt}VirtHandler state was already called, so skip.
-            if [ "$exmt" != "vmn" ]; then
-                ${vrmt}VirtHandler state
-            fi
-
-            if [ "$vmstate" = "active" -a "$acstate" = "none" -a "$exstate" = "none" ]; then
-                state="on"
-            elif [ "$vmstate" = "active" ]; then
-                state="busy"
-            elif [ "$vmstate" = "inactive" ] ;then
-                state="off"
-            else
-                state="$vmstate"
-            fi
-        fi
-
-    # Determine final state for service entities.
-    elif [ "$type" = "service" ]; then
-        ${svmt}ServiceHandler state
-        if [ "$svstate" = "active" ]; then
-            state="on"
-        elif [ "$svrunning" = "active" -a "$port" = "none" ]; then
-            state="on"
-        elif [ "$svrunning" = "inactive" -a "$port" = "none" ]; then
-            state="off"
-        elif [ "$svrunning" = "active" -a "$svlistening" = "active" ]; then
-            state="on"
-        elif [ "$svrunning" = "inactive" -a "$svlistening" = "inactive" ]; then
-            state="off"
-        elif [ "$svstate" = "unknown" ]; then
-            state="unknown"
-        else
-            state="busy"
-        fi
+      if [ "$vmstate" = "active" -a "$acstate" = "none" -a "$exstate" = "none" ]; then
+        state="on"
+      elif [ "$vmstate" = "active" ]; then
+        state="busy"
+      elif [ "$vmstate" = "inactive" ]; then
+        state="off"
+      else
+        state="$vmstate"
+      fi
     fi
+
+  # Determine final state for service entities.
+  elif [ "$type" = "service" ]; then
+    ${svmt}ServiceHandler state
+    if [ "$svstate" = "active" ]; then
+      state="on"
+    elif [ "$svrunning" = "active" -a "$port" = "none" ]; then
+      state="on"
+    elif [ "$svrunning" = "inactive" -a "$port" = "none" ]; then
+      state="off"
+    elif [ "$svrunning" = "active" -a "$svlistening" = "active" ]; then
+      state="on"
+    elif [ "$svrunning" = "inactive" -a "$svlistening" = "inactive" ]; then
+      state="off"
+    elif [ "$svstate" = "unknown" ]; then
+      state="unknown"
+    else
+      state="busy"
+    fi
+  fi
 }
 
 # startEntity()
@@ -2309,25 +2384,25 @@ function checkState {
 # Start a system by means of the appropriate VirtHandler.
 #
 function startEntity {
-    reportDebugFuncEntry "$*" "execute type"
+  reportDebugFuncEntry "$*" "execute type"
 
-    if [ "$execute" != "true" ]; then
-        reportError "Required execute functions disabled; set to 1 in $usropt or $sysopt or make sure you have the required executables; executables required: $tools_execute; executables detected: $tools_execute_found"
-        return 1
-    fi
+  if [ "$execute" != "true" ]; then
+    reportError "Required execute functions disabled; set to 1 in $usropt or $sysopt or make sure you have the required executables; executables required: $tools_execute; executables detected: $tools_execute_found"
+    return 1
+  fi
 
-    if [ "$type" = "host" ]; then
-        noneVirtHandler start
-    elif [ "$type" = "guest" ]; then
-        ${vrmt}VirtHandler start
-    elif [ "$type" = "service" ]; then
-        ${svmt}ServiceHandler start
-    else
-        reportError "Unknown type $type passed"
-        return 1
-    fi
+  if [ "$type" = "host" ]; then
+    noneVirtHandler start
+  elif [ "$type" = "guest" ]; then
+    ${vrmt}VirtHandler start
+  elif [ "$type" = "service" ]; then
+    ${svmt}ServiceHandler start
+  else
+    reportError "Unknown type $type passed"
+    return 1
+  fi
 
-    return 0
+  return 0
 }
 
 # stopEntity()
@@ -2336,25 +2411,25 @@ function startEntity {
 # Stop a system by means of the appropriate VirtHandler.
 #
 function stopEntity {
-    reportDebugFuncEntry "$*" "execute type"
+  reportDebugFuncEntry "$*" "execute type"
 
-    if [ "$execute" != "true" ]; then
-        reportError "Required execute functions disabled; set execute to 1 in $usropt or in $sysopt or make sure you have the required executables; executables required: $tools_execute; executables detected: $tools_execute_found"
-        return 1
-    fi
+  if [ "$execute" != "true" ]; then
+    reportError "Required execute functions disabled; set execute to 1 in $usropt or in $sysopt or make sure you have the required executables; executables required: $tools_execute; executables detected: $tools_execute_found"
+    return 1
+  fi
 
-    if [ "$type" = "host" ]; then
-        noneVirtHandler stop
-    elif [ "$type" = "guest" ]; then
-        ${vrmt}VirtHandler stop
-    elif [ "$type" = "service" ]; then
-        ${svmt}ServiceHandler stop
-    else
-        reportError "Unknown type $type passed"
-        return 1
-    fi
+  if [ "$type" = "host" ]; then
+    noneVirtHandler stop
+  elif [ "$type" = "guest" ]; then
+    ${vrmt}VirtHandler stop
+  elif [ "$type" = "service" ]; then
+    ${svmt}ServiceHandler stop
+  else
+    reportError "Unknown type $type passed"
+    return 1
+  fi
 
-    return 0
+  return 0
 }
 
 # restartEntity()
@@ -2363,25 +2438,25 @@ function stopEntity {
 # Restart a system by means of the appropriate VirtHandler
 #
 function restartEntity {
-    reportDebugFuncEntry "$*" "execute type"
+  reportDebugFuncEntry "$*" "execute type"
 
-    if [ "$execute" != "true" ]; then
-        reportError "Required execute functions disabled; set execute to 1 in $usropt or in $sysopt or make sure you have the required executables; executables required: $tools_execute; executables detected: $tools_execute_found"
-        return 1
-    fi
+  if [ "$execute" != "true" ]; then
+    reportError "Required execute functions disabled; set execute to 1 in $usropt or in $sysopt or make sure you have the required executables; executables required: $tools_execute; executables detected: $tools_execute_found"
+    return 1
+  fi
 
-    if [ "$type" = "host" ]; then
-        noneVirtHandler restart
-    elif [ "$type" = "guest" ]; then
-        ${vrmt}VirtHandler restart
-    elif [ "$type" = "service" ]; then
-        ${svmt}ServiceHandler restart
-    else
-        reportError "Unknown type $type passed"
-        return 1
-    fi
+  if [ "$type" = "host" ]; then
+    noneVirtHandler restart
+  elif [ "$type" = "guest" ]; then
+    ${vrmt}VirtHandler restart
+  elif [ "$type" = "service" ]; then
+    ${svmt}ServiceHandler restart
+  else
+    reportError "Unknown type $type passed"
+    return 1
+  fi
 
-    return 0
+  return 0
 }
 
 # createEntity()
@@ -2390,33 +2465,33 @@ function restartEntity {
 # Create a system by means of the appropriate VirtHandler.
 #
 function createEntity {
-    reportDebugFuncEntry "$*" "execute create send type"
+  reportDebugFuncEntry "$*" "execute create send type"
 
-    if [ "$execute" != "true" ]; then
-        reportError "Required execute functions disabled; set execute to 1 in $usropt or in $sysopt or make sure you have the required executables; executables required: $tools_execute; executables detected: $tools_execute_found"
-        return 1
-    fi
+  if [ "$execute" != "true" ]; then
+    reportError "Required execute functions disabled; set execute to 1 in $usropt or in $sysopt or make sure you have the required executables; executables required: $tools_execute; executables detected: $tools_execute_found"
+    return 1
+  fi
 
-    if [ "$create" != "true" ]; then
-        reportError "Required create functions disabled; set create to 1 in $usropt or in $sysopt to enable"
-        return 1
-    fi
+  if [ "$create" != "true" ]; then
+    reportError "Required create functions disabled; set create to 1 in $usropt or in $sysopt to enable"
+    return 1
+  fi
 
-    if [ "$send" != "true" ]; then
-        reportError "Required send functions disabled; set send to 1 in $usropt or in $sysopt or make sure you have the required executables; executables required: $tools_send; executables detected: $tools_send_found"
-        return 1
-    fi
+  if [ "$send" != "true" ]; then
+    reportError "Required send functions disabled; set send to 1 in $usropt or in $sysopt or make sure you have the required executables; executables required: $tools_send; executables detected: $tools_send_found"
+    return 1
+  fi
 
-    if [ "$type" = "host" ]; then
-        noneVirtHandler create
-    elif [ "$type" = "guest" ]; then
-        ${vrmt}VirtHandler create
-    else
-        reportError "Unknown type $type passed"
-        return 1
-    fi
+  if [ "$type" = "host" ]; then
+    noneVirtHandler create
+  elif [ "$type" = "guest" ]; then
+    ${vrmt}VirtHandler create
+  else
+    reportError "Unknown type $type passed"
+    return 1
+  fi
 
-    return 0
+  return 0
 }
 
 # destroyEntity()
@@ -2425,28 +2500,28 @@ function createEntity {
 # Destroy a system by means of the appropriate VirtHandler.
 #
 function destroyEntity {
-    reportDebugFuncEntry "$*" "execute destroy type"
+  reportDebugFuncEntry "$*" "execute destroy type"
 
-    if [ "$execute" != "true" ]; then
-        reportError "Required execute functions disabled; set execute to 1 in $usropt or in $sysopt or make sure you have the required executables; executables required: $tools_execute; executables detected: $tools_execute_found"
-        return 1
-    fi
+  if [ "$execute" != "true" ]; then
+    reportError "Required execute functions disabled; set execute to 1 in $usropt or in $sysopt or make sure you have the required executables; executables required: $tools_execute; executables detected: $tools_execute_found"
+    return 1
+  fi
 
-    if [ "$destroy" != "true" ]; then
-        reportError "Required destroy functions disabled; set destroy to 1 in $usropt or in $sysopt to enable"
-        return 1
-    fi
+  if [ "$destroy" != "true" ]; then
+    reportError "Required destroy functions disabled; set destroy to 1 in $usropt or in $sysopt to enable"
+    return 1
+  fi
 
-    if [ "$type" = "host" ]; then
-        noneVirtHandler destroy
-    elif [ "$type" = "guest" ]; then
-        ${vrmt}VirtHandler destroy
-    else
-        reportError "Unknown type $type passed"
-        return 1
-    fi
+  if [ "$type" = "host" ]; then
+    noneVirtHandler destroy
+  elif [ "$type" = "guest" ]; then
+    ${vrmt}VirtHandler destroy
+  else
+    reportError "Unknown type $type passed"
+    return 1
+  fi
 
-    return 0
+  return 0
 }
 
 # accessEntity()
@@ -2455,28 +2530,28 @@ function destroyEntity {
 # Access a system by means of the appropriate AccessHandler.
 #
 function accessEntity {
-    reportDebugFuncEntry "$*" "acmt access xsastype user upwd admin apwd"
+  reportDebugFuncEntry "$*" "acmt access xsastype user upwd admin apwd"
 
-    if [ "$access" != "true" ]; then
-        reportError "Required access functions disabled; set access to 1 in $usropt or in $sysopt or make sure you have the required executables; executables required: $tools_access; executables detected: $tools_access_found"
-        return 1
-    fi
+  if [ "$access" != "true" ]; then
+    reportError "Required access functions disabled; set access to 1 in $usropt or in $sysopt or make sure you have the required executables; executables required: $tools_access; executables detected: $tools_access_found"
+    return 1
+  fi
 
-    if [ "$xsastype" = "service" -o "$xsastype" = "user" ]; then
-        xsasuser="$user"
-        xsasupwd="$upwd"
-    elif [ "$xsastype" = "admin" ]; then
-        xsasuser="$admin"
-        xsasapwd="$apwd"
-    fi
+  if [ "$xsastype" = "service" -o "$xsastype" = "user" ]; then
+    xsasuser="$user"
+    xsasupwd="$upwd"
+  elif [ "$xsastype" = "admin" ]; then
+    xsasuser="$admin"
+    xsasapwd="$apwd"
+  fi
 
-    if [ "$type" ]; then
-        ${acmt}AccessHandler access
-        return $?
-    else
-        reportError "Unknown type $type passed"
-        return 1
-    fi
+  if [ "$type" ]; then
+    ${acmt}AccessHandler access
+    return $?
+  else
+    reportError "Unknown type $type passed"
+    return 1
+  fi
 }
 
 # runAs()
@@ -2485,20 +2560,20 @@ function accessEntity {
 # Send a command to a system by means of the appropriate ExecHandler.
 #
 function runAs {
-    reportDebugFuncEntry "$*" "execute exmt runastype"
+  reportDebugFuncEntry "$*" "execute exmt runastype"
 
-    if [ "$execute" != "true" ]; then
-        reportError "Required execute functions disabled; set execute to 1 in $usropt or in $sysopt or make sure you have the required executables; executables required: $tools_execute; executables detected: $tools_execute_found"
-        return 1
-    fi
+  if [ "$execute" != "true" ]; then
+    reportError "Required execute functions disabled; set execute to 1 in $usropt or in $sysopt or make sure you have the required executables; executables required: $tools_execute; executables detected: $tools_execute_found"
+    return 1
+  fi
 
-    if [ "$type" ]; then
-        ${exmt}ExecHandler "runas${runastype}"
-        return $?
-    else
-        reportError "Unknown type $type passed"
-        return 1
-    fi
+  if [ "$type" ]; then
+    ${exmt}ExecHandler "runas${runastype}"
+    return $?
+  else
+    reportError "Unknown type $type passed"
+    return 1
+  fi
 }
 
 # sendAs()
@@ -2507,20 +2582,20 @@ function runAs {
 # Send a file or directory to a system by means of the appropriate ExecHandler.
 #
 function sendAs {
-    reportDebugFuncEntry "$*" "send exmt sendastype"
+  reportDebugFuncEntry "$*" "send exmt sendastype"
 
-    if [ "$send" != "true" ]; then
-        reportError "Required send functions disabled; set send to 1 in $usropt or in $sysopt or make sure you have the required executables; executables required: $tools_send; executables detected: $tools_send_found"
-        return 1
-    fi
+  if [ "$send" != "true" ]; then
+    reportError "Required send functions disabled; set send to 1 in $usropt or in $sysopt or make sure you have the required executables; executables required: $tools_send; executables detected: $tools_send_found"
+    return 1
+  fi
 
-    if [ "$type" ]; then
-        ${exmt}ExecHandler "sendas${sendastype}"
-        return $?
-    else
-        reportError "Unknown type $type passed"
-        return 1
-    fi
+  if [ "$type" ]; then
+    ${exmt}ExecHandler "sendas${sendastype}"
+    return $?
+  else
+    reportError "Unknown type $type passed"
+    return 1
+  fi
 }
 
 # credAs()
@@ -2530,52 +2605,61 @@ function sendAs {
 # acmt and exmt settings.
 #
 function credAs {
-    reportDebugFuncEntry "$*" "execute type exmt acmt addr"
+  reportDebugFuncEntry "$*" "execute type exmt acmt addr"
 
-    typeset list
-    typeset crmt
-    typeset retval
+  typeset list
+  typeset crmt
+  typeset retval
 
-    if [ "$execute" != "true" ]; then
-        reportError "Required execute functions disabled; set execute to 1 in $usropt or in $sysopt or make sure you have the required executables; executables required: $tools_execute; executables detected: $tools_execute_found"
-        return 1
-    fi
+  if [ "$execute" != "true" ]; then
+    reportError "Required execute functions disabled; set execute to 1 in $usropt or in $sysopt or make sure you have the required executables; executables required: $tools_execute; executables detected: $tools_execute_found"
+    return 1
+  fi
 
-    if [ "$exmt" = "none" -a "$type" = "service" ]; then
-        exmt="$(parseEntry "$host" ; printf "$exmt\n")"
-        reportInfo "Inherited execute method ($exmt) from parent $host"
-    fi
+  if [ "$exmt" = "none" -a "$type" = "service" ]; then
+    exmt="$(
+      parseEntry "$host"
+      printf "$exmt\n"
+    )"
+    reportInfo "Inherited execute method ($exmt) from parent $host"
+  fi
 
-    if [ "$acmt" = "none" -a "$type" = "service" ]; then
-        acmt="$(parseEntry "$host" ; printf "$acmt\n")"
-        reportInfo "Inherited access method ($acmt) from parent $host"
-    fi
+  if [ "$acmt" = "none" -a "$type" = "service" ]; then
+    acmt="$(
+      parseEntry "$host"
+      printf "$acmt\n"
+    )"
+    reportInfo "Inherited access method ($acmt) from parent $host"
+  fi
 
-    if [ "$addr" = "none" -a "$type" = "service" ]; then
-        addr="$(parseEntry "$host" ; printf "$addr\n")"
-        reportInfo "Inherited address ($addr) from parent $host"
-    fi
+  if [ "$addr" = "none" -a "$type" = "service" ]; then
+    addr="$(
+      parseEntry "$host"
+      printf "$addr\n"
+    )"
+    reportInfo "Inherited address ($addr) from parent $host"
+  fi
 
-    if [ "$exmt" = "none" -a "$acmt" = "none" ]; then
-        reportError "Both execute method and access method are \"none\"; cannot send or store credentials without one of these"
-        return 1
-    elif [ "$exmt" = "ssh" -a "$acmt" = "rdp" ]; then
-        list="ssh win"
-    elif [ "$exmt" = "smb" -a "$acmt" = "ssh" ]; then
-        list="ssh win"
-    elif [ "$exmt" = "ssh" -o "$acmt" = "ssh" ]; then
-        list="ssh"
-    elif [ "$exmt" = "smb" -o "$acmt" = "rdp" ]; then
-        list="win"
-    fi
+  if [ "$exmt" = "none" -a "$acmt" = "none" ]; then
+    reportError "Both execute method and access method are \"none\"; cannot send or store credentials without one of these"
+    return 1
+  elif [ "$exmt" = "ssh" -a "$acmt" = "rdp" ]; then
+    list="ssh win"
+  elif [ "$exmt" = "smb" -a "$acmt" = "ssh" ]; then
+    list="ssh win"
+  elif [ "$exmt" = "ssh" -o "$acmt" = "ssh" ]; then
+    list="ssh"
+  elif [ "$exmt" = "smb" -o "$acmt" = "rdp" ]; then
+    list="win"
+  fi
 
-    retval=0
-    for crmt in $list ; do
-        ${crmt}CredHandler "as${type}"
-        [ "$?" = 0 ] || retval=1
-    done
+  retval=0
+  for crmt in $list; do
+    ${crmt}CredHandler "as${type}"
+    [ "$?" = 0 ] || retval=1
+  done
 
-    return $retval
+  return $retval
 }
 
 # noneVirtHandler(state|start|stop|restart|create|destroy)
@@ -2584,48 +2668,54 @@ function credAs {
 # Handle non-vm-host related commands.
 #
 function noneVirtHandler {
-    reportDebugFuncEntry "$*" "state destroy"
+  reportDebugFuncEntry "$*" "state destroy"
 
-    case "$1" in
-      state)
-        vmstate="none"
-        ;;
-      start)
-        reportError "Not implemented: I don't know how to start a physical system"
-        return 1
-        ;;
-      stop)
-        if [ "$state" = "on" ]; then
-            (command="$osstop" ; ${exmt}ExecHandler runasadmin) >/dev/null
-            state="stopping"
-        fi
-        ;;
-      restart)
-        if [ "$state" = "on" ]; then
-            (command="$osreboot" ; ${exmt}ExecHandler runasadmin) >/dev/null
-            state="restarting"
-        fi
-        ;;
-      create)
-        reportError "Not implemented: I don't know how to create a physical system"
-        return 1
-        ;;
-      destroy)
-        if [ "$destroy" = "true" ]; then
-            reportError "Not implemented: I don't know how to destroy a physical system"
-            return 1
-        else
-            reportError "Destroy is disabled"
-            return 1
-        fi
-        ;;
-      exec)
-        reportError "Not implemented: I don't know how to execute natively with 'none' as vrmt"
-        return 1
-        ;;
-    esac
+  case "$1" in
+  state)
+    vmstate="none"
+    ;;
+  start)
+    reportError "Not implemented: I don't know how to start a physical system"
+    return 1
+    ;;
+  stop)
+    if [ "$state" = "on" ]; then
+      (
+        command="$osstop"
+        ${exmt}ExecHandler runasadmin
+      ) >/dev/null
+      state="stopping"
+    fi
+    ;;
+  restart)
+    if [ "$state" = "on" ]; then
+      (
+        command="$osreboot"
+        ${exmt}ExecHandler runasadmin
+      ) >/dev/null
+      state="restarting"
+    fi
+    ;;
+  create)
+    reportError "Not implemented: I don't know how to create a physical system"
+    return 1
+    ;;
+  destroy)
+    if [ "$destroy" = "true" ]; then
+      reportError "Not implemented: I don't know how to destroy a physical system"
+      return 1
+    else
+      reportError "Destroy is disabled"
+      return 1
+    fi
+    ;;
+  exec)
+    reportError "Not implemented: I don't know how to execute natively with 'none' as vrmt"
+    return 1
+    ;;
+  esac
 
-    return 0
+  return 0
 }
 
 # kvmVirtHandler(state|start|stop|restart|create|destroy)
@@ -2634,105 +2724,146 @@ function noneVirtHandler {
 # Handle KVM virtual machine related commands.
 #
 function kvmVirtHandler {
-    reportDebugFuncEntry "$*" "name host state vrmt memsize destroy"
+  reportDebugFuncEntry "$*" "name host state vrmt memsize destroy"
 
-    typeset result
-    typeset template
-    typeset answer
-    typeset -i memsizeInKiB=memsize*1024
+  typeset result
+  typeset template
+  typeset answer
+  typeset -i memsizeInKiB=memsize*1024
 
-    case "$1" in
-      state)
-        result="$(command="virsh domstate \"$name\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin)"
-        case "$result" in
-          *running*)
-            vmstate="active"
-            ;;
-          *"shut off"*)
-            vmstate="inactive"
-            ;;
-          *)
-            vmstate="non-existing"
-            ;;
-        esac
-        ;;
-      start)
-        if [ "$state" = "off" ]; then
-            (command="virsh start \"$name\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin) 2>/dev/null
-            state="booting"
-        fi
-        ;;
-      stop)
-        if [ "$state" = "on" ]; then
-            (command="$osstop" ; ${exmt}ExecHandler runasadmin) 2>/dev/null
-            state="stopping"
-        fi
-        ;;
-      restart)
-        if [ "$state" = "on" ]; then
-            (command="$osreboot" ; ${exmt}ExecHandler runasadmin) 2>/dev/null
-            state="restarting"
-        fi
-        ;;
-      create)
-        # Check for global template, override with local if exists.
-        if [ -e "$syscfd/tpl/$vrmt.stf" ]; then
-            template="$syscfd/tpl/$vrmt.stf"
-        fi
-        if [ -e "$usrcfd/tpl/$vrmt.stf" ]; then
-            template="$usrcfd/tpl/$vrmt.stf"
-        fi
-
-        # Create virtual machine configuration.
-        if [ -e "$template" ]; then
-            mkdir -p "$usrcfd/sys/$name"
-            macGen "$vrmt"
-            cat "$template" \
-                | sed "s|GUEST_NAME|$name|g" \
-                | sed "s|GUEST_DESC|$desc|g" \
-                | sed "s|GUEST_OS|$guestos|g" \
-                | sed "s|GUEST_NUMVCPU|$numvcpu|g" \
-                | sed "s|GUEST_MEMSIZE|$memsizeInKiB|g" \
-                | sed "s|GUEST_MACADDR|$macaddr|g" \
-                > "$usrcfd/sys/$name/$name.xml"
-            mkdir "$usrcfd/tmp/session.create.$name"
-            cp "$usrcfd/sys/$name/$name.xml" "$usrcfd/tmp/session.create.$name"
-            (source="$usrcfd/tmp/session.create.$name/$name.xml" target="$vmdata/qemu" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler sendasadmin) 2>/dev/null
-            rm -f "$usrcfd/tmp/session.create.$name/$name.xml"
-            rmdir "$usrcfd/tmp/session.create.$name"
-            (command="\"$vmhome/qemu-img\" create -f qcow2 \"$vmdata/images/$name.img\" ${dsksize}G" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin) 2>/dev/null
-            (command="\"$vmhome/virsh\" define \"$vmdata/qemu/$name.xml\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin) 2>/dev/null
-            state="created"
-        else
-            reportError "Config template for $vrmt style guest not found: need either $usrcfd/tpl/$vrmt.stf or $syscfd/tpl/$vrmt.stf"
-            return 1
-        fi
-        ;;
-      destroy)
-        if [ "$destroy" = "true" ]; then
-            if [ "$state" = "off" ]; then
-                printf "You are about to delete and destroy $name. Are you sure? (y|n): "
-                read answer
-                if [ "$answer" = "y" -o "$answer" = "Y" ]; then
-                    (command="\"$vmhome/virsh\" undefine \"$name\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin) 2>/dev/null
-                    (command="rm -f \"$vmdata/qemu/$name.xml\" \"$vmdata/qemu/$name.log*\" \"$vmdata/images/$name.img\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin) 2>/dev/null
-                    state="destroyed"
-                else
-                    state="saved"
-                fi
-            fi
-        else
-            reportError "Destroy is disabled"
-            return 1
-        fi
-        ;;
-      exec)
-        reportError "Haven't implemented $1 yet"
-        return 1
-        ;;
+  case "$1" in
+  state)
+    result="$(
+      command="virsh domstate \"$name\""
+      parseEntry "$host"
+      checkState
+      ${exmt}ExecHandler runasadmin
+    )"
+    case "$result" in
+    *running*)
+      vmstate="active"
+      ;;
+    *"shut off"*)
+      vmstate="inactive"
+      ;;
+    *)
+      vmstate="non-existing"
+      ;;
     esac
+    ;;
+  start)
+    if [ "$state" = "off" ]; then
+      (
+        command="virsh start \"$name\""
+        parseEntry "$host"
+        checkState
+        ${exmt}ExecHandler runasadmin
+      ) 2>/dev/null
+      state="booting"
+    fi
+    ;;
+  stop)
+    if [ "$state" = "on" ]; then
+      (
+        command="$osstop"
+        ${exmt}ExecHandler runasadmin
+      ) 2>/dev/null
+      state="stopping"
+    fi
+    ;;
+  restart)
+    if [ "$state" = "on" ]; then
+      (
+        command="$osreboot"
+        ${exmt}ExecHandler runasadmin
+      ) 2>/dev/null
+      state="restarting"
+    fi
+    ;;
+  create)
+    # Check for global template, override with local if exists.
+    if [ -e "$syscfd/tpl/$vrmt.stf" ]; then
+      template="$syscfd/tpl/$vrmt.stf"
+    fi
+    if [ -e "$usrcfd/tpl/$vrmt.stf" ]; then
+      template="$usrcfd/tpl/$vrmt.stf"
+    fi
 
-    return 0
+    # Create virtual machine configuration.
+    if [ -e "$template" ]; then
+      mkdir -p "$usrcfd/sys/$name"
+      macGen "$vrmt"
+      cat "$template" |
+        sed "s|GUEST_NAME|$name|g" |
+        sed "s|GUEST_DESC|$desc|g" |
+        sed "s|GUEST_OS|$guestos|g" |
+        sed "s|GUEST_NUMVCPU|$numvcpu|g" |
+        sed "s|GUEST_MEMSIZE|$memsizeInKiB|g" |
+        sed "s|GUEST_MACADDR|$macaddr|g" \
+          >"$usrcfd/sys/$name/$name.xml"
+      mkdir "$usrcfd/tmp/session.create.$name"
+      cp "$usrcfd/sys/$name/$name.xml" "$usrcfd/tmp/session.create.$name"
+      (
+        source="$usrcfd/tmp/session.create.$name/$name.xml" target="$vmdata/qemu"
+        parseEntry "$host"
+        checkState
+        ${exmt}ExecHandler sendasadmin
+      ) 2>/dev/null
+      rm -f "$usrcfd/tmp/session.create.$name/$name.xml"
+      rmdir "$usrcfd/tmp/session.create.$name"
+      (
+        command="\"$vmhome/qemu-img\" create -f qcow2 \"$vmdata/images/$name.img\" ${dsksize}G"
+        parseEntry "$host"
+        checkState
+        ${exmt}ExecHandler runasadmin
+      ) 2>/dev/null
+      (
+        command="\"$vmhome/virsh\" define \"$vmdata/qemu/$name.xml\""
+        parseEntry "$host"
+        checkState
+        ${exmt}ExecHandler runasadmin
+      ) 2>/dev/null
+      state="created"
+    else
+      reportError "Config template for $vrmt style guest not found: need either $usrcfd/tpl/$vrmt.stf or $syscfd/tpl/$vrmt.stf"
+      return 1
+    fi
+    ;;
+  destroy)
+    if [ "$destroy" = "true" ]; then
+      if [ "$state" = "off" ]; then
+        printf "You are about to delete and destroy $name. Are you sure? (y|n): "
+        read answer
+        if [ "$answer" = "y" -o "$answer" = "Y" ]; then
+          (
+            command="\"$vmhome/virsh\" undefine \"$name\""
+            parseEntry "$host"
+            checkState
+            ${exmt}ExecHandler runasadmin
+          ) 2>/dev/null
+          (
+            command="rm -f \"$vmdata/qemu/$name.xml\" \"$vmdata/qemu/$name.log*\" \"$vmdata/images/$name.img\""
+            parseEntry "$host"
+            checkState
+            ${exmt}ExecHandler runasadmin
+          ) 2>/dev/null
+          state="destroyed"
+        else
+          state="saved"
+        fi
+      fi
+    else
+      reportError "Destroy is disabled"
+      return 1
+    fi
+    ;;
+  exec)
+    reportError "Haven't implemented $1 yet"
+    return 1
+    ;;
+  esac
+
+  return 0
 }
 
 # xenVirtHandler(state|start|stop|restart|create|destroy)
@@ -2741,58 +2872,74 @@ function kvmVirtHandler {
 # Handle XEN virtual machine related commands.
 #
 function xenVirtHandler {
-    reportDebugFuncEntry "$*" "name host state destroy"
+  reportDebugFuncEntry "$*" "name host state destroy"
 
-    typeset result
+  typeset result
 
-    case "$1" in
-      state)
-        # FIXME: Parse the fifth (state) column to determine the state
-        result="$(command="xm list \"$name\" | grep \"^$name\" | awk '{print \$1}'" ; parseEntry "$host" ; checkState ;${exmt}ExecHandler runasadmin)"
-        if [ "$result" ]; then
-            vmstate="active"
-        else
-            vmstate="non-existing"
-        fi
-        ;;
-      start)
-        if [ "$state" = "off" ]; then
-            (command="xm create \"$name\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin) 2>/dev/null
-            state="booting"
-        fi
-        ;;
-      stop)
-        if [ "$state" = "on" ]; then
-            (command="$osstop" ; ${exmt}ExecHandler runasadmin) 2>/dev/null
-            state="stopping"
-        fi
-        ;;
-      restart)
-        if [ "$state" = "on" ]; then
-            (command="$osreboot" ; ${exmt}ExecHandler runasadmin) 2>/dev/null
-            state="restarting"
-        fi
-        ;;
-      create)
-        reportError "Haven't implemented $1 yet"
-        return 1
-        ;;
-      destroy)
-        if [ "$destroy" = "true" ]; then
-            reportError "Haven't implemented $1 yet"
-            return 1
-        else
-            reportError "Destroy is disabled"
-            return 1
-        fi
-        ;;
-      exec)
-        reportError "Haven't implemented $1 yet"
-        return 1
-        ;;
-    esac
+  case "$1" in
+  state)
+    # FIXME: Parse the fifth (state) column to determine the state
+    result="$(
+      command="xm list \"$name\" | grep \"^$name\" | awk '{print \$1}'"
+      parseEntry "$host"
+      checkState
+      ${exmt}ExecHandler runasadmin
+    )"
+    if [ "$result" ]; then
+      vmstate="active"
+    else
+      vmstate="non-existing"
+    fi
+    ;;
+  start)
+    if [ "$state" = "off" ]; then
+      (
+        command="xm create \"$name\""
+        parseEntry "$host"
+        checkState
+        ${exmt}ExecHandler runasadmin
+      ) 2>/dev/null
+      state="booting"
+    fi
+    ;;
+  stop)
+    if [ "$state" = "on" ]; then
+      (
+        command="$osstop"
+        ${exmt}ExecHandler runasadmin
+      ) 2>/dev/null
+      state="stopping"
+    fi
+    ;;
+  restart)
+    if [ "$state" = "on" ]; then
+      (
+        command="$osreboot"
+        ${exmt}ExecHandler runasadmin
+      ) 2>/dev/null
+      state="restarting"
+    fi
+    ;;
+  create)
+    reportError "Haven't implemented $1 yet"
+    return 1
+    ;;
+  destroy)
+    if [ "$destroy" = "true" ]; then
+      reportError "Haven't implemented $1 yet"
+      return 1
+    else
+      reportError "Destroy is disabled"
+      return 1
+    fi
+    ;;
+  exec)
+    reportError "Haven't implemented $1 yet"
+    return 1
+    ;;
+  esac
 
-    return 0
+  return 0
 }
 
 # vboxVirtHandler(state|start|stop|restart|create|destroy)
@@ -2801,65 +2948,86 @@ function xenVirtHandler {
 # Handle VirtualBox virtual machine related commands.
 #
 function vboxVirtHandler {
-    reportDebugFuncEntry "$*" "name host state destroy"
+  reportDebugFuncEntry "$*" "name host state destroy"
 
-    typeset result
+  typeset result
 
-    case "$1" in
-      state)
-        result="$(command="\"$vmhome/VboxManage\" list runningvms" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasuser)"
-        case "$result" in
-          *"$name"*)
-            vmstate="active"
-            ;;
-          *)
-            (command="\"$vmhome/VboxManage\" showvminfo \"$name\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasuser) 2>/dev/null
-            if [ "$?" = 0 ]; then
-                vmstate="inactive"
-            else
-                vmstate="non-existing"
-            fi
-            ;;
-        esac
-        ;;
-      start)
-        if [ "$state" = "off" ]; then
-            (command="\"$vmhome/VboxManage\" startvm \"$name\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasuser) 2>/dev/null
-            state="booting"
-        fi
-        ;;
-      stop)
-        if [ "$state" = "on" ]; then
-            (command="$osstop" ; ${exmt}ExecHandler runasadmin) 2>/dev/null
-            state="stopping"
-        fi
-        ;;
-      restart)
-        if [ "$state" = "on" ]; then
-            (command="$osreboot" ; ${exmt}ExecHandler runasadmin) 2>/dev/null
-            state="restarting"
-        fi
-        ;;
-      create)
-        reportError "Haven't implemented $1 yet"
-        return 1
-        ;;
-      destroy)
-        if [ "$destroy" = "true" ]; then
-            reportError "Haven't implemented $1 yet"
-            return 1
-        else
-            reportError "Destroy is disabled"
-            return 1
-        fi
-        ;;
-      exec)
-        reportError "Haven't implemented $1 yet"
-        return 1
-        ;;
+  case "$1" in
+  state)
+    result="$(
+      command="\"$vmhome/VboxManage\" list runningvms"
+      parseEntry "$host"
+      checkState
+      ${exmt}ExecHandler runasuser
+    )"
+    case "$result" in
+    *"$name"*)
+      vmstate="active"
+      ;;
+    *)
+      (
+        command="\"$vmhome/VboxManage\" showvminfo \"$name\""
+        parseEntry "$host"
+        checkState
+        ${exmt}ExecHandler runasuser
+      ) 2>/dev/null
+      if [ "$?" = 0 ]; then
+        vmstate="inactive"
+      else
+        vmstate="non-existing"
+      fi
+      ;;
     esac
+    ;;
+  start)
+    if [ "$state" = "off" ]; then
+      (
+        command="\"$vmhome/VboxManage\" startvm \"$name\""
+        parseEntry "$host"
+        checkState
+        ${exmt}ExecHandler runasuser
+      ) 2>/dev/null
+      state="booting"
+    fi
+    ;;
+  stop)
+    if [ "$state" = "on" ]; then
+      (
+        command="$osstop"
+        ${exmt}ExecHandler runasadmin
+      ) 2>/dev/null
+      state="stopping"
+    fi
+    ;;
+  restart)
+    if [ "$state" = "on" ]; then
+      (
+        command="$osreboot"
+        ${exmt}ExecHandler runasadmin
+      ) 2>/dev/null
+      state="restarting"
+    fi
+    ;;
+  create)
+    reportError "Haven't implemented $1 yet"
+    return 1
+    ;;
+  destroy)
+    if [ "$destroy" = "true" ]; then
+      reportError "Haven't implemented $1 yet"
+      return 1
+    else
+      reportError "Destroy is disabled"
+      return 1
+    fi
+    ;;
+  exec)
+    reportError "Haven't implemented $1 yet"
+    return 1
+    ;;
+  esac
 
-    return 0
+  return 0
 }
 
 # vmwVirtHandler(state|start|stop|restart|create|destroy)
@@ -2868,120 +3036,161 @@ function vboxVirtHandler {
 # Handle VMware Workstation virtual machine related commands.
 #
 function vmwVirtHandler {
-    reportDebugFuncEntry "$*" "host name state vrmt memsize destroy"
+  reportDebugFuncEntry "$*" "host name state vrmt memsize destroy"
 
-    typeset result
-    typeset template
-    typeset answer
+  typeset result
+  typeset template
+  typeset answer
 
-    case "$1" in
-      state)
-        result="$(command="\"$vmhome/vmrun\" list" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasuser)"
-        case "$result" in
-          *"$name"*)
-            vmstate="active"
-            ;;
-          *)
-            result="$(command="\"$vmhome/vmrun\" listSnapshots \"$vmdata/$name/$name.vmx\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasuser)"
-            case "$result" in
-              *"Error: Cannot open VM"*)
-                vmstate="non-existing"
-                ;;
-              *)
-                vmstate="inactive"
-                ;;
-            esac
-            ;;
-        esac
+  case "$1" in
+  state)
+    result="$(
+      command="\"$vmhome/vmrun\" list"
+      parseEntry "$host"
+      checkState
+      ${exmt}ExecHandler runasuser
+    )"
+    case "$result" in
+    *"$name"*)
+      vmstate="active"
+      ;;
+    *)
+      result="$(
+        command="\"$vmhome/vmrun\" listSnapshots \"$vmdata/$name/$name.vmx\""
+        parseEntry "$host"
+        checkState
+        ${exmt}ExecHandler runasuser
+      )"
+      case "$result" in
+      *"Error: Cannot open VM"*)
+        vmstate="non-existing"
         ;;
-      start)
-        if [ "$state" = "off" ]; then
-            if [ "$vmshared" ]; then
-                reportInfo "VMware Workstation Shared Mode enabled: vmshared=\"$vmshared\", vmport=\"$vmport\""
-                result=$(command="\"$vmhome/vmrun\" -T ws-shared -h https://localhost:$vmport/sdk -u \"$vmuser\" -p \"$vmpass\" start \"[ha-datacenter/standard] $name/$name.vmx\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasuser)
-            else
-                result=$(command="\"$vmhome/vmrun\" start \"$vmdata/$name/$name.vmx\" nogui" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasuser)
-            fi
-            case "$result" in
-              *"Error: The file is already in use"*)
-                reportError "Failed to start $name because it is in-use. Try closing $name in your gui"
-                state="aborted"
-                ;;
-              *)
-                state="booting"
-                ;;
-            esac
-        fi
+      *)
+        vmstate="inactive"
         ;;
-      stop)
-        if [ "$state" = "on" ]; then
-            (command="$osstop" ; ${exmt}ExecHandler runasadmin) 2>/dev/null
-            state="stopping"
-        fi
-        ;;
-      restart)
-        if [ "$state" = "on" ]; then
-            (command="$osreboot" ; ${exmt}ExecHandler runasadmin) 2>/dev/null
-            state="restarting"
-        fi
-        ;;
-      create)
-        # Check for global template, override with local if exists.
-        if [ -e "$syscfd/tpl/$vrmt.stf" ]; then
-            template="$syscfd/tpl/$vrmt.stf"
-        fi
-        if [ -e "$usrcfd/tpl/$vrmt.stf" ]; then
-            template="$usrcfd/tpl/$vrmt.stf"
-        fi
-
-        # Create virtual machine configuration
-        if [ -e "$template" ]; then
-            mkdir -p "$usrcfd/sys/$name"
-            macGen "$vrmt"
-            cat "$template" \
-                | sed "s|GUEST_NAME|$name|g" \
-                | sed "s|GUEST_DESC|$desc|g" \
-                | sed "s|GUEST_OS|$guestos|g" \
-                | sed "s|GUEST_NUMVCPU|$numvcpu|g" \
-                | sed "s|GUEST_MEMSIZE|$memsize|g" \
-                | sed "s|GUEST_MACADDR|$macaddr|g" \
-                > "$usrcfd/sys/$name/$name.vmx"
-            mkdir "$usrcfd/tmp/session.create.$name"
-            cp "$usrcfd/sys/$name/$name.vmx" "$usrcfd/tmp/session.create.$name"
-            (source="$usrcfd/tmp/session.create.$name" target="$vmdata/$name" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler sendasuser) 2>/dev/null
-            rm -f "$usrcfd/tmp/session.create.$name/$name.vmx"
-            rmdir "$usrcfd/tmp/session.create.$name"
-            (command="\"$vmhome/vmware-vdiskmanager\" -c -s ${dsksize}GB -a ide -t 0 \"$vmdata/$name/$name.vmdk\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasuser) 2>/dev/null
-            state="created"
-        else
-            reportError "Config template for $vrmt style guest not found: need either $usrcfd/tpl/$vrmt.stf or $syscfd/tpl/$vrmt.stf"
-            return 1
-        fi
-        ;;
-      destroy)
-        if [ "$destroy" = "true" ]; then
-            if [ "$state" = "off" ]; then
-                printf "You are about to delete and destroy $name. Are you sure? (y|n): "
-                read answer
-                if [ "$answer" = "y" -o "$answer" = "Y" ]; then
-                    (command="\"$vmhome/vmrun\" deleteVM \"$vmdata/$name/$name.vmx\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasuser) 2>/dev/null
-                    state="destroyed"
-                else
-                    state="saved"
-                fi
-            fi
-        else
-            reportError "Destroy is disabled"
-            return 1
-        fi
-        ;;
-      exec)
-        reportError "Haven't implemented $1 yet"
-        return 1
-        ;;
+      esac
+      ;;
     esac
+    ;;
+  start)
+    if [ "$state" = "off" ]; then
+      if [ "$vmshared" ]; then
+        reportInfo "VMware Workstation Shared Mode enabled: vmshared=\"$vmshared\", vmport=\"$vmport\""
+        result=$(
+          command="\"$vmhome/vmrun\" -T ws-shared -h https://localhost:$vmport/sdk -u \"$vmuser\" -p \"$vmpass\" start \"[ha-datacenter/standard] $name/$name.vmx\""
+          parseEntry "$host"
+          checkState
+          ${exmt}ExecHandler runasuser
+        )
+      else
+        result=$(
+          command="\"$vmhome/vmrun\" start \"$vmdata/$name/$name.vmx\" nogui"
+          parseEntry "$host"
+          checkState
+          ${exmt}ExecHandler runasuser
+        )
+      fi
+      case "$result" in
+      *"Error: The file is already in use"*)
+        reportError "Failed to start $name because it is in-use. Try closing $name in your gui"
+        state="aborted"
+        ;;
+      *)
+        state="booting"
+        ;;
+      esac
+    fi
+    ;;
+  stop)
+    if [ "$state" = "on" ]; then
+      (
+        command="$osstop"
+        ${exmt}ExecHandler runasadmin
+      ) 2>/dev/null
+      state="stopping"
+    fi
+    ;;
+  restart)
+    if [ "$state" = "on" ]; then
+      (
+        command="$osreboot"
+        ${exmt}ExecHandler runasadmin
+      ) 2>/dev/null
+      state="restarting"
+    fi
+    ;;
+  create)
+    # Check for global template, override with local if exists.
+    if [ -e "$syscfd/tpl/$vrmt.stf" ]; then
+      template="$syscfd/tpl/$vrmt.stf"
+    fi
+    if [ -e "$usrcfd/tpl/$vrmt.stf" ]; then
+      template="$usrcfd/tpl/$vrmt.stf"
+    fi
 
-    return 0
+    # Create virtual machine configuration
+    if [ -e "$template" ]; then
+      mkdir -p "$usrcfd/sys/$name"
+      macGen "$vrmt"
+      cat "$template" |
+        sed "s|GUEST_NAME|$name|g" |
+        sed "s|GUEST_DESC|$desc|g" |
+        sed "s|GUEST_OS|$guestos|g" |
+        sed "s|GUEST_NUMVCPU|$numvcpu|g" |
+        sed "s|GUEST_MEMSIZE|$memsize|g" |
+        sed "s|GUEST_MACADDR|$macaddr|g" \
+          >"$usrcfd/sys/$name/$name.vmx"
+      mkdir "$usrcfd/tmp/session.create.$name"
+      cp "$usrcfd/sys/$name/$name.vmx" "$usrcfd/tmp/session.create.$name"
+      (
+        source="$usrcfd/tmp/session.create.$name" target="$vmdata/$name"
+        parseEntry "$host"
+        checkState
+        ${exmt}ExecHandler sendasuser
+      ) 2>/dev/null
+      rm -f "$usrcfd/tmp/session.create.$name/$name.vmx"
+      rmdir "$usrcfd/tmp/session.create.$name"
+      (
+        command="\"$vmhome/vmware-vdiskmanager\" -c -s ${dsksize}GB -a ide -t 0 \"$vmdata/$name/$name.vmdk\""
+        parseEntry "$host"
+        checkState
+        ${exmt}ExecHandler runasuser
+      ) 2>/dev/null
+      state="created"
+    else
+      reportError "Config template for $vrmt style guest not found: need either $usrcfd/tpl/$vrmt.stf or $syscfd/tpl/$vrmt.stf"
+      return 1
+    fi
+    ;;
+  destroy)
+    if [ "$destroy" = "true" ]; then
+      if [ "$state" = "off" ]; then
+        printf "You are about to delete and destroy $name. Are you sure? (y|n): "
+        read answer
+        if [ "$answer" = "y" -o "$answer" = "Y" ]; then
+          (
+            command="\"$vmhome/vmrun\" deleteVM \"$vmdata/$name/$name.vmx\""
+            parseEntry "$host"
+            checkState
+            ${exmt}ExecHandler runasuser
+          ) 2>/dev/null
+          state="destroyed"
+        else
+          state="saved"
+        fi
+      fi
+    else
+      reportError "Destroy is disabled"
+      return 1
+    fi
+    ;;
+  exec)
+    reportError "Haven't implemented $1 yet"
+    return 1
+    ;;
+  esac
+
+  return 0
 }
 
 # vmfVirtHandler(state|start|stop|restart|create|destroy)
@@ -2990,107 +3199,143 @@ function vmwVirtHandler {
 # Handle VMware Fusion virtual machine related commands.
 #
 function vmfVirtHandler {
-    reportDebugFuncEntry "$*" "name host state vrmt memsize destroy"
+  reportDebugFuncEntry "$*" "name host state vrmt memsize destroy"
 
-    typeset result
-    typeset template
-    typeset answer
+  typeset result
+  typeset template
+  typeset answer
 
-    case "$1" in
-      state)
-        result="$(command="\"$vmhome/vmrun\" list" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasuser)"
-        case "$result" in
-          *"$name"*)
-            vmstate="active"
-            ;;
-          *)
-            result="$(command="\"$vmhome/vmrun\" listSnapshots \"$vmdata/$name.vmwarevm/$name.vmx\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasuser)"
-            case "$result" in
-              *"Error: Cannot open VM"*)
-                vmstate="non-existing"
-                ;;
-              *)
-                vmstate="inactive"
-                ;;
-            esac
-            ;;
-        esac
+  case "$1" in
+  state)
+    result="$(
+      command="\"$vmhome/vmrun\" list"
+      parseEntry "$host"
+      checkState
+      ${exmt}ExecHandler runasuser
+    )"
+    case "$result" in
+    *"$name"*)
+      vmstate="active"
+      ;;
+    *)
+      result="$(
+        command="\"$vmhome/vmrun\" listSnapshots \"$vmdata/$name.vmwarevm/$name.vmx\""
+        parseEntry "$host"
+        checkState
+        ${exmt}ExecHandler runasuser
+      )"
+      case "$result" in
+      *"Error: Cannot open VM"*)
+        vmstate="non-existing"
         ;;
-      start)
-        if [ "$state" = "off" ]; then
-            (command="\"$vmhome/vmrun\" start \"$vmdata/$name.vmwarevm/$name.vmx\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasuser) 2>/dev/null
-            state="booting"
-        fi
+      *)
+        vmstate="inactive"
         ;;
-      stop)
-        if [ "$state" = "on" ]; then
-            (command="$osstop" ; ${exmt}ExecHandler runasadmin) 2>/dev/null
-            state="stopping"
-        fi
-        ;;
-      restart)
-        if [ "$state" = "on" ]; then
-            (command="$osreboot" ; ${exmt}ExecHandler runasadmin) 2>/dev/null
-            state="restarting"
-        fi
-        ;;
-      create)
-        # Check for global template, override with local if exists.
-        if [ -e "$syscfd/tpl/$vrmt.stf" ]; then
-            template="$syscfd/tpl/$vrmt.stf"
-        fi
-        if [ -e "$usrcfd/tpl/$vrmt.stf" ]; then
-            template="$usrcfd/tpl/$vrmt.stf"
-        fi
-
-        # Create virtual machine configuration
-        if [ -e "$template" ]; then
-            mkdir -p "$usrcfd/sys/$name"
-            macGen "$vrmt"
-            cat "$template" \
-                | sed "s|GUEST_NAME|$name|g" \
-                | sed "s|GUEST_DESC|$desc|g" \
-                | sed "s|GUEST_OS|$guestos|g" \
-                | sed "s|GUEST_NUMVCPU|$numvcpu|g" \
-                | sed "s|GUEST_MEMSIZE|$memsize|g" \
-                | sed "s|GUEST_MACADDR|$macaddr|g" \
-                > "$usrcfd/sys/$name/$name.vmx"
-            mkdir "$usrcfd/tmp/session.create.$name"
-            cp "$usrcfd/sys/$name/$name.vmx" "$usrcfd/tmp/session.create.$name"
-            (source="$usrcfd/tmp/session.create.$name" target="$vmdata/$name" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler sendasuser) 2>/dev/null
-            rm -f "$usrcfd/tmp/session.create.$name/$name.vmx"
-            rmdir "$usrcfd/tmp/session.create.$name"
-            (command="\"$vmhome/vmware-vdiskmanager\" -c -s ${dsksize}GB -a ide -t 0 \"$vmdata/$name.vmwarevm/$name.vmdk\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasuser) 2>/dev/null
-            state="created"
-        else
-            reportError "Config template for $vrmt style guest not found: need either $usrcfd/tpl/$vrmt.stf or $syscfd/tpl/$vrmt.stf"
-            return 1
-        fi
-        ;;
-      destroy)
-        if [ "$destroy" = "true" ]; then
-            if [ "$state" = "off" ]; then
-                printf "You are about to delete and destroy $name. Are you sure? (y|n): "
-                read answer
-                if [ "$answer" = "y" -o "$answer" = "Y" ]; then
-                    (command="\"$vmhome/vmrun\" deleteVM \"$vmdata/$name.vmwarevm/$name.vmx\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasuser) 2>/dev/null
-                    state="destroyed"
-                else
-                    state="saved"
-                fi
-            fi
-        else
-            reportError "Destroy is disabled"
-            return 1
-        fi
-        ;;
-      exec)
-        reportError "Haven't implemented $1 yet"
-        return 1
-        ;;
+      esac
+      ;;
     esac
+    ;;
+  start)
+    if [ "$state" = "off" ]; then
+      (
+        command="\"$vmhome/vmrun\" start \"$vmdata/$name.vmwarevm/$name.vmx\""
+        parseEntry "$host"
+        checkState
+        ${exmt}ExecHandler runasuser
+      ) 2>/dev/null
+      state="booting"
+    fi
+    ;;
+  stop)
+    if [ "$state" = "on" ]; then
+      (
+        command="$osstop"
+        ${exmt}ExecHandler runasadmin
+      ) 2>/dev/null
+      state="stopping"
+    fi
+    ;;
+  restart)
+    if [ "$state" = "on" ]; then
+      (
+        command="$osreboot"
+        ${exmt}ExecHandler runasadmin
+      ) 2>/dev/null
+      state="restarting"
+    fi
+    ;;
+  create)
+    # Check for global template, override with local if exists.
+    if [ -e "$syscfd/tpl/$vrmt.stf" ]; then
+      template="$syscfd/tpl/$vrmt.stf"
+    fi
+    if [ -e "$usrcfd/tpl/$vrmt.stf" ]; then
+      template="$usrcfd/tpl/$vrmt.stf"
+    fi
 
-    return 0
+    # Create virtual machine configuration
+    if [ -e "$template" ]; then
+      mkdir -p "$usrcfd/sys/$name"
+      macGen "$vrmt"
+      cat "$template" |
+        sed "s|GUEST_NAME|$name|g" |
+        sed "s|GUEST_DESC|$desc|g" |
+        sed "s|GUEST_OS|$guestos|g" |
+        sed "s|GUEST_NUMVCPU|$numvcpu|g" |
+        sed "s|GUEST_MEMSIZE|$memsize|g" |
+        sed "s|GUEST_MACADDR|$macaddr|g" \
+          >"$usrcfd/sys/$name/$name.vmx"
+      mkdir "$usrcfd/tmp/session.create.$name"
+      cp "$usrcfd/sys/$name/$name.vmx" "$usrcfd/tmp/session.create.$name"
+      (
+        source="$usrcfd/tmp/session.create.$name" target="$vmdata/$name"
+        parseEntry "$host"
+        checkState
+        ${exmt}ExecHandler sendasuser
+      ) 2>/dev/null
+      rm -f "$usrcfd/tmp/session.create.$name/$name.vmx"
+      rmdir "$usrcfd/tmp/session.create.$name"
+      (
+        command="\"$vmhome/vmware-vdiskmanager\" -c -s ${dsksize}GB -a ide -t 0 \"$vmdata/$name.vmwarevm/$name.vmdk\""
+        parseEntry "$host"
+        checkState
+        ${exmt}ExecHandler runasuser
+      ) 2>/dev/null
+      state="created"
+    else
+      reportError "Config template for $vrmt style guest not found: need either $usrcfd/tpl/$vrmt.stf or $syscfd/tpl/$vrmt.stf"
+      return 1
+    fi
+    ;;
+  destroy)
+    if [ "$destroy" = "true" ]; then
+      if [ "$state" = "off" ]; then
+        printf "You are about to delete and destroy $name. Are you sure? (y|n): "
+        read answer
+        if [ "$answer" = "y" -o "$answer" = "Y" ]; then
+          (
+            command="\"$vmhome/vmrun\" deleteVM \"$vmdata/$name.vmwarevm/$name.vmx\""
+            parseEntry "$host"
+            checkState
+            ${exmt}ExecHandler runasuser
+          ) 2>/dev/null
+          state="destroyed"
+        else
+          state="saved"
+        fi
+      fi
+    else
+      reportError "Destroy is disabled"
+      return 1
+    fi
+    ;;
+  exec)
+    reportError "Haven't implemented $1 yet"
+    return 1
+    ;;
+  esac
+
+  return 0
 }
 
 # esxVirtHandler(state|start|stop|restart|create|destroy)
@@ -3099,103 +3344,139 @@ function vmfVirtHandler {
 # Handle VMware ESX(i) virtual machine related commands.
 #
 function esxVirtHandler {
-    reportDebugFuncEntry "$*" "name host state vrmt memsize destroy"
+  reportDebugFuncEntry "$*" "name host state vrmt memsize destroy"
 
-    typeset result
-    typeset template
-    typeset answer
+  typeset result
+  typeset template
+  typeset answer
 
-    case "$1" in
-      state)
-        result="$(command='vim-cmd vmsvc/power.getstate $(vim-cmd vmsvc/getallvms | grep '"$name"' | cut -f 1) 2> /dev/null | grep Powered' ; parseEntry "$host" ; checkState ;  ${exmt}ExecHandler runasadmin)"
-        case "$result" in
-          *"Powered on"*)
-            vmstate="active"
-            ;;
-          *"Powered off"*)
-            vmstate="inactive"
-            ;;
-          *)
-            vmstate="non-existing"
-            ;;
-        esac
-        ;;
-      start)
-        if [ "$state" = "off" ]; then
-            (command='vim-cmd vmsvc/power.on $(vim-cmd vmsvc/getallvms | grep '"$name"' | cut -f 1)' ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin) 2>/dev/null
-            state="booting"
-        fi
-        ;;
-      stop)
-        if [ "$state" = "on" ]; then
-            (command="$osstop" ; ${exmt}ExecHandler runasadmin) 2>/dev/null
-            state="stopping"
-        fi
-        ;;
-      restart)
-        if [ "$state" = "on" ]; then
-            (command="$osreboot" ; ${exmt}ExecHandler runasadmin) 2>/dev/null
-            state="restarting"
-        fi
-        ;;
-      create)
-        # Check for global template, override with local if exists.
-        if [ -e "$syscfd/tpl/$vrmt.stf" ]; then
-            template="$syscfd/tpl/$vrmt.stf"
-        fi
-        if [ -e "$usrcfd/tpl/$vrmt.stf" ]; then
-            template="$usrcfd/tpl/$vrmt.stf"
-        fi
-
-        # Create virtual machine configuration
-        if [ -e "$template" ]; then
-            mkdir -p "$usrcfd/sys/$name"
-            macGen "$vrmt"
-            cat "$template" \
-                | sed "s|GUEST_NAME|$name|g" \
-                | sed "s|GUEST_DESC|$desc|g" \
-                | sed "s|GUEST_OS|$guestos|g" \
-                | sed "s|GUEST_NUMVCPU|$numvcpu|g" \
-                | sed "s|GUEST_MEMSIZE|$memsize|g" \
-                | sed "s|GUEST_MACADDR|$macaddr|g" \
-                > "$usrcfd/sys/$name/$name.vmx"
-            mkdir "$usrcfd/tmp/session.create.$name"
-            cp "$usrcfd/sys/$name/$name.vmx" "$usrcfd/tmp/session.create.$name"
-            (source="$usrcfd/tmp/session.create.$name" target="$vmdata/$name" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler sendasadmin) 2>/dev/null
-            rm -f "$usrcfd/tmp/session.create.$name/$name.vmx"
-            rmdir "$usrcfd/tmp/session.create.$name"
-            (command="/sbin/vmkfstools -c ${dsksize}G \"$vmdata/$name/$name.vmdk\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin) 2>/dev/null
-            (command="vim-cmd solo/registervm \"$vmdata/$name/$name.vmx\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin) 2>/dev/null
-            state="created"
-        else
-            reportError "Config template for $vrmt style guest not found: need either $usrcfd/tpl/$vrmt.stf or $syscfd/tpl/$vrmt.stf"
-            return 1
-        fi
-        ;;
-      destroy)
-        if [ "$destroy" = "true" ]; then
-            if [ "$state" = "off" ]; then
-                printf "You are about to delete and destroy $name. Are you sure? (y|n): "
-                read answer
-                if [ "$answer" = "y" -o "$answer" = "Y" ]; then
-                    (command='vim-cmd vmsvc/destroy $(vim-cmd vmsvc/getallvms | grep '"$name"' | cut -f 1)' ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin) 2>/dev/null
-                    state="destroyed"
-                else
-                    state="saved"
-                fi
-            fi
-        else
-            reportError "Destroy is disabled"
-            return 1
-        fi
-        ;;
-      exec)
-        reportError "Haven't implemented $1 yet"
-        return 1
-        ;;
+  case "$1" in
+  state)
+    result="$(
+      command='vim-cmd vmsvc/power.getstate $(vim-cmd vmsvc/getallvms | grep '"$name"' | cut -f 1) 2> /dev/null | grep Powered'
+      parseEntry "$host"
+      checkState
+      ${exmt}ExecHandler runasadmin
+    )"
+    case "$result" in
+    *"Powered on"*)
+      vmstate="active"
+      ;;
+    *"Powered off"*)
+      vmstate="inactive"
+      ;;
+    *)
+      vmstate="non-existing"
+      ;;
     esac
+    ;;
+  start)
+    if [ "$state" = "off" ]; then
+      (
+        command='vim-cmd vmsvc/power.on $(vim-cmd vmsvc/getallvms | grep '"$name"' | cut -f 1)'
+        parseEntry "$host"
+        checkState
+        ${exmt}ExecHandler runasadmin
+      ) 2>/dev/null
+      state="booting"
+    fi
+    ;;
+  stop)
+    if [ "$state" = "on" ]; then
+      (
+        command="$osstop"
+        ${exmt}ExecHandler runasadmin
+      ) 2>/dev/null
+      state="stopping"
+    fi
+    ;;
+  restart)
+    if [ "$state" = "on" ]; then
+      (
+        command="$osreboot"
+        ${exmt}ExecHandler runasadmin
+      ) 2>/dev/null
+      state="restarting"
+    fi
+    ;;
+  create)
+    # Check for global template, override with local if exists.
+    if [ -e "$syscfd/tpl/$vrmt.stf" ]; then
+      template="$syscfd/tpl/$vrmt.stf"
+    fi
+    if [ -e "$usrcfd/tpl/$vrmt.stf" ]; then
+      template="$usrcfd/tpl/$vrmt.stf"
+    fi
 
-    return 0
+    # Create virtual machine configuration
+    if [ -e "$template" ]; then
+      mkdir -p "$usrcfd/sys/$name"
+      macGen "$vrmt"
+      cat "$template" |
+        sed "s|GUEST_NAME|$name|g" |
+        sed "s|GUEST_DESC|$desc|g" |
+        sed "s|GUEST_OS|$guestos|g" |
+        sed "s|GUEST_NUMVCPU|$numvcpu|g" |
+        sed "s|GUEST_MEMSIZE|$memsize|g" |
+        sed "s|GUEST_MACADDR|$macaddr|g" \
+          >"$usrcfd/sys/$name/$name.vmx"
+      mkdir "$usrcfd/tmp/session.create.$name"
+      cp "$usrcfd/sys/$name/$name.vmx" "$usrcfd/tmp/session.create.$name"
+      (
+        source="$usrcfd/tmp/session.create.$name" target="$vmdata/$name"
+        parseEntry "$host"
+        checkState
+        ${exmt}ExecHandler sendasadmin
+      ) 2>/dev/null
+      rm -f "$usrcfd/tmp/session.create.$name/$name.vmx"
+      rmdir "$usrcfd/tmp/session.create.$name"
+      (
+        command="/sbin/vmkfstools -c ${dsksize}G \"$vmdata/$name/$name.vmdk\""
+        parseEntry "$host"
+        checkState
+        ${exmt}ExecHandler runasadmin
+      ) 2>/dev/null
+      (
+        command="vim-cmd solo/registervm \"$vmdata/$name/$name.vmx\""
+        parseEntry "$host"
+        checkState
+        ${exmt}ExecHandler runasadmin
+      ) 2>/dev/null
+      state="created"
+    else
+      reportError "Config template for $vrmt style guest not found: need either $usrcfd/tpl/$vrmt.stf or $syscfd/tpl/$vrmt.stf"
+      return 1
+    fi
+    ;;
+  destroy)
+    if [ "$destroy" = "true" ]; then
+      if [ "$state" = "off" ]; then
+        printf "You are about to delete and destroy $name. Are you sure? (y|n): "
+        read answer
+        if [ "$answer" = "y" -o "$answer" = "Y" ]; then
+          (
+            command='vim-cmd vmsvc/destroy $(vim-cmd vmsvc/getallvms | grep '"$name"' | cut -f 1)'
+            parseEntry "$host"
+            checkState
+            ${exmt}ExecHandler runasadmin
+          ) 2>/dev/null
+          state="destroyed"
+        else
+          state="saved"
+        fi
+      fi
+    else
+      reportError "Destroy is disabled"
+      return 1
+    fi
+    ;;
+  exec)
+    reportError "Haven't implemented $1 yet"
+    return 1
+    ;;
+  esac
+
+  return 0
 }
 
 # hpvmVirtHandler(state|start|stop|restart|create|destroy)
@@ -3204,63 +3485,79 @@ function esxVirtHandler {
 # Handle HPVM virtual machine related commands.
 #
 function hpvmVirtHandler {
-    reportDebugFuncEntry "$*" "name host state destroy"
+  reportDebugFuncEntry "$*" "name host state destroy"
 
-    typeset result
+  typeset result
 
-    case "$1" in
-      state)
-        result="$(command="/opt/hpvm/bin/hpvmstatus -P \"$name\" | grep \"^$name\" | awk '{print \$4}'" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin)"
-        case "$result" in
-          *On*)
-            vmstate="active"
-            ;;
-          *Off*)
-            vmstate="inactive"
-            ;;
-          *)
-            vmstate="non-existing"
-            ;;
-        esac
-        ;;
-      start)
-        if [ "$state" = "off" ]; then
-            (command="/opt/hpvm/bin/hpvmstart -P \"$name\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin) 2>/dev/null
-            state="booting"
-        fi
-        ;;
-      stop)
-        if [ "$state" = "on" ]; then
-            (command="$osstop" ; ${exmt}ExecHandler runasadmin) 2>/dev/null
-            state="stopping"
-        fi
-        ;;
-      restart)
-        if [ "$state" = "on" ]; then
-            (command="$osreboot" ; ${exmt}ExecHandler runasadmin) 2>/dev/null
-            state="restarting"
-        fi
-        ;;
-      create)
-        reportError "Haven't implemented $1 yet"
-        return 1
-        ;;
-      destroy)
-        if [ "$destroy" = "true" ]; then
-            reportError "Haven't implemented $1 yet"
-            return 1
-        else
-            reportError "Destroy is disabled"
-            return 1
-        fi
-        ;;
-      exec)
-        reportError "Haven't implemented $1 yet"
-        return 1
-        ;;
+  case "$1" in
+  state)
+    result="$(
+      command="/opt/hpvm/bin/hpvmstatus -P \"$name\" | grep \"^$name\" | awk '{print \$4}'"
+      parseEntry "$host"
+      checkState
+      ${exmt}ExecHandler runasadmin
+    )"
+    case "$result" in
+    *On*)
+      vmstate="active"
+      ;;
+    *Off*)
+      vmstate="inactive"
+      ;;
+    *)
+      vmstate="non-existing"
+      ;;
     esac
+    ;;
+  start)
+    if [ "$state" = "off" ]; then
+      (
+        command="/opt/hpvm/bin/hpvmstart -P \"$name\""
+        parseEntry "$host"
+        checkState
+        ${exmt}ExecHandler runasadmin
+      ) 2>/dev/null
+      state="booting"
+    fi
+    ;;
+  stop)
+    if [ "$state" = "on" ]; then
+      (
+        command="$osstop"
+        ${exmt}ExecHandler runasadmin
+      ) 2>/dev/null
+      state="stopping"
+    fi
+    ;;
+  restart)
+    if [ "$state" = "on" ]; then
+      (
+        command="$osreboot"
+        ${exmt}ExecHandler runasadmin
+      ) 2>/dev/null
+      state="restarting"
+    fi
+    ;;
+  create)
+    reportError "Haven't implemented $1 yet"
+    return 1
+    ;;
+  destroy)
+    if [ "$destroy" = "true" ]; then
+      reportError "Haven't implemented $1 yet"
+      return 1
+    else
+      reportError "Destroy is disabled"
+      return 1
+    fi
+    ;;
+  exec)
+    reportError "Haven't implemented $1 yet"
+    return 1
+    ;;
+  esac
 
-    return 0
+  return 0
 }
 
 # ldomVirtHandler(state|start|stop|restart|create|destroy)
@@ -3269,63 +3566,79 @@ function hpvmVirtHandler {
 # Handle Sun/Oracle LDOM virtual machine related commands.
 #
 function ldomVirtHandler {
-    reportDebugFuncEntry "$*" "name host state destroy"
+  reportDebugFuncEntry "$*" "name host state destroy"
 
-    typeset result
+  typeset result
 
-    case "$1" in
-      state)
-        result="$(command="ldm list | grep \"^$name\" | awk '{print \$2}'" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin)"
-        case "$result" in
-          *active*)
-            vmstate="active"
-            ;;
-          *inactive*)
-            vmstate="inactive"
-            ;;
-          *)
-            vmstate="non-existing"
-            ;;
-        esac
-        ;;
-      start)
-        if [ "$state" = "off" ]; then
-            (command="ldm start-domain \"$name\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin) 2>/dev/null
-            state="booting"
-        fi
-        ;;
-      stop)
-        if [ "$state" = "on" ]; then
-            (command="$osstop" ; ${exmt}ExecHandler runasadmin) 2>/dev/null
-            state="stopping"
-        fi
-        ;;
-      restart)
-        if [ "$state" = "on" ]; then
-            (command="$osreboot" ; ${exmt}ExecHandler runasadmin) 2>/dev/null
-            state="restarting"
-        fi
-        ;;
-      create)
-        reportError "Haven't implemented $1 yet"
-        return 1
-        ;;
-      destroy)
-        if [ "$destroy" = "true" ]; then
-            reportError "Haven't implemented $1 yet"
-            return 1
-        else
-            reportError "Destroy is disabled"
-            return 1
-        fi
-        ;;
-      exec)
-        reportError "Haven't implemented $1 yet"
-        return 1
-        ;;
+  case "$1" in
+  state)
+    result="$(
+      command="ldm list | grep \"^$name\" | awk '{print \$2}'"
+      parseEntry "$host"
+      checkState
+      ${exmt}ExecHandler runasadmin
+    )"
+    case "$result" in
+    *active*)
+      vmstate="active"
+      ;;
+    *inactive*)
+      vmstate="inactive"
+      ;;
+    *)
+      vmstate="non-existing"
+      ;;
     esac
+    ;;
+  start)
+    if [ "$state" = "off" ]; then
+      (
+        command="ldm start-domain \"$name\""
+        parseEntry "$host"
+        checkState
+        ${exmt}ExecHandler runasadmin
+      ) 2>/dev/null
+      state="booting"
+    fi
+    ;;
+  stop)
+    if [ "$state" = "on" ]; then
+      (
+        command="$osstop"
+        ${exmt}ExecHandler runasadmin
+      ) 2>/dev/null
+      state="stopping"
+    fi
+    ;;
+  restart)
+    if [ "$state" = "on" ]; then
+      (
+        command="$osreboot"
+        ${exmt}ExecHandler runasadmin
+      ) 2>/dev/null
+      state="restarting"
+    fi
+    ;;
+  create)
+    reportError "Haven't implemented $1 yet"
+    return 1
+    ;;
+  destroy)
+    if [ "$destroy" = "true" ]; then
+      reportError "Haven't implemented $1 yet"
+      return 1
+    else
+      reportError "Destroy is disabled"
+      return 1
+    fi
+    ;;
+  exec)
+    reportError "Haven't implemented $1 yet"
+    return 1
+    ;;
+  esac
 
-    return 0
+  return 0
 }
 
 # pvmVirtHandler(state|start|stop|restart|create|destroy)
@@ -3334,66 +3647,82 @@ function ldomVirtHandler {
 # Handle IBM PowerVM virtual machine related commands.
 #
 function pvmVirtHandler {
-    reportDebugFuncEntry "$*" "name host state destroy"
+  reportDebugFuncEntry "$*" "name host state destroy"
 
-    typeset result
+  typeset result
 
-    case "$1" in
-      state)
-        result="$(command="lssyscfg -r sys -F name:state | grep \"$name\" | cut -d: -f2" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin)"
-        case "$result" in
-          *Operating*)
-            vmstate="active"
-            ;;
-          *Running*)
-            vmstate="active"
-            ;;
-          *"Not Activated"*)
-            vmstate="inactive"
-            ;;
-          *)
-            vmstate="non-existing"
-            ;;
-        esac
-        ;;
-      start)
-        if [ "$state" = "off" ]; then
-            (command="chsysstate -m \"$name\" -o on" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin) 2>/dev/null
-            state="booting"
-        fi
-        ;;
-      stop)
-        if [ "$state" = "on" ]; then
-            (command="$osstop" ; ${exmt}ExecHandler runasadmin) 2>/dev/null
-            state="stopping"
-        fi
-        ;;
-      restart)
-        if [ "$state" = "on" ]; then
-            (command="$osreboot" ; ${exmt}ExecHandler runasadmin) 2>/dev/null
-            state="restarting"
-        fi
-        ;;
-      create)
-        reportError "Haven't implemented $1 yet"
-        return 1
-        ;;
-      destroy)
-        if [ "$destroy" = "true" ]; then
-            reportError "Haven't implemented $1 yet"
-            return 1
-        else
-            reportError "Destroy is disabled"
-            return 1
-        fi
-        ;;
-      exec)
-        reportError "Haven't implemented $1 yet"
-        return 1
-        ;;
+  case "$1" in
+  state)
+    result="$(
+      command="lssyscfg -r sys -F name:state | grep \"$name\" | cut -d: -f2"
+      parseEntry "$host"
+      checkState
+      ${exmt}ExecHandler runasadmin
+    )"
+    case "$result" in
+    *Operating*)
+      vmstate="active"
+      ;;
+    *Running*)
+      vmstate="active"
+      ;;
+    *"Not Activated"*)
+      vmstate="inactive"
+      ;;
+    *)
+      vmstate="non-existing"
+      ;;
     esac
+    ;;
+  start)
+    if [ "$state" = "off" ]; then
+      (
+        command="chsysstate -m \"$name\" -o on"
+        parseEntry "$host"
+        checkState
+        ${exmt}ExecHandler runasadmin
+      ) 2>/dev/null
+      state="booting"
+    fi
+    ;;
+  stop)
+    if [ "$state" = "on" ]; then
+      (
+        command="$osstop"
+        ${exmt}ExecHandler runasadmin
+      ) 2>/dev/null
+      state="stopping"
+    fi
+    ;;
+  restart)
+    if [ "$state" = "on" ]; then
+      (
+        command="$osreboot"
+        ${exmt}ExecHandler runasadmin
+      ) 2>/dev/null
+      state="restarting"
+    fi
+    ;;
+  create)
+    reportError "Haven't implemented $1 yet"
+    return 1
+    ;;
+  destroy)
+    if [ "$destroy" = "true" ]; then
+      reportError "Haven't implemented $1 yet"
+      return 1
+    else
+      reportError "Destroy is disabled"
+      return 1
+    fi
+    ;;
+  exec)
+    reportError "Haven't implemented $1 yet"
+    return 1
+    ;;
+  esac
 
-    return 0
+  return 0
 }
 
 # dockerVirtHandler(state|start|stop|restart|create|destroy)
@@ -3402,66 +3731,91 @@ function pvmVirtHandler {
 # Handle Docker container related commands.
 #
 function dockerVirtHandler {
-    reportDebugFuncEntry "$*" "name host state destroy"
+  reportDebugFuncEntry "$*" "name host state destroy"
 
-    typeset result
+  typeset result
 
-    case "$1" in
-      state)
-        result="$(command="docker ps --all --format \"{{.Names}},{{.Status}}\" | grep -i \"^$name,\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin)"
-        case "$result" in
-          *,Up*)
-            vmstate="active"
-            ;;
-          *,Created*)
-            vmstate="inactive"
-            ;;
-          *,Exited*)
-            vmstate="inactive"
-            ;;
-          *)
-            vmstate="non-existing"
-            ;;
-        esac
-        ;;
-      start)
-        if [ "$state" = "off" ]; then
-            (command="docker start \"$name\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin) >/dev/null
-            state="booting"
-        fi
-        ;;
-      stop)
-        if [ "$state" = "on" ]; then
-            (command="docker stop \"$name\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin) >/dev/null
-            state="stopping"
-        fi
-        ;;
-      restart)
-        if [ "$state" = "on" ]; then
-            (command="docker restart \"$name\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin) >/dev/null
-            state="restarting"
-        fi
-        ;;
-      create)
-        reportError "Haven't implemented $1 yet"
-        return 1
-        ;;
-      destroy)
-        if [ "$destroy" = "true" ]; then
-            reportError "Haven't implemented $1 yet"
-            return 1
-        else
-            reportError "Destroy is disabled"
-            return 1
-        fi
-        ;;
-      exec)
-        result="$(command="docker exec --interactive \"$name\" /bin/sh -c \"$command\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasadmin)"
-        echo $result
-        ;;
+  case "$1" in
+  state)
+    result="$(
+      command="docker ps --all --format \"{{.Names}},{{.Status}}\" | grep -i \"^$name,\""
+      parseEntry "$host"
+      checkState
+      ${exmt}ExecHandler runasadmin
+    )"
+    case "$result" in
+    *,Up*)
+      vmstate="active"
+      ;;
+    *,Created*)
+      vmstate="inactive"
+      ;;
+    *,Exited*)
+      vmstate="inactive"
+      ;;
+    *)
+      vmstate="non-existing"
+      ;;
     esac
+    ;;
+  start)
+    if [ "$state" = "off" ]; then
+      (
+        command="docker start \"$name\""
+        parseEntry "$host"
+        checkState
+        ${exmt}ExecHandler runasadmin
+      ) >/dev/null
+      state="booting"
+    fi
+    ;;
+  stop)
+    if [ "$state" = "on" ]; then
+      (
+        command="docker stop \"$name\""
+        parseEntry "$host"
+        checkState
+        ${exmt}ExecHandler runasadmin
+      ) >/dev/null
+      state="stopping"
+    fi
+    ;;
+  restart)
+    if [ "$state" = "on" ]; then
+      (
+        command="docker restart \"$name\""
+        parseEntry "$host"
+        checkState
+        ${exmt}ExecHandler runasadmin
+      ) >/dev/null
+      state="restarting"
+    fi
+    ;;
+  create)
+    reportError "Haven't implemented $1 yet"
+    return 1
+    ;;
+  destroy)
+    if [ "$destroy" = "true" ]; then
+      reportError "Haven't implemented $1 yet"
+      return 1
+    else
+      reportError "Destroy is disabled"
+      return 1
+    fi
+    ;;
+  exec)
+    result="$(
+      command="docker exec --interactive \"$name\" /bin/sh -c \"$command\""
+      parseEntry "$host"
+      checkState
+      ${exmt}ExecHandler runasadmin
+    )"
+    echo $result
+    ;;
+  esac
 
-    return 0
+  return 0
 }
 
 # androidVirtHandler(state|start|stop|restart|create|destroy|exec)
@@ -3472,67 +3826,97 @@ function dockerVirtHandler {
 # sets the AVD name (default <name>) and vmopts adds emulator options.
 #
 function androidVirtHandler {
-    reportDebugFuncEntry "$*" "name host state destroy vmhome vmdata vmname vmopts"
+  reportDebugFuncEntry "$*" "name host state destroy vmhome vmdata vmname vmopts"
 
-    typeset result
-    typeset avd="${vmname:-$name}"
-    typeset serial="$(adbSerial)"
-    typeset adb="\"$vmhome/platform-tools/adb\""
-    typeset avdhome="ANDROID_AVD_HOME=\"$vmdata\""
-    typeset emulator="\"$vmhome/emulator/emulator\""
+  typeset result
+  typeset avd="${vmname:-$name}"
+  typeset serial="$(adbSerial)"
+  typeset adb="\"$vmhome/platform-tools/adb\""
+  typeset avdhome="ANDROID_AVD_HOME=\"$vmdata\""
+  typeset emulator="\"$vmhome/emulator/emulator\""
 
-    case "$1" in
-      state)
-        result="$(command="$adb devices" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasuser 2>/dev/null)"
-        if printf '%s\n' "$result" | grep -q "^$serial[[:space:]]"; then
-            vmstate="active"
-        else
-            result="$(command="$avdhome $emulator -list-avds" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasuser 2>/dev/null)"
-            if printf '%s\n' "$result" | grep -qx "$avd"; then
-                vmstate="inactive"
-            else
-                vmstate="non-existing"
-            fi
-        fi
-        ;;
-      start)
-        if [ "$state" = "off" ]; then
-            (command="$avdhome nohup $emulator -avd \"$avd\" -port ${serial#emulator-} $vmopts </dev/null >/dev/null 2>&1 &" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasuser) >/dev/null
-            state="booting"
-        fi
-        ;;
-      stop)
-        if [ "$state" = "on" ]; then
-            (command="$adb -s $serial emu kill" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasuser) >/dev/null
-            state="stopping"
-        fi
-        ;;
-      restart)
-        if [ "$state" = "on" ]; then
-            (command="$adb -s $serial reboot" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasuser) >/dev/null
-            state="restarting"
-        fi
-        ;;
-      create)
-        reportError "Haven't implemented $1 yet"
-        return 1
-        ;;
-      destroy)
-        if [ "$destroy" = "true" ]; then
-            reportError "Haven't implemented $1 yet"
-            return 1
-        else
-            reportError "Destroy is disabled"
-            return 1
-        fi
-        ;;
-      exec)
-        (command="$adb -s $serial shell \"$command\"" ; parseEntry "$host" ; checkState ; ${exmt}ExecHandler runasuser)
-        return $?
-        ;;
-    esac
+  case "$1" in
+  state)
+    result="$(
+      command="$adb devices"
+      parseEntry "$host"
+      checkState
+      ${exmt}ExecHandler runasuser 2>/dev/null
+    )"
+    if printf '%s\n' "$result" | grep -q "^$serial[[:space:]]"; then
+      vmstate="active"
+    else
+      result="$(
+        command="$avdhome $emulator -list-avds"
+        parseEntry "$host"
+        checkState
+        ${exmt}ExecHandler runasuser 2>/dev/null
+      )"
+      if printf '%s\n' "$result" | grep -qx "$avd"; then
+        vmstate="inactive"
+      else
+        vmstate="non-existing"
+      fi
+    fi
+    ;;
+  start)
+    if [ "$state" = "off" ]; then
+      (
+        command="$avdhome nohup $emulator -avd \"$avd\" -port ${serial#emulator-} $vmopts </dev/null >/dev/null 2>&1 &"
+        parseEntry "$host"
+        checkState
+        ${exmt}ExecHandler runasuser
+      ) >/dev/null
+      state="booting"
+    fi
+    ;;
+  stop)
+    if [ "$state" = "on" ]; then
+      (
+        command="$adb -s $serial emu kill"
+        parseEntry "$host"
+        checkState
+        ${exmt}ExecHandler runasuser
+      ) >/dev/null
+      state="stopping"
+    fi
+    ;;
+  restart)
+    if [ "$state" = "on" ]; then
+      (
+        command="$adb -s $serial reboot"
+        parseEntry "$host"
+        checkState
+        ${exmt}ExecHandler runasuser
+      ) >/dev/null
+      state="restarting"
+    fi
+    ;;
+  create)
+    reportError "Haven't implemented $1 yet"
+    return 1
+    ;;
+  destroy)
+    if [ "$destroy" = "true" ]; then
+      reportError "Haven't implemented $1 yet"
+      return 1
+    else
+      reportError "Destroy is disabled"
+      return 1
+    fi
+    ;;
+  exec)
+    (
+      command="$adb -s $serial shell \"$command\""
+      parseEntry "$host"
+      checkState
+      ${exmt}ExecHandler runasuser
+    )
+    return $?
+    ;;
+  esac
 
-    return 0
+  return 0
 }
 
 # noneServiceHandler(state|start|stop|restart)
@@ -3541,21 +3925,21 @@ function androidVirtHandler {
 # Handle services that are of type none.
 #
 function noneServiceHandler {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    case "$1" in
-      state)
-        svstate="none"
-        svrunning="none"
-        svlistening="none"
-        ;;
-      start|stop|restart)
-        reportError "No service method defined for this service"
-        return 1
-        ;;
-    esac
+  case "$1" in
+  state)
+    svstate="none"
+    svrunning="none"
+    svlistening="none"
+    ;;
+  start | stop | restart)
+    reportError "No service method defined for this service"
+    return 1
+    ;;
+  esac
 
-    return 0
+  return 0
 }
 
 # scriptedServiceHandler(state|start|stop|restart)
@@ -3564,94 +3948,106 @@ function noneServiceHandler {
 # Handle regular services with svstatus, svstart and svstop.
 #
 function scriptedServiceHandler {
-    reportDebugFuncEntry "$*" "name addr port state svstatus oslisten"
+  reportDebugFuncEntry "$*" "name addr port state svstatus oslisten"
 
-    typeset result
-    typeset retval
+  typeset result
+  typeset retval
 
-    osGlobals
-    if [ ! "$svstatus" -a ! "$oslisten" ]; then
-        reportError "Neither svstatus nor oslisten is set for $name"
-        return 1
+  osGlobals
+  if [ ! "$svstatus" -a ! "$oslisten" ]; then
+    reportError "Neither svstatus nor oslisten is set for $name"
+    return 1
+  fi
+
+  case "$1" in
+  state)
+    # Set initial svstate.
+    svstate="unset"
+    svrunning="unset"
+    svlistening="unset"
+
+    result="$(printPortState "$addr" "$port")"
+    if [ "$result" = "open" ]; then
+      reportDebug "Service is listening on $addr:$port"
+      svstate="active"
+    else
+      reportDebug "Service is not directly reachable, determine svrunning by sending svstatus command to $host"
+      result="$(
+        command="$svstatus"
+        ${exmt}ExecHandler runasservice
+      )"
+      retval="$?" # from ExecHandler command
+      if [ "$retval" != 0 ]; then
+        reportDebug "Got return $retval from ${exmt}ExecHandler (on $name)"
+        svstate="unknown"
+        svrunning="unknown"
+      fi
+      if [ ! "$result" ]; then
+        reportDebug "Service got no result from svstatus command, svrunning is inactive: $result"
+        svstate="inactive"
+        svrunning="inactive"
+      elif [ "$result" ]; then
+        reportDebug "Service got result from svstatus command, svrunning is active"
+        svstate="active"
+        svrunning="active"
+      fi
+
+      # And svlistening, if we have addr and port.
+      if [ "$addr" != "none" -a "$port" != "none" ]; then
+        reportDebug "Service is not directly reachable, determine svlistening by sending oslisten command to $host"
+        result="$(
+          command="$oslisten"
+          ${exmt}ExecHandler runasservice
+        )"
+        retval="$?" # from ExecHandler command
+        if [ "$retval" != 0 ]; then
+          reportDebug "Got return $retval from ${exmt}ExecHandler (on $name)"
+          svstate="unknown"
+          svlistening="unknown"
+        fi
+        if [ ! "$result" ]; then
+          reportDebug "Service got no result from oslisten command, svlistening is inactive"
+          svstate="inactive"
+          svlistening="inactive"
+        elif [ "$result" ]; then
+          reportDebug "Service got result from oslisten command, svlistening is active"
+          svstate="active"
+          svlistening="active"
+        fi
+      fi
     fi
+    ;;
+  start)
+    if [ "$state" = "off" ]; then
+      (
+        command="$svstart"
+        ${exmt}ExecHandler runasservice
+      ) 2>/dev/null
+      state="starting"
+    else
+      reportInfo "State of service on $name was not off but $state"
+    fi
+    ;;
+  stop)
+    if [ "$state" = "on" ]; then
+      (
+        command="$svstop"
+        ${exmt}ExecHandler runasservice
+      ) 2>/dev/null
+      state="stopping"
+    else
+      reportInfo "State of service on $name was not on but $state"
+    fi
+    ;;
+  restart)
+    scriptedServiceHandler state
+    scriptedServiceHandler stop
+    scriptedServiceHandler state
+    scriptedServiceHandler start
+    ;;
+  esac
 
-    case "$1" in
-      state)
-        # Set initial svstate.
-        svstate="unset"
-        svrunning="unset"
-        svlistening="unset"
-
-        result="$(printPortState "$addr" "$port")"
-        if [ "$result" = "open" ]; then
-            reportDebug "Service is listening on $addr:$port"
-            svstate="active"
-        else
-            reportDebug "Service is not directly reachable, determine svrunning by sending svstatus command to $host"
-            result="$(command="$svstatus" ; ${exmt}ExecHandler runasservice)"
-            retval="$?" # from ExecHandler command
-            if [ "$retval" != 0 ]; then
-                reportDebug "Got return $retval from ${exmt}ExecHandler (on $name)"
-                svstate="unknown"
-                svrunning="unknown"
-            fi
-            if [ ! "$result" ]; then
-                reportDebug "Service got no result from svstatus command, svrunning is inactive: $result"
-                svstate="inactive"
-                svrunning="inactive"
-            elif [ "$result" ]; then
-                reportDebug "Service got result from svstatus command, svrunning is active"
-                svstate="active"
-                svrunning="active"
-            fi
-
-            # And svlistening, if we have addr and port.
-            if [ "$addr" != "none" -a "$port" != "none" ]; then
-                reportDebug "Service is not directly reachable, determine svlistening by sending oslisten command to $host"
-                result="$(command="$oslisten" ; ${exmt}ExecHandler runasservice)"
-                retval="$?" # from ExecHandler command
-                if [ "$retval" != 0 ]; then
-                    reportDebug "Got return $retval from ${exmt}ExecHandler (on $name)"
-                    svstate="unknown"
-                    svlistening="unknown"
-                fi
-                if [ ! "$result" ]; then
-                    reportDebug "Service got no result from oslisten command, svlistening is inactive"
-                    svstate="inactive"
-                    svlistening="inactive"
-                elif [ "$result" ]; then
-                    reportDebug "Service got result from oslisten command, svlistening is active"
-                    svstate="active"
-                    svlistening="active"
-                fi
-            fi
-        fi
-        ;;
-      start)
-        if [ "$state" = "off" ]; then
-            (command="$svstart" ; ${exmt}ExecHandler runasservice) 2>/dev/null
-            state="starting"
-        else
-            reportInfo "State of service on $name was not off but $state"
-        fi
-        ;;
-      stop)
-        if [ "$state" = "on" ]; then
-            (command="$svstop" ; ${exmt}ExecHandler runasservice) 2>/dev/null
-            state="stopping"
-        else
-            reportInfo "State of service on $name was not on but $state"
-        fi
-        ;;
-      restart)
-        scriptedServiceHandler state
-        scriptedServiceHandler stop
-        scriptedServiceHandler state
-        scriptedServiceHandler start
-        ;;
-    esac
-
-    return 0
+  return 0
 }
 
 # dockerServiceHandler(state|start|stop|restart)
@@ -3661,67 +4057,79 @@ function scriptedServiceHandler {
 # parent host or guest.
 #
 function dockerServiceHandler {
-    reportDebugFuncEntry "$*" "name addr port state"
+  reportDebugFuncEntry "$*" "name addr port state"
 
-    typeset result
+  typeset result
 
-    case "$1" in
-      state)
-        svstate="unset"
-        svrunning="unset"
-        svlistening="unset"
+  case "$1" in
+  state)
+    svstate="unset"
+    svrunning="unset"
+    svlistening="unset"
 
-        result="$(command="docker inspect --format \"{{.State.Status}}\" \"$name\"" ; ${exmt}ExecHandler runasservice 2>/dev/null)"
-        case "$result" in
-          running)
-            svrunning="active"
-            if [ "$port" != "none" ]; then
-                if [ "$(printPortState "$addr" "$port")" = "open" ]; then
-                    svlistening="active"
-                else
-                    svlistening="inactive"
-                fi
-            fi
-            ;;
-          created|exited|paused|dead)
-            svrunning="inactive"
-            svlistening="inactive"
-            ;;
-          restarting|removing)
-            reportDebug "Container $name is $result"
-            ;;
-          *)
-            svstate="unknown"
-            ;;
-        esac
-        ;;
-      start)
-        if [ "$state" = "off" ]; then
-            (command="docker start \"$name\"" ; ${exmt}ExecHandler runasservice) >/dev/null
-            state="starting"
+    result="$(
+      command="docker inspect --format \"{{.State.Status}}\" \"$name\""
+      ${exmt}ExecHandler runasservice 2>/dev/null
+    )"
+    case "$result" in
+    running)
+      svrunning="active"
+      if [ "$port" != "none" ]; then
+        if [ "$(printPortState "$addr" "$port")" = "open" ]; then
+          svlistening="active"
         else
-            reportInfo "State of service on $name was not off but $state"
+          svlistening="inactive"
         fi
-        ;;
-      stop)
-        if [ "$state" = "on" ]; then
-            (command="docker stop \"$name\"" ; ${exmt}ExecHandler runasservice) >/dev/null
-            state="stopping"
-        else
-            reportInfo "State of service on $name was not on but $state"
-        fi
-        ;;
-      restart)
-        if [ "$state" = "on" ]; then
-            (command="docker restart \"$name\"" ; ${exmt}ExecHandler runasservice) >/dev/null
-            state="restarting"
-        else
-            reportInfo "State of service on $name was not on but $state"
-        fi
-        ;;
+      fi
+      ;;
+    created | exited | paused | dead)
+      svrunning="inactive"
+      svlistening="inactive"
+      ;;
+    restarting | removing)
+      reportDebug "Container $name is $result"
+      ;;
+    *)
+      svstate="unknown"
+      ;;
     esac
+    ;;
+  start)
+    if [ "$state" = "off" ]; then
+      (
+        command="docker start \"$name\""
+        ${exmt}ExecHandler runasservice
+      ) >/dev/null
+      state="starting"
+    else
+      reportInfo "State of service on $name was not off but $state"
+    fi
+    ;;
+  stop)
+    if [ "$state" = "on" ]; then
+      (
+        command="docker stop \"$name\""
+        ${exmt}ExecHandler runasservice
+      ) >/dev/null
+      state="stopping"
+    else
+      reportInfo "State of service on $name was not on but $state"
+    fi
+    ;;
+  restart)
+    if [ "$state" = "on" ]; then
+      (
+        command="docker restart \"$name\""
+        ${exmt}ExecHandler runasservice
+      ) >/dev/null
+      state="restarting"
+    else
+      reportInfo "State of service on $name was not on but $state"
+    fi
+    ;;
+  esac
 
-    return 0
+  return 0
 }
 
 # waitForDialog(<triggerProcess> <dialogProcess>)
@@ -3730,31 +4138,34 @@ function dockerServiceHandler {
 # Waits for a dialog to close.
 #
 function waitForDialog {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    typeset triggerProcess="$1"
-    typeset dialogProcess="$2"
-    typeset promptActive
-    typeset detected
+  typeset triggerProcess="$1"
+  typeset dialogProcess="$2"
+  typeset promptActive
+  typeset detected
 
-    [ "$triggerProcess" ] || { reportError "No trigger process specified" ; return 1 ; }
+  [ "$triggerProcess" ] || {
+    reportError "No trigger process specified"
+    return 1
+  }
 
-    if [ "$dialogProcess" ]; then
-        detected="$($pslist | grep "$triggerProcess" | grep -v grep)"
-        if [ "$detected" ]; then
-            reportDebug "Detected $triggerProcess"
-            sleep 1
-            promptActive="$($pslist | grep "$dialogProcess" | grep -v grep)"
-            while [ "$promptActive" ]; do
-                promptActive="$($pslist | grep "$dialogProcess" | grep -v grep)"
-                reportDebug "Waiting for $dialogProcess to close"
-                sleep 1
-            done
-        fi
-    else
-        reportDebug "No dialog process specified to wait for, simply waiting for 10 seconds"
-        sleep 10
+  if [ "$dialogProcess" ]; then
+    detected="$($pslist | grep "$triggerProcess" | grep -v grep)"
+    if [ "$detected" ]; then
+      reportDebug "Detected $triggerProcess"
+      sleep 1
+      promptActive="$($pslist | grep "$dialogProcess" | grep -v grep)"
+      while [ "$promptActive" ]; do
+        promptActive="$($pslist | grep "$dialogProcess" | grep -v grep)"
+        reportDebug "Waiting for $dialogProcess to close"
+        sleep 1
+      done
     fi
+  else
+    reportDebug "No dialog process specified to wait for, simply waiting for 10 seconds"
+    sleep 10
+  fi
 }
 
 # puttyTerminalHandler(<protocol>)
@@ -3763,32 +4174,32 @@ function waitForDialog {
 # Handle PuTTY terminal parameterization.
 #
 function puttyTerminalHandler {
-    reportDebugFuncEntry "$*" "name addr sshopts xsasuser"
+  reportDebugFuncEntry "$*" "name addr sshopts xsasuser"
 
-    typeset nametmp="${name}.$$"
-    typeset protocol="$1"
-    typeset wrapped
-    typeset append
-    typeset line
+  typeset nametmp="${name}.$$"
+  typeset protocol="$1"
+  typeset wrapped
+  typeset append
+  typeset line
 
-    if [ "$command" ]; then
-        reportDebug "Command passed: $command"
-        reportDebug "Writing to PuTTY command file for execution"
-        printf '%s\n '"$command" | sed 's/^[[:space:]]*//' 2> /dev/null >> "$usrcfd/tmp/session.access.$nametmp.sh"
-        append="-t -m \"$(toLocalWindowsPath "$usrcfd/tmp/session.access.$nametmp.sh")\""
-    fi
+  if [ "$command" ]; then
+    reportDebug "Command passed: $command"
+    reportDebug "Writing to PuTTY command file for execution"
+    printf '%s\n '"$command" | sed 's/^[[:space:]]*//' 2>/dev/null >>"$usrcfd/tmp/session.access.$nametmp.sh"
+    append="-t -m \"$(toLocalWindowsPath "$usrcfd/tmp/session.access.$nametmp.sh")\""
+  fi
 
-    if [ "$protocol" = "ssh" ]; then
-        line="$putty $sshopts $xsasuser@$addr $append"
-    elif [ "$protocol" = "tel" ]; then
-        line="$putty -telnet $addr $append"
-    else
-        reportError "Invalid protocol type passed: $protocol; valid types are: tel ssh"
-        return 1
-    fi
+  if [ "$protocol" = "ssh" ]; then
+    line="$putty $sshopts $xsasuser@$addr $append"
+  elif [ "$protocol" = "tel" ]; then
+    line="$putty -telnet $addr $append"
+  else
+    reportError "Invalid protocol type passed: $protocol; valid types are: tel ssh"
+    return 1
+  fi
 
-    if [ "$titling" ]; then
-        wrapped="\
+  if [ "$titling" ]; then
+    wrapped="\
         reg delete \"HKEY_CURRENT_USER\\Software\\SimonTatham\\PuTTY\\Sessions\\Default%%20Settings\" /v \"WinTitle\" /f > nul 2>&1
         reg add \"HKEY_CURRENT_USER\\Software\\SimonTatham\\PuTTY\\Sessions\\Default%%20Settings\" /t REG_SZ /v \"WinTitle\" /d \"$(capsFirst "$name")\" > nul 2>&1
         $line
@@ -3798,14 +4209,13 @@ function puttyTerminalHandler {
         reg delete \"HKEY_CURRENT_USER\\Software\\SimonTatham\\PuTTY\\Sessions\\Default%%20Settings\" /v \"WinTitle\" /f > nul 2>&1
         reg add \"HKEY_CURRENT_USER\\Software\\SimonTatham\\PuTTY\\Sessions\\Default%%20Settings\" /t REG_SZ /v \"WinTitle\" > nul 2>&1
         "
-    else
-        wrapped="$line"
-    fi
+  else
+    wrapped="$line"
+  fi
 
+  viaWscript "$(localTellCommandWriter "$wrapped")"
 
-    viaWscript "$(localTellCommandWriter "$wrapped")"
-
-    return 0
+  return 0
 }
 
 # appleTerminalHandler(<protocol>)
@@ -3814,78 +4224,76 @@ function puttyTerminalHandler {
 # Handle Apple Terminal parameterization.
 #
 function appleTerminalHandler {
-    reportDebugFuncEntry "$*" "name addr sshopts xsasuser"
+  reportDebugFuncEntry "$*" "name addr sshopts xsasuser"
 
-    typeset protocol="$1"
-    typeset append
-    typeset title="$(capsFirst "$name")"
-    typeset line
+  typeset protocol="$1"
+  typeset append
+  typeset title="$(capsFirst "$name")"
+  typeset line
 
-    if [ "$command" ]; then
-        reportDebug "Command passed: $command"
-        append="$command"
+  if [ "$command" ]; then
+    reportDebug "Command passed: $command"
+    append="$command"
+  fi
+
+  if [ "$protocol" = "ssh" ]; then
+    line="ssh $sshopts -Y $xsasuser@$addr $append"
+  elif [ "$protocol" = "tel" ]; then
+    line="telnet $addr $append"
+  elif [ "$protocol" = "adb" ]; then
+    line="adb -s $(adbSerial) shell $append"
+  else
+    reportError "Invalid protocol type passed: $protocol; valid types are: tel ssh adb"
+    return 1
+  fi
+
+  if [ "$tabbed" ]; then
+    # Handle tab creation and run connection command.
+    printf "activate application \"Terminal\"\n" >"$usrcfd/tmp/session.access.$name.scpt"
+    printf "tell application \"Terminal\"\n" >>"$usrcfd/tmp/session.access.$name.scpt"
+    printf "tell application \"System Events\" to tell process \"Terminal\" to keystroke \"t\" using command down\n" >>"$usrcfd/tmp/session.access.$name.scpt"
+    printf "do script \"$line\" in last tab of front window\n" >>"$usrcfd/tmp/session.access.$name.scpt"
+    if [ "$titling" ]; then
+      printf "set custom title of last tab of front window to \"$title\"\n" >>"$usrcfd/tmp/session.access.$name.scpt"
     fi
+    printf "end tell\n" >>"$usrcfd/tmp/session.access.$name.scpt"
 
-    if [ "$protocol" = "ssh" ]; then
-        line="ssh $sshopts -Y $xsasuser@$addr $append"
-    elif [ "$protocol" = "tel" ]; then
-        line="telnet $addr $append"
-    elif [ "$protocol" = "adb" ]; then
-        line="adb -s $(adbSerial) shell $append"
+    osascript "$usrcfd/tmp/session.access.$name.scpt"
+
+    if [ "$debug" ]; then
+      reportDebug "Not removing $usrcfd/tmp/session.access.$name.scpt"
     else
-        reportError "Invalid protocol type passed: $protocol; valid types are: tel ssh adb"
-        return 1
+      rm "$usrcfd/tmp/session.access.$name.scpt"
     fi
 
-    if [ "$tabbed" ]; then
-        # Handle tab creation and run connection command.
-        printf "activate application \"Terminal\"\n" > "$usrcfd/tmp/session.access.$name.scpt"
-        printf "tell application \"Terminal\"\n" >> "$usrcfd/tmp/session.access.$name.scpt"
-        printf "tell application \"System Events\" to tell process \"Terminal\" to keystroke \"t\" using command down\n" >> "$usrcfd/tmp/session.access.$name.scpt"
-        printf "do script \"$line\" in last tab of front window\n" >> "$usrcfd/tmp/session.access.$name.scpt"
-        if [ "$titling" ]; then
-            printf "set custom title of last tab of front window to \"$title\"\n" >> "$usrcfd/tmp/session.access.$name.scpt"
-        fi
-        printf "end tell\n" >> "$usrcfd/tmp/session.access.$name.scpt"
+    # If Keychain is running, check to see if a prompt has started, wait for it to close.
+    waitForDialog "securityd" "SecurityAgent"
 
-        osascript "$usrcfd/tmp/session.access.$name.scpt"
+    # Return to first tab.
+    osascript -e 'tell application "System Events"' -e 'keystroke "}" using command down' -e 'end tell'
+  else
+    # Handle window creation and run connection command.
+    printf "activate application \"Terminal\"\n" >"$usrcfd/tmp/session.access.$name.scpt"
+    printf "tell application \"Terminal\"\n" >>"$usrcfd/tmp/session.access.$name.scpt"
+    printf "tell application \"System Events\" to tell process \"Terminal\" to keystroke \"n\" using command down\n" >>"$usrcfd/tmp/session.access.$name.scpt"
+    printf "do script \"$line\" in last tab of front window\n" >>"$usrcfd/tmp/session.access.$name.scpt"
+    if [ "$titling" ]; then
+      printf "set custom title of last tab of front window to \"$title\"\n" >>"$usrcfd/tmp/session.access.$name.scpt"
+    fi
+    printf "end tell\n" >>"$usrcfd/tmp/session.access.$name.scpt"
 
-        if [ "$debug" ]; then
-            reportDebug "Not removing $usrcfd/tmp/session.access.$name.scpt"
-        else
-            rm "$usrcfd/tmp/session.access.$name.scpt"
-        fi
+    osascript "$usrcfd/tmp/session.access.$name.scpt"
 
-
-        # If Keychain is running, check to see if a prompt has started, wait for it to close.
-        waitForDialog "securityd" "SecurityAgent"
-
-
-        # Return to first tab.
-        osascript -e 'tell application "System Events"' -e 'keystroke "}" using command down' -e 'end tell'
+    if [ "$debug" ]; then
+      reportDebug "Not removing $usrcfd/tmp/session.access.$name.scpt"
     else
-        # Handle window creation and run connection command.
-        printf "activate application \"Terminal\"\n" > "$usrcfd/tmp/session.access.$name.scpt"
-        printf "tell application \"Terminal\"\n" >> "$usrcfd/tmp/session.access.$name.scpt"
-        printf "tell application \"System Events\" to tell process \"Terminal\" to keystroke \"n\" using command down\n" >> "$usrcfd/tmp/session.access.$name.scpt"
-        printf "do script \"$line\" in last tab of front window\n" >> "$usrcfd/tmp/session.access.$name.scpt"
-        if [ "$titling" ]; then
-            printf "set custom title of last tab of front window to \"$title\"\n" >> "$usrcfd/tmp/session.access.$name.scpt"
-        fi
-        printf "end tell\n" >> "$usrcfd/tmp/session.access.$name.scpt"
-
-        osascript "$usrcfd/tmp/session.access.$name.scpt"
-
-        if [ "$debug" ]; then
-            reportDebug "Not removing $usrcfd/tmp/session.access.$name.scpt"
-        else
-            rm "$usrcfd/tmp/session.access.$name.scpt"
-        fi
-
-        # If Keychain is running, check to see if a prompt has started, wait for it to close.
-        waitForDialog "securityd" "SecurityAgent"
-
+      rm "$usrcfd/tmp/session.access.$name.scpt"
     fi
+
+    # If Keychain is running, check to see if a prompt has started, wait for it to close.
+    waitForDialog "securityd" "SecurityAgent"
+
+  fi
 }
 
 # gnomeTerminalHandler(<protocol>)
@@ -3894,46 +4302,46 @@ function appleTerminalHandler {
 # Handle Gnome Terminal parameterization.
 #
 function gnomeTerminalHandler {
-    reportDebugFuncEntry "$*" "name addr sshopts xsasuser localUserDblBacksl"
+  reportDebugFuncEntry "$*" "name addr sshopts xsasuser localUserDblBacksl"
 
-    typeset protocol="$1"
-    typeset append
-    typeset title="$(capsFirst "$name")"
-    typeset mode
-    typeset line
+  typeset protocol="$1"
+  typeset append
+  typeset title="$(capsFirst "$name")"
+  typeset mode
+  typeset line
 
-    if [ "$command" ]; then
-        reportDebug "Command passed: $command"
-        append="$command"
-    fi
+  if [ "$command" ]; then
+    reportDebug "Command passed: $command"
+    append="$command"
+  fi
 
-    if [ "$protocol" = "ssh" ]; then
-        line="ssh $sshopts -A -Y $xsasuser@$addr $append"
-    elif [ "$protocol" = "tel" ]; then
-        line="telnet $addr $append"
-    elif [ "$protocol" = "adb" ]; then
-        line="adb -s $(adbSerial) shell $append"
-    else
-        reportError "Invalid protocol type passed: $protocol; valid types are: tel ssh adb"
-        return 1
-    fi
+  if [ "$protocol" = "ssh" ]; then
+    line="ssh $sshopts -A -Y $xsasuser@$addr $append"
+  elif [ "$protocol" = "tel" ]; then
+    line="telnet $addr $append"
+  elif [ "$protocol" = "adb" ]; then
+    line="adb -s $(adbSerial) shell $append"
+  else
+    reportError "Invalid protocol type passed: $protocol; valid types are: tel ssh adb"
+    return 1
+  fi
 
-    if [ "$tabbed" ]; then
-        mode="--tab"
-    else
-        mode="--window"
-    fi
+  if [ "$tabbed" ]; then
+    mode="--tab"
+  else
+    mode="--window"
+  fi
 
-    if [ "$titling" ]; then
-        gnome-terminal $mode --title="$title" -- sh -c "$line"
-    else
-        gnome-terminal $mode -- sh -c "$line"
-    fi
+  if [ "$titling" ]; then
+    gnome-terminal $mode --title="$title" -- sh -c "$line"
+  else
+    gnome-terminal $mode -- sh -c "$line"
+  fi
 
-    # If gnome-keyring-daemon is running, check to see if a prompt has started, wait for it to close.
-    waitForDialog "gnome-keyring-daemon" "gnome-keyring-prompt"
+  # If gnome-keyring-daemon is running, check to see if a prompt has started, wait for it to close.
+  waitForDialog "gnome-keyring-daemon" "gnome-keyring-prompt"
 
-    return 0
+  return 0
 }
 
 # urxvtTerminalHandler(<protocol>)
@@ -3942,37 +4350,36 @@ function gnomeTerminalHandler {
 # Handle URXVT Terminal parameterization.
 #
 function urxvtTerminalHandler {
-    reportDebugFuncEntry "$*" "name addr sshopts xsasuser localUserDblBacksl"
+  reportDebugFuncEntry "$*" "name addr sshopts xsasuser localUserDblBacksl"
 
-    typeset protocol="$1"
-    typeset append
-    typeset title="$(capsFirst "$name")"
-    typeset line
+  typeset protocol="$1"
+  typeset append
+  typeset title="$(capsFirst "$name")"
+  typeset line
 
-    if [ "$command" ]; then
-        reportDebug "Command passed: $command"
-        append="$command"
-    fi
+  if [ "$command" ]; then
+    reportDebug "Command passed: $command"
+    append="$command"
+  fi
 
-    if [ "$protocol" = "ssh" ]; then
-        line="ssh $sshopts -A -Y $xsasuser@$addr $append"
-    elif [ "$protocol" = "tel" ]; then
-        line="telnet $addr $append"
-    elif [ "$protocol" = "adb" ]; then
-        line="adb -s $(adbSerial) shell $append"
-    else
-        reportError "Invalid protocol type passed: $protocol; valid types are: tel ssh adb"
-        return 1
-    fi
+  if [ "$protocol" = "ssh" ]; then
+    line="ssh $sshopts -A -Y $xsasuser@$addr $append"
+  elif [ "$protocol" = "tel" ]; then
+    line="telnet $addr $append"
+  elif [ "$protocol" = "adb" ]; then
+    line="adb -s $(adbSerial) shell $append"
+  else
+    reportError "Invalid protocol type passed: $protocol; valid types are: tel ssh adb"
+    return 1
+  fi
 
+  if [ "$titling" ]; then
+    urxvt -title "$title" -e bash -c "$line" &
+  else
+    urxvt -e bash -c "$line" &
+  fi
 
-    if [ "$titling" ]; then
-        urxvt -title "$title" -e bash -c "$line" &
-    else
-        urxvt -e bash -c "$line" &
-    fi
-
-    return 0
+  return 0
 }
 
 # alacrittyTerminalHandler(<protocol>)
@@ -3981,37 +4388,37 @@ function urxvtTerminalHandler {
 # Handle Alacritty terminal parameterization.
 #
 function alacrittyTerminalHandler {
-    reportDebugFuncEntry "$*" "name addr sshopts xsasuser"
+  reportDebugFuncEntry "$*" "name addr sshopts xsasuser"
 
-    typeset protocol="$1"
-    typeset append
-    typeset title="$(capsFirst "$name")"
-    typeset line
+  typeset protocol="$1"
+  typeset append
+  typeset title="$(capsFirst "$name")"
+  typeset line
 
-    if [ "$command" ]; then
-        reportDebug "Command passed: $command"
-        append="$command"
-    fi
+  if [ "$command" ]; then
+    reportDebug "Command passed: $command"
+    append="$command"
+  fi
 
-    if [ "$protocol" = "ssh" ]; then
-        line="ssh $sshopts -A -Y $xsasuser@$addr $append"
-    elif [ "$protocol" = "tel" ]; then
-        line="telnet $addr $append"
-    elif [ "$protocol" = "adb" ]; then
-        line="adb -s $(adbSerial) shell $append"
-    else
-        reportError "Invalid protocol type passed: $protocol; valid types are: tel ssh adb"
-        return 1
-    fi
+  if [ "$protocol" = "ssh" ]; then
+    line="ssh $sshopts -A -Y $xsasuser@$addr $append"
+  elif [ "$protocol" = "tel" ]; then
+    line="telnet $addr $append"
+  elif [ "$protocol" = "adb" ]; then
+    line="adb -s $(adbSerial) shell $append"
+  else
+    reportError "Invalid protocol type passed: $protocol; valid types are: tel ssh adb"
+    return 1
+  fi
 
-    # Keep the title, so the shell cannot change it.
-    if [ "$titling" ]; then
-        alacritty --title "$title" -o window.dynamic_title=false -e sh -c "$line" &
-    else
-        alacritty -e sh -c "$line" &
-    fi
+  # Keep the title, so the shell cannot change it.
+  if [ "$titling" ]; then
+    alacritty --title "$title" -o window.dynamic_title=false -e sh -c "$line" &
+  else
+    alacritty -e sh -c "$line" &
+  fi
 
-    return 0
+  return 0
 }
 
 # screenTerminalHandler(<protocol>)
@@ -4020,71 +4427,71 @@ function alacrittyTerminalHandler {
 # Handle Screen Terminal parameterization.
 #
 function screenTerminalHandler {
-    reportDebugFuncEntry "$*" "name addr sshopts xsasuser $localUserDblBacksl TERM"
+  reportDebugFuncEntry "$*" "name addr sshopts xsasuser $localUserDblBacksl TERM"
 
-    typeset protocol="$1"
-    typeset append
-    typeset line
-    typeset title="$name"
+  typeset protocol="$1"
+  typeset append
+  typeset line
+  typeset title="$name"
 
-    if [ "$titling" ]; then
-        title="$(capsFirst "$name")"
-    fi
+  if [ "$titling" ]; then
+    title="$(capsFirst "$name")"
+  fi
 
-    if [ "$command" ]; then
-        reportDebug "Command passed: $command"
-        append="$command"
-    fi
+  if [ "$command" ]; then
+    reportDebug "Command passed: $command"
+    append="$command"
+  fi
 
-    if [ "$protocol" = "ssh" ]; then
-        line="ssh $sshopts -Y $xsasuser@$addr $append"
-    elif [ "$protocol" = "tel" ]; then
-        line="telnet $addr $append"
-    elif [ "$protocol" = "adb" ]; then
-        line="adb -s $(adbSerial) shell $append"
-    else
-        reportError "Invalid protocol type passed: $protocol; valid types are: tel ssh adb"
-        return 1
-    fi
+  if [ "$protocol" = "ssh" ]; then
+    line="ssh $sshopts -Y $xsasuser@$addr $append"
+  elif [ "$protocol" = "tel" ]; then
+    line="telnet $addr $append"
+  elif [ "$protocol" = "adb" ]; then
+    line="adb -s $(adbSerial) shell $append"
+  else
+    reportError "Invalid protocol type passed: $protocol; valid types are: tel ssh adb"
+    return 1
+  fi
 
-    typeset sesuser="$localUserDblBacksl"
-    typeset seshost="$hostname"
-    typeset sesname="session.$seshost.$sesuser"
-    typeset sesruns="$(screen -ls | grep "$sesname")"
+  typeset sesuser="$localUserDblBacksl"
+  typeset seshost="$hostname"
+  typeset sesname="session.$seshost.$sesuser"
+  typeset sesruns="$(screen -ls | grep "$sesname")"
 
-    if [ ! "$sesruns" ]; then
-        reportDebug "Setting up initial screen in background"
-        screen -dmS "$sesname" -t "$seshost" &
-        sleep 1
-        reportDebug "Creating window for $seshost (window 0)"
-        screen -r -S "$sesname" -X defscrollback 10000
-        screen -r -S "$sesname" -X termcapinfo xterm* ti@:te@
-        screen -r -S "$sesname" -X hardstatus alwayslastline
-        screen -r -S "$sesname" -X hardstatus string '%n:%t%-=%d/%m/%Y %c%{-}'
-    fi
+  if [ ! "$sesruns" ]; then
+    reportDebug "Setting up initial screen in background"
+    screen -dmS "$sesname" -t "$seshost" &
+    sleep 1
+    reportDebug "Creating window for $seshost (window 0)"
+    screen -r -S "$sesname" -X defscrollback 10000
+    screen -r -S "$sesname" -X termcapinfo xterm* ti@:te@
+    screen -r -S "$sesname" -X hardstatus alwayslastline
+    screen -r -S "$sesname" -X hardstatus string '%n:%t%-=%d/%m/%Y %c%{-}'
+  fi
 
-    if [ "$TERM" = "screen" ]; then
-        reportDebug "Creating window for $name from within screen"
-        # Warning: line variable has to be unquoted.
-        screen -r -X eval "screen -t \"$title\" $line" ${titling:+"dynamictitle off"}
-    else
-        reportDebug "Creating window for $name from outside of screen"
-        # Warning: line variable has to be unquoted.
-        screen -r -S "$sesname" -X eval "screen -t \"$title\" $line" ${titling:+"dynamictitle off"}
-    fi
+  if [ "$TERM" = "screen" ]; then
+    reportDebug "Creating window for $name from within screen"
+    # Warning: line variable has to be unquoted.
+    screen -r -X eval "screen -t \"$title\" $line" ${titling:+"dynamictitle off"}
+  else
+    reportDebug "Creating window for $name from outside of screen"
+    # Warning: line variable has to be unquoted.
+    screen -r -S "$sesname" -X eval "screen -t \"$title\" $line" ${titling:+"dynamictitle off"}
+  fi
 
-    if [ "$platform" = "linux" -o "$platform" = "bsd" ]; then
-        # If gnome-keyring-daemon is running, check to see if a prompt has started, wait for it to close.
-        waitForDialog "gnome-keyring-daemon" "gnome-keyring-prompt"
-    elif [ "$platform" = "macosx" ]; then
-        # If Keychain is running, check to see if a prompt has started, wait for it to close.
-        waitForDialog "securityd" "SecurityAgent"
-    elif [ "$platform" = "windows" ]; then
-        reportDebug "No need to wait for dialog on Windows"
-    else
-        reportError "Unknown platform specified: $platform"
-        return 1
-    fi
+  if [ "$platform" = "linux" -o "$platform" = "bsd" ]; then
+    # If gnome-keyring-daemon is running, check to see if a prompt has started, wait for it to close.
+    waitForDialog "gnome-keyring-daemon" "gnome-keyring-prompt"
+  elif [ "$platform" = "macosx" ]; then
+    # If Keychain is running, check to see if a prompt has started, wait for it to close.
+    waitForDialog "securityd" "SecurityAgent"
+  elif [ "$platform" = "windows" ]; then
+    reportDebug "No need to wait for dialog on Windows"
+  else
+    reportError "Unknown platform specified: $platform"
+    return 1
+  fi
 }
 
 # tmuxTerminalHandler(<protocol>)
@@ -4093,59 +4500,59 @@ function screenTerminalHandler {
 # Handle tmux terminal parameterization.
 #
 function tmuxTerminalHandler {
-    reportDebugFuncEntry "$*" "name addr sshopts xsasuser localUserDblBacksl TMUX"
+  reportDebugFuncEntry "$*" "name addr sshopts xsasuser localUserDblBacksl TMUX"
 
-    typeset protocol="$1"
-    typeset append
-    typeset line
-    typeset pane
-    typeset title="$name"
-    typeset sesname="session-$hostname-$localUserDblBacksl"
+  typeset protocol="$1"
+  typeset append
+  typeset line
+  typeset pane
+  typeset title="$name"
+  typeset sesname="session-$hostname-$localUserDblBacksl"
 
-    if [ "$titling" ]; then
-        title="$(capsFirst "$name")"
+  if [ "$titling" ]; then
+    title="$(capsFirst "$name")"
+  fi
+
+  if [ "$command" ]; then
+    reportDebug "Command passed: $command"
+    append="$command"
+  fi
+
+  if [ "$protocol" = "ssh" ]; then
+    line="ssh $sshopts -Y $xsasuser@$addr $append"
+  elif [ "$protocol" = "tel" ]; then
+    line="telnet $addr $append"
+  elif [ "$protocol" = "adb" ]; then
+    line="adb -s $(adbSerial) shell $append"
+  else
+    reportError "Invalid protocol type passed: $protocol; valid types are: tel ssh adb"
+    return 1
+  fi
+
+  if [ "$TMUX" ]; then
+    reportDebug "Creating window for $name from within tmux"
+    pane="$(tmux new-window -P -F '#{pane_id}' -n "$title" "$line")"
+  else
+    if ! tmux has-session -t "$sesname" 2>/dev/null; then
+      reportDebug "Setting up initial tmux session in background"
+      tmux new-session -d -s "$sesname" -n "$hostname"
     fi
+    reportDebug "Creating window for $name from outside of tmux"
+    pane="$(tmux new-window -P -F '#{pane_id}' -t "$sesname:" -n "$title" "$line")"
+  fi
 
-    if [ "$command" ]; then
-        reportDebug "Command passed: $command"
-        append="$command"
-    fi
+  if [ "$titling" ]; then
+    tmux select-pane -t "$pane" -T "$title"
+    tmux set-option -p -t "$pane" allow-set-title off
+  fi
 
-    if [ "$protocol" = "ssh" ]; then
-        line="ssh $sshopts -Y $xsasuser@$addr $append"
-    elif [ "$protocol" = "tel" ]; then
-        line="telnet $addr $append"
-    elif [ "$protocol" = "adb" ]; then
-        line="adb -s $(adbSerial) shell $append"
-    else
-        reportError "Invalid protocol type passed: $protocol; valid types are: tel ssh adb"
-        return 1
-    fi
-
-    if [ "$TMUX" ]; then
-        reportDebug "Creating window for $name from within tmux"
-        pane="$(tmux new-window -P -F '#{pane_id}' -n "$title" "$line")"
-    else
-        if ! tmux has-session -t "$sesname" 2>/dev/null; then
-            reportDebug "Setting up initial tmux session in background"
-            tmux new-session -d -s "$sesname" -n "$hostname"
-        fi
-        reportDebug "Creating window for $name from outside of tmux"
-        pane="$(tmux new-window -P -F '#{pane_id}' -t "$sesname:" -n "$title" "$line")"
-    fi
-
-    if [ "$titling" ]; then
-        tmux select-pane -t "$pane" -T "$title"
-        tmux set-option -p -t "$pane" allow-set-title off
-    fi
-
-    if [ "$platform" = "linux" -o "$platform" = "bsd" ]; then
-        # If gnome-keyring-daemon is running, check to see if a prompt has started, wait for it to close.
-        waitForDialog "gnome-keyring-daemon" "gnome-keyring-prompt"
-    elif [ "$platform" = "macosx" ]; then
-        # If Keychain is running, check to see if a prompt has started, wait for it to close.
-        waitForDialog "securityd" "SecurityAgent"
-    fi
+  if [ "$platform" = "linux" -o "$platform" = "bsd" ]; then
+    # If gnome-keyring-daemon is running, check to see if a prompt has started, wait for it to close.
+    waitForDialog "gnome-keyring-daemon" "gnome-keyring-prompt"
+  elif [ "$platform" = "macosx" ]; then
+    # If Keychain is running, check to see if a prompt has started, wait for it to close.
+    waitForDialog "securityd" "SecurityAgent"
+  fi
 }
 
 # windowsBrowserHandler(<url>)
@@ -4154,10 +4561,10 @@ function tmuxTerminalHandler {
 # Handles Windows default browser parameterization.
 #
 function windowsBrowserHandler {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    typeset url="$1"
-    "$explorer" "$url" &
+  typeset url="$1"
+  "$explorer" "$url" &
 }
 
 # appleBrowserHandler(<url>)
@@ -4166,10 +4573,10 @@ function windowsBrowserHandler {
 # Handles Apple default browser parameterization.
 #
 function macosBrowserHandler {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    typeset url="$1"
-    open "$url" &
+  typeset url="$1"
+  open "$url" &
 }
 
 # gnomeBrowserHandler(<url>)
@@ -4178,10 +4585,10 @@ function macosBrowserHandler {
 # Handles Gnome default browser parameterization.
 #
 function gnomeBrowserHandler {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    typeset url="$1"
-    xdg-open "$url" &
+  typeset url="$1"
+  xdg-open "$url" &
 }
 
 # rdpFileWriter()
@@ -4190,45 +4597,45 @@ function gnomeBrowserHandler {
 # Creates an RDP file which can be parsed by mstsc.exe.
 #
 function rdpFileWriter {
-    rdpfile="$usrcfd/sys/$name/$name.rdp"
-    reportDebugFuncEntry "$*" "addr xsasuser name" "writing $rdpfile"
+  rdpfile="$usrcfd/sys/$name/$name.rdp"
+  reportDebugFuncEntry "$*" "addr xsasuser name" "writing $rdpfile"
 
-    mkdir -p "$usrcfd/sys/$name"
-    printf "screen mode id:i:2\n" > "$rdpfile"
-    printf "desktopwidth:i:1024\n" >> "$rdpfile"
-    printf "desktopheight:i:768\n" >> "$rdpfile"
-    printf "session bpp:i:24\n" >> "$rdpfile"
-    printf "winposstr:s:0,1,32,68,800,572\n" >> "$rdpfile"
-    printf "full address:s:$addr\n" >> "$rdpfile"
-    printf "compression:i:1\n" >> "$rdpfile"
-    printf "keyboardhook:i:2\n" >> "$rdpfile"
-    printf "audiomode:i:2\n" >> "$rdpfile"
-    printf "redirectdrives:i:0\n" >> "$rdpfile"
-    printf "redirectprinters:i:0\n" >> "$rdpfile"
-    printf "redirectcomports:i:0\n" >> "$rdpfile"
-    printf "redirectsmartcards:i:1\n" >> "$rdpfile"
-    printf "displayconnectionbar:i:1\n" >> "$rdpfile"
-    printf "autoreconnection enabled:i:1\n" >> "$rdpfile"
-    printf "authentication level:i:0\n" >> "$rdpfile"
-    printf "username:s:$xsasuser\n" >> "$rdpfile"
-    printf "alternate shell:s:\n" >> "$rdpfile"
-    printf "shell working directory:s:\n" >> "$rdpfile"
-    printf "disable wallpaper:i:1\n" >> "$rdpfile"
-    printf "disable full window drag:i:0\n" >> "$rdpfile"
-    printf "disable menu anims:i:0\n" >> "$rdpfile"
-    printf "disable themes:i:0\n" >> "$rdpfile"
-    printf "disable cursor setting:i:0\n" >> "$rdpfile"
-    printf "bitmapcachepersistenable:i:1\n" >> "$rdpfile"
-    if [[ "$tools_access_found" =~ "cryptRDP5" ]]; then
-        if [ "$xsastype" = "user" -a "$xsasupwd" ]; then
-            typeset rdphash="$(cryptRDP5.exe "$xsasupwd")"
-            printf "password 51:b:$rdphash\n" >> "$rdpfile"
-        elif [ "$xsastype" = "admin" -a "$xsasapwd" ]; then
-            typeset rdphash="$(cryptRDP5.exe "$xsasapwd")"
-            printf "password 51:b:$rdphash\n" >> "$rdpfile"
-        fi
+  mkdir -p "$usrcfd/sys/$name"
+  printf "screen mode id:i:2\n" >"$rdpfile"
+  printf "desktopwidth:i:1024\n" >>"$rdpfile"
+  printf "desktopheight:i:768\n" >>"$rdpfile"
+  printf "session bpp:i:24\n" >>"$rdpfile"
+  printf "winposstr:s:0,1,32,68,800,572\n" >>"$rdpfile"
+  printf "full address:s:$addr\n" >>"$rdpfile"
+  printf "compression:i:1\n" >>"$rdpfile"
+  printf "keyboardhook:i:2\n" >>"$rdpfile"
+  printf "audiomode:i:2\n" >>"$rdpfile"
+  printf "redirectdrives:i:0\n" >>"$rdpfile"
+  printf "redirectprinters:i:0\n" >>"$rdpfile"
+  printf "redirectcomports:i:0\n" >>"$rdpfile"
+  printf "redirectsmartcards:i:1\n" >>"$rdpfile"
+  printf "displayconnectionbar:i:1\n" >>"$rdpfile"
+  printf "autoreconnection enabled:i:1\n" >>"$rdpfile"
+  printf "authentication level:i:0\n" >>"$rdpfile"
+  printf "username:s:$xsasuser\n" >>"$rdpfile"
+  printf "alternate shell:s:\n" >>"$rdpfile"
+  printf "shell working directory:s:\n" >>"$rdpfile"
+  printf "disable wallpaper:i:1\n" >>"$rdpfile"
+  printf "disable full window drag:i:0\n" >>"$rdpfile"
+  printf "disable menu anims:i:0\n" >>"$rdpfile"
+  printf "disable themes:i:0\n" >>"$rdpfile"
+  printf "disable cursor setting:i:0\n" >>"$rdpfile"
+  printf "bitmapcachepersistenable:i:1\n" >>"$rdpfile"
+  if [[ "$tools_access_found" =~ "cryptRDP5" ]]; then
+    if [ "$xsastype" = "user" -a "$xsasupwd" ]; then
+      typeset rdphash="$(cryptRDP5.exe "$xsasupwd")"
+      printf "password 51:b:$rdphash\n" >>"$rdpfile"
+    elif [ "$xsastype" = "admin" -a "$xsasapwd" ]; then
+      typeset rdphash="$(cryptRDP5.exe "$xsasapwd")"
+      printf "password 51:b:$rdphash\n" >>"$rdpfile"
     fi
-    chmod 600 "$rdpfile"
+  fi
+  chmod 600 "$rdpfile"
 }
 
 # mstscDesktopHandler()
@@ -4237,10 +4644,10 @@ function rdpFileWriter {
 # Calls rdpFileWriter and executes mstsc.
 #
 function mstscDesktopHandler {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    rdpFileWriter
-    mstsc.exe "$(toLocalWindowsPath "$rdpfile")"
+  rdpFileWriter
+  mstsc.exe "$(toLocalWindowsPath "$rdpfile")"
 }
 
 # amsrdcDesktopHandler()
@@ -4249,10 +4656,10 @@ function mstscDesktopHandler {
 # Calls rdpFileWriter and executes Microsoft Remote Desktop Connection.
 #
 function amsrdcDesktopHandler {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    rdpFileWriter
-    /Applications/Remote\ Desktop\ Connection.app/Contents/MacOS/Remote\ Desktop\ Connection "$rdpfile" 2>/dev/null &
+  rdpFileWriter
+  /Applications/Remote\ Desktop\ Connection.app/Contents/MacOS/Remote\ Desktop\ Connection "$rdpfile" 2>/dev/null &
 }
 
 # rdesktopDesktopHandler()
@@ -4261,11 +4668,11 @@ function amsrdcDesktopHandler {
 # Calls rdpFileWriter and executes rdesktop.
 #
 function rdesktopDesktopHandler {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    rdpFileWriter
-    if [ "$titling" ]; then typeset title="-T $(capsFirst "$name")"; fi
-    printf "$xsasupwd\n" | rdesktop -0 -g ${width}x${height} -b -B "$title" -u "$xsasuser" -p - -N -a 16 -z -x l -r disk:home="$HOME" "$addr" 2>/dev/null &
+  rdpFileWriter
+  if [ "$titling" ]; then typeset title="-T $(capsFirst "$name")"; fi
+  printf "$xsasupwd\n" | rdesktop -0 -g ${width}x${height} -b -B "$title" -u "$xsasuser" -p - -N -a 16 -z -x l -r disk:home="$HOME" "$addr" 2>/dev/null &
 }
 
 # xfreerdpDesktopHandler()
@@ -4274,12 +4681,12 @@ function rdesktopDesktopHandler {
 # Calls rdpFileWriter and executes xfreerdp.
 #
 function xfreerdpDesktopHandler {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    rdpFileWriter
-    if [ "$xsasupwd" ]; then typeset pass="/p:$xsasupwd"; fi
-    if [ "$titling" ]; then typeset title="/t:$(capsFirst "$name")"; fi
-    xfreerdp /v:$addr /u:"$xsasuser" $pass "$title" /sound:sys:alsa /w:$width /h:$height /smart-sizing:${width}x${height} -bitmap-cache -offscreen-cache -glyph-cache /cert-ignore +auto-reconnect +clipboard +fonts +aero +window-drag +wallpaper +themes +toggle-fullscreen > /dev/null 2>&1 &
+  rdpFileWriter
+  if [ "$xsasupwd" ]; then typeset pass="/p:$xsasupwd"; fi
+  if [ "$titling" ]; then typeset title="/t:$(capsFirst "$name")"; fi
+  xfreerdp /v:$addr /u:"$xsasuser" $pass "$title" /sound:sys:alsa /w:$width /h:$height /smart-sizing:${width}x${height} -bitmap-cache -offscreen-cache -glyph-cache /cert-ignore +auto-reconnect +clipboard +fonts +aero +window-drag +wallpaper +themes +toggle-fullscreen >/dev/null 2>&1 &
 }
 
 # noneAccessHandler(state|access)
@@ -4289,19 +4696,19 @@ function xfreerdpDesktopHandler {
 # access method.
 #
 function noneAccessHandler {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    case "$1" in
-      state)
-        acstate="none"
-        ;;
-      access)
-        reportError "No access method defined for this system"
-        return 1
-        ;;
-    esac
+  case "$1" in
+  state)
+    acstate="none"
+    ;;
+  access)
+    reportError "No access method defined for this system"
+    return 1
+    ;;
+  esac
 
-    return 0
+  return 0
 }
 
 # httpAccessHandler(state|access)
@@ -4311,49 +4718,49 @@ function noneAccessHandler {
 # protocol and the default web browser.
 #
 function httpAccessHandler {
-    reportDebugFuncEntry "$*" "name addr port type acstate"
+  reportDebugFuncEntry "$*" "name addr port type acstate"
 
-    typeset result
-    typeset proto
+  typeset result
+  typeset proto
 
-    if [ "$type" = "host" -o "$type" = "guest" ]; then
-        port=80
-        proto="http"
-        result="$(printPortState "$addr" "$port")"
-        if [ "$result" = "closed" ]; then
-            port=443
-            proto="https"
-            result="$(printPortState "$addr" "$port")"
-        fi
-    elif [ "$type" = "service" ]; then
-        proto="http"
-        result="$(printPortState "$addr" "$port")"
+  if [ "$type" = "host" -o "$type" = "guest" ]; then
+    port=80
+    proto="http"
+    result="$(printPortState "$addr" "$port")"
+    if [ "$result" = "closed" ]; then
+      port=443
+      proto="https"
+      result="$(printPortState "$addr" "$port")"
     fi
+  elif [ "$type" = "service" ]; then
+    proto="http"
+    result="$(printPortState "$addr" "$port")"
+  fi
 
-    case "$1" in
-      state)
-        if [ "$result" = "open" ]; then
-            acstate="active"
-        elif [ "$result" = "closed" ]; then
-            acstate="inactive"
-        else
-            acstate="$result"
-        fi
-        ;;
-      access)
-        if [ "$acstate" = "active" -a "$browser" != "none" ]; then
-            ${browser}BrowserHandler "$proto://$addr:$port"
-        elif [ "$browser" = "none" ]; then
-            reportError "Browser handler was set to \"none\" in options.env."
-            return 1
-        else
-            reportError "Failed to access $name on $addr over $acmt (acstate=$acstate)"
-            return 1
-        fi
-        ;;
-    esac
+  case "$1" in
+  state)
+    if [ "$result" = "open" ]; then
+      acstate="active"
+    elif [ "$result" = "closed" ]; then
+      acstate="inactive"
+    else
+      acstate="$result"
+    fi
+    ;;
+  access)
+    if [ "$acstate" = "active" -a "$browser" != "none" ]; then
+      ${browser}BrowserHandler "$proto://$addr:$port"
+    elif [ "$browser" = "none" ]; then
+      reportError "Browser handler was set to \"none\" in options.env."
+      return 1
+    else
+      reportError "Failed to access $name on $addr over $acmt (acstate=$acstate)"
+      return 1
+    fi
+    ;;
+  esac
 
-    return 0
+  return 0
 }
 
 # telAccessHandler(state|access)
@@ -4363,36 +4770,36 @@ function httpAccessHandler {
 # and the terminal handler specified in options.env.
 #
 function telAccessHandler {
-    reportDebugFuncEntry "$*" "name addr acstate terminal"
+  reportDebugFuncEntry "$*" "name addr acstate terminal"
 
-    typeset result
-    typeset port=23
+  typeset result
+  typeset port=23
 
-    case "$1" in
-      state)
-        result="$(printPortState "$addr" "$port")"
-        if [ "$result" = "open" ]; then
-            acstate="active"
-        elif [ "$result" = "closed" ]; then
-            acstate="inactive"
-        else
-            acstate="$result"
-        fi
-        ;;
-      access)
-        if [ "$acstate" = "active" -a "$terminal" != "none" ]; then
-            ${terminal}TerminalHandler tel
-        elif [ "$terminal" = "none" ]; then
-            reportError "Terminal handler was set to \"none\" in options.env."
-            return 1
-        else
-            reportError "Failed to access $name on $addr over $acmt (acstate=$acstate)"
-            return 1
-        fi
-        ;;
-    esac
+  case "$1" in
+  state)
+    result="$(printPortState "$addr" "$port")"
+    if [ "$result" = "open" ]; then
+      acstate="active"
+    elif [ "$result" = "closed" ]; then
+      acstate="inactive"
+    else
+      acstate="$result"
+    fi
+    ;;
+  access)
+    if [ "$acstate" = "active" -a "$terminal" != "none" ]; then
+      ${terminal}TerminalHandler tel
+    elif [ "$terminal" = "none" ]; then
+      reportError "Terminal handler was set to \"none\" in options.env."
+      return 1
+    else
+      reportError "Failed to access $name on $addr over $acmt (acstate=$acstate)"
+      return 1
+    fi
+    ;;
+  esac
 
-    return 0
+  return 0
 }
 
 # sshAccessHandler(state|access)
@@ -4402,36 +4809,36 @@ function telAccessHandler {
 # and the terminal handler specified in options.env.
 #
 function sshAccessHandler {
-    reportDebugFuncEntry "$*" "name addr acstate terminal"
+  reportDebugFuncEntry "$*" "name addr acstate terminal"
 
-    typeset result
-    typeset port=22
+  typeset result
+  typeset port=22
 
-    case "$1" in
-      state)
-        result="$(printPortState "$addr" "$port")"
-        if [ "$result" = "open" ]; then
-            acstate="active"
-        elif [ "$result" = "closed" ]; then
-            acstate="inactive"
-        else
-            acstate="$result"
-        fi
-        ;;
-      access)
-        if [ "$acstate" = "active" ]; then
-            ${terminal}TerminalHandler ssh
-         elif [ "$terminal" = "none" ]; then
-            reportError "Terminal handler was set to \"none\" in options.env."
-            return 1
-        else
-            reportError "Failed to access $name on $addr over $acmt (acstate=$acstate)"
-            return 1
-        fi
-        ;;
-    esac
+  case "$1" in
+  state)
+    result="$(printPortState "$addr" "$port")"
+    if [ "$result" = "open" ]; then
+      acstate="active"
+    elif [ "$result" = "closed" ]; then
+      acstate="inactive"
+    else
+      acstate="$result"
+    fi
+    ;;
+  access)
+    if [ "$acstate" = "active" ]; then
+      ${terminal}TerminalHandler ssh
+    elif [ "$terminal" = "none" ]; then
+      reportError "Terminal handler was set to \"none\" in options.env."
+      return 1
+    else
+      reportError "Failed to access $name on $addr over $acmt (acstate=$acstate)"
+      return 1
+    fi
+    ;;
+  esac
 
-    return 0
+  return 0
 }
 
 # rdpAccessHandler(state|access)
@@ -4441,36 +4848,36 @@ function sshAccessHandler {
 # and the desktop handler specified in options.env.
 #
 function rdpAccessHandler {
-    reportDebugFuncEntry "$*" "name addr acstate desktop"
+  reportDebugFuncEntry "$*" "name addr acstate desktop"
 
-    typeset result
-    typeset port=3389
+  typeset result
+  typeset port=3389
 
-    case "$1" in
-      state)
-        result="$(printPortState "$addr" "$port")"
-        if [ "$result" = "open" ]; then
-            acstate="active"
-        elif [ "$result" = "closed" ]; then
-            acstate="inactive"
-        else
-            acstate="$result"
-        fi
-        ;;
-      access)
-        if [ "$acstate" = "active" -a "$desktop" != "none" ] && { ! isLoopback "$addr" || ! isLocal "$name" ; } ; then
-            ${desktop}DesktopHandler
-        elif [ "$desktop" = "none" ]; then
-            reportError "Desktop handler was set to \"none\" in options.env."
-            return 1
-        else
-            reportError "Failed to access $name on $addr over $acmt (acstate=$acstate)"
-            return 1
-        fi
-        ;;
-    esac
+  case "$1" in
+  state)
+    result="$(printPortState "$addr" "$port")"
+    if [ "$result" = "open" ]; then
+      acstate="active"
+    elif [ "$result" = "closed" ]; then
+      acstate="inactive"
+    else
+      acstate="$result"
+    fi
+    ;;
+  access)
+    if [ "$acstate" = "active" -a "$desktop" != "none" ] && { ! isLoopback "$addr" || ! isLocal "$name"; }; then
+      ${desktop}DesktopHandler
+    elif [ "$desktop" = "none" ]; then
+      reportError "Desktop handler was set to \"none\" in options.env."
+      return 1
+    else
+      reportError "Failed to access $name on $addr over $acmt (acstate=$acstate)"
+      return 1
+    fi
+    ;;
+  esac
 
-    return 0
+  return 0
 }
 
 # adbAccessHandler(state|access)
@@ -4480,26 +4887,26 @@ function rdpAccessHandler {
 # and the terminal handler specified in options.env.
 #
 function adbAccessHandler {
-    reportDebugFuncEntry "$*" "name addr acstate terminal"
+  reportDebugFuncEntry "$*" "name addr acstate terminal"
 
-    case "$1" in
-      state)
-        acstate="$(printAdbState)"
-        ;;
-      access)
-        if [ "$acstate" = "active" ]; then
-            ${terminal}TerminalHandler adb
-        elif [ "$terminal" = "none" ]; then
-            reportError "Terminal handler was set to \"none\" in options.env."
-            return 1
-        else
-            reportError "Failed to access $name on $addr over $acmt (acstate=$acstate)"
-            return 1
-        fi
-        ;;
-    esac
+  case "$1" in
+  state)
+    acstate="$(printAdbState)"
+    ;;
+  access)
+    if [ "$acstate" = "active" ]; then
+      ${terminal}TerminalHandler adb
+    elif [ "$terminal" = "none" ]; then
+      reportError "Terminal handler was set to \"none\" in options.env."
+      return 1
+    else
+      reportError "Failed to access $name on $addr over $acmt (acstate=$acstate)"
+      return 1
+    fi
+    ;;
+  esac
 
-    return 0
+  return 0
 }
 
 # noneExecHandler(state|runasuser|runasadmin|runasservice|sendasuser|sendasadmin|sendasservice)
@@ -4508,19 +4915,19 @@ function adbAccessHandler {
 # Handle execute commands for systems without any known execute method.
 #
 function noneExecHandler {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    case "$1" in
-      state)
-        exstate="none"
-        ;;
-      runasuser|runasadmin|runasservice|sendasuser|sendasadmin|sendasservice)
-        reportError "No execute method defined for this system"
-        return 1
-        ;;
-    esac
+  case "$1" in
+  state)
+    exstate="none"
+    ;;
+  runasuser | runasadmin | runasservice | sendasuser | sendasadmin | sendasservice)
+    reportError "No execute method defined for this system"
+    return 1
+    ;;
+  esac
 
-    return 0
+  return 0
 }
 
 # smbExecHandler(state|runasuser|runasadmin|runasservice|sendasuser|sendasadmin|sendasservice)
@@ -4529,124 +4936,124 @@ function noneExecHandler {
 # Handle executing commands on a remote system using the smb/cifs protocol.
 #
 function smbExecHandler {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    typeset result
-    typeset port=445
+  typeset result
+  typeset port=445
 
-    case "$1" in
-      state)
-        result="$(printPortState "$addr" "$port")"
-        if [ "$result" = "open" ]; then
-            exstate="active"
-        elif [ "$result" = "closed" ]; then
-            exstate="inactive"
-        else
-            exstate="$result"
-        fi
-        ;;
-      runasuser)
-        if isLoopback "$addr" || { isLocal "$name" && [ "$type" != "service" ]; } ; then
-            reportDebug "Attempting to execute user-level command locally (on $name)"
-            viaScript "$(localTellCommandWriter "$command")"
-            return $?
-        elif [ "$exstate" = "active" -a "$type" != "service" ]; then
-            reportDebug "Attempting to execute user-level command remotely (on $name)"
-            viaScript "$(${smbtell}TellCommandWriter "$addr" "$user" "$upwd" "$command")"
-            return $?
-        else
-            reportError "Failed to execute user-level command (on $name) (exstate=$exstate)"
-            return 1
-        fi
-        ;;
-      runasadmin)
-        if isLoopback "$addr" || { isLocal "$name" && [ "$type" != "service" ]; } ; then
-            reportDebug "Attempting to execute admin-level command locally (on $name)"
-            viaScript "$(localTellCommandWriter "$privesc $command")"
-            return $?
-        elif [ "$exstate" = "active" -a "$type" != "service" ]; then
-            reportDebug "Attempting to execute admin-level command remotely (on $name)"
-            viaScript "$(${smbtell}TellCommandWriter "$addr" "$admin" "$apwd" "$command")"
-            return $?
-        else
-            reportError "Failed to execute admin-level command (on $name) (exstate=$exstate)"
-            return 1
-        fi
-        ;;
-      runasservice)
-        if isLoopback "$addr" || { isLocal "$name" && [ "$type" = "service" ]; } ; then
-            reportDebug "Attempting to execute service-level command locally (on $host)"
-            viaScript "$(localTellCommandWriter "$privesc $command")"
-            return $?
-        elif [ "$exstate" = "active" -a "$type" = "service" ]; then
-            reportDebug "Attempting to execute service-level command remotely (on $host)"
-            tokenReader setVars "$host" "addr" || return 1
-            viaScript "$(${smbtell}TellCommandWriter "$addr" "$user" "$upwd" "$command")"
-            return $?
-        else
-            reportError "Failed to execute service-level command (on $host) (exstate=$exstate)"
-            return 1
-        fi
-        ;;
-      sendasuser)
-        if isLoopback "$addr" || { isLocal "$name" && [ "$type" != "service" ]; } ; then
-            reportDebug "Attempting to send data locally at user-level (on $name)"
-            viaScript "$(localSendCommandWriter "$source" "$target")"
-            return $?
-        elif [ "$exstate" = "active" -a "$type" != "service" ]; then
-            reportDebug "Attempting to send data remotely at user-level (on $name)"
-            viaScript "$(${smbsend}SendCommandWriter "$addr" "$user" "$upwd" "$source" "$target")"
-            return $?
-        else
-            reportError "Failed to send data at user-level (on $name) (exstate=$exstate)"
-            return 1
-        fi
-        ;;
-      sendasadmin)
-        if isLoopback "$addr" || { isLocal "$name" && [ "$type" != "service" ]; } ; then
-            reportDebug "Attempting to send data locally at admin-level (on $name)"
-            reportError "Sending of typeset files with elevated privileges not implemented yet"
-            return 1
-        elif [ "$exstate" = "active" -a "$type" != "service" ]; then
-            reportDebug "Attempting to send data remotely at admin-level (on $name)"
-            viaScript "$(${smbsend}SendCommandWriter "$addr" "$admin" "$apwd" "$source" "$target")"
-            return $?
-        else
-            reportError "Failed to send data at admin-level (on $name) (exstate=$exstate)"
-            return 1
-        fi
-        ;;
-      sendasservice)
-        if isLoopback "$addr" || { isLocal "$name" && [ "$type" = "service" ]; } ; then
-            reportDebug "Attempting to send data locally at service-level (on $host)"
-            reportError "Sending of typeset files with changed privileges not implemented yet"
-            return 1
-        elif [ "$exstate" = "active" -a "$type" = "service" ]; then
-            reportDebug "Attempting to send data remotely at service-level (on $host)"
-            tokenReader setVars "$host" "addr" || return 1
-            viaScript "$(${smbsend}SendCommandWriter "$addr" "$user" "$upwd" "$source" "$target")"
-            return $?
-        else
-            reportError "Failed to send data at service-level (on $host) (exstate=$exstate)"
-            return 1
-        fi
-        ;;
-    esac
-
-    if [ "$platform" = "linux" -o "$platform" = "bsd" ]; then
-        # If gnome-keyring-daemon is running, check to see if a prompt has started, wait for it to close.
-        waitForDialog "gnome-keyring-daemon" "gnome-keyring-prompt"
-    elif [ "$platform" = "macosx" ]; then
-        # If Keychain is running, check to see if a prompt has started, wait for it to close.
-        waitForDialog "securityd" "SecurityAgent"
-    elif [ "$platform" = "windows" ]; then
-        reportDebug "No need to wait for dialog on Windows"
+  case "$1" in
+  state)
+    result="$(printPortState "$addr" "$port")"
+    if [ "$result" = "open" ]; then
+      exstate="active"
+    elif [ "$result" = "closed" ]; then
+      exstate="inactive"
     else
-        reportError "Unknown platform specified: $platform"
-        return 1
+      exstate="$result"
     fi
+    ;;
+  runasuser)
+    if isLoopback "$addr" || { isLocal "$name" && [ "$type" != "service" ]; }; then
+      reportDebug "Attempting to execute user-level command locally (on $name)"
+      viaScript "$(localTellCommandWriter "$command")"
+      return $?
+    elif [ "$exstate" = "active" -a "$type" != "service" ]; then
+      reportDebug "Attempting to execute user-level command remotely (on $name)"
+      viaScript "$(${smbtell}TellCommandWriter "$addr" "$user" "$upwd" "$command")"
+      return $?
+    else
+      reportError "Failed to execute user-level command (on $name) (exstate=$exstate)"
+      return 1
+    fi
+    ;;
+  runasadmin)
+    if isLoopback "$addr" || { isLocal "$name" && [ "$type" != "service" ]; }; then
+      reportDebug "Attempting to execute admin-level command locally (on $name)"
+      viaScript "$(localTellCommandWriter "$privesc $command")"
+      return $?
+    elif [ "$exstate" = "active" -a "$type" != "service" ]; then
+      reportDebug "Attempting to execute admin-level command remotely (on $name)"
+      viaScript "$(${smbtell}TellCommandWriter "$addr" "$admin" "$apwd" "$command")"
+      return $?
+    else
+      reportError "Failed to execute admin-level command (on $name) (exstate=$exstate)"
+      return 1
+    fi
+    ;;
+  runasservice)
+    if isLoopback "$addr" || { isLocal "$name" && [ "$type" = "service" ]; }; then
+      reportDebug "Attempting to execute service-level command locally (on $host)"
+      viaScript "$(localTellCommandWriter "$privesc $command")"
+      return $?
+    elif [ "$exstate" = "active" -a "$type" = "service" ]; then
+      reportDebug "Attempting to execute service-level command remotely (on $host)"
+      tokenReader setVars "$host" "addr" || return 1
+      viaScript "$(${smbtell}TellCommandWriter "$addr" "$user" "$upwd" "$command")"
+      return $?
+    else
+      reportError "Failed to execute service-level command (on $host) (exstate=$exstate)"
+      return 1
+    fi
+    ;;
+  sendasuser)
+    if isLoopback "$addr" || { isLocal "$name" && [ "$type" != "service" ]; }; then
+      reportDebug "Attempting to send data locally at user-level (on $name)"
+      viaScript "$(localSendCommandWriter "$source" "$target")"
+      return $?
+    elif [ "$exstate" = "active" -a "$type" != "service" ]; then
+      reportDebug "Attempting to send data remotely at user-level (on $name)"
+      viaScript "$(${smbsend}SendCommandWriter "$addr" "$user" "$upwd" "$source" "$target")"
+      return $?
+    else
+      reportError "Failed to send data at user-level (on $name) (exstate=$exstate)"
+      return 1
+    fi
+    ;;
+  sendasadmin)
+    if isLoopback "$addr" || { isLocal "$name" && [ "$type" != "service" ]; }; then
+      reportDebug "Attempting to send data locally at admin-level (on $name)"
+      reportError "Sending of typeset files with elevated privileges not implemented yet"
+      return 1
+    elif [ "$exstate" = "active" -a "$type" != "service" ]; then
+      reportDebug "Attempting to send data remotely at admin-level (on $name)"
+      viaScript "$(${smbsend}SendCommandWriter "$addr" "$admin" "$apwd" "$source" "$target")"
+      return $?
+    else
+      reportError "Failed to send data at admin-level (on $name) (exstate=$exstate)"
+      return 1
+    fi
+    ;;
+  sendasservice)
+    if isLoopback "$addr" || { isLocal "$name" && [ "$type" = "service" ]; }; then
+      reportDebug "Attempting to send data locally at service-level (on $host)"
+      reportError "Sending of typeset files with changed privileges not implemented yet"
+      return 1
+    elif [ "$exstate" = "active" -a "$type" = "service" ]; then
+      reportDebug "Attempting to send data remotely at service-level (on $host)"
+      tokenReader setVars "$host" "addr" || return 1
+      viaScript "$(${smbsend}SendCommandWriter "$addr" "$user" "$upwd" "$source" "$target")"
+      return $?
+    else
+      reportError "Failed to send data at service-level (on $host) (exstate=$exstate)"
+      return 1
+    fi
+    ;;
+  esac
 
-    return 0
+  if [ "$platform" = "linux" -o "$platform" = "bsd" ]; then
+    # If gnome-keyring-daemon is running, check to see if a prompt has started, wait for it to close.
+    waitForDialog "gnome-keyring-daemon" "gnome-keyring-prompt"
+  elif [ "$platform" = "macosx" ]; then
+    # If Keychain is running, check to see if a prompt has started, wait for it to close.
+    waitForDialog "securityd" "SecurityAgent"
+  elif [ "$platform" = "windows" ]; then
+    reportDebug "No need to wait for dialog on Windows"
+  else
+    reportError "Unknown platform specified: $platform"
+    return 1
+  fi
+
+  return 0
 }
 
 # sshExecHandler(state|runasuser|runasadmin|runasservice|sendasuser|sendasadmin|sendasservice)
@@ -4655,124 +5062,124 @@ function smbExecHandler {
 # Handle executing commands using the ssh protocol.
 #
 function sshExecHandler {
-    reportDebugFuncEntry "$*" "addr name type host exstate user admin command"
+  reportDebugFuncEntry "$*" "addr name type host exstate user admin command"
 
-    typeset result
-    typeset port=22
+  typeset result
+  typeset port=22
 
-    case "$1" in
-      state)
-        result="$(printPortState "$addr" "$port")"
-        if [ "$result" = "open" ]; then
-            exstate="active"
-        elif [ "$result" = "closed" ]; then
-            exstate="inactive"
-        else
-            exstate="$result"
-        fi
-        ;;
-      runasuser)
-        if isLoopback "$addr" || { isLocal "$name" && [ "$type" != "service" ]; } ; then
-            reportDebug "Attempting to execute user-level command locally (on $name)"
-            viaScript "$(localTellCommandWriter "$command")"
-            return $?
-        elif [ "$exstate" = "active" -a "$type" != "service" ]; then
-            reportDebug "Attempting to execute user-level command remotely (on $name)"
-            viaScript "$(${sshtell}TellCommandWriter "$addr" "$user" "$command")"
-            return $?
-        else
-            reportError "Failed to execute user-level command (on $name) (exstate=$exstate)"
-            return 1
-        fi
-        ;;
-      runasadmin)
-        if isLoopback "$addr" || { isLocal "$name" && [ "$type" != "service" ]; } ; then
-            reportDebug "Attempting to execute admin-level command locally (on $name)"
-            viaScript "$(localTellCommandWriter "$privesc $command")"
-            return $?
-        elif [ "$exstate" = "active" -a "$type" != "service" ]; then
-            reportDebug "Attempting to execute admin-level command remotely (on $name)"
-            viaScript "$(${sshtell}TellCommandWriter "$addr" "$admin" "$command")"
-            return $?
-        else
-            reportError "Failed to execute admin-level command (on $name) (exstate=$exstate)"
-            return 1
-        fi
-        ;;
-      runasservice)
-        if isLoopback "$addr" || { isLocal "$name" && [ "$type" = "service" ]; } ; then
-            reportDebug "Attempting to execute service-level command locally (on $host)"
-            viaScript "$(localTellCommandWriter "$privesc $command")"
-            return $?
-        elif [ "$exstate" = "active" -a "$type" = "service" ]; then
-            reportDebug "Attempting to execute service-level command remotely (on $host)"
-            tokenReader setVars "$host" "addr" || return 1
-            viaScript "$(${sshtell}TellCommandWriter "$addr" "$user" "$command")"
-            return $?
-        else
-            reportError "Failed to execute service-level command (on $host) (exstate=$exstate)"
-            return 1
-        fi
-        ;;
-      sendasuser)
-        if isLoopback "$addr" || { isLocal "$name" && [ "$type" != "service" ]; } ; then
-            reportDebug "Attempting to send data locally at user-level (on $name)"
-            viaScript "$(localSendCommandWriter "$source" "$target")"
-            return $?
-        elif [ "$exstate" = "active" -a "$type" != "service" ]; then
-            reportDebug "Attempting to send data remotely at user-level (on $name)"
-            viaScript "$(${sshsend}SendCommandWriter "$addr" "$user" "$source" "$target")"
-            return $?
-        else
-            reportError "Failed to send data at user-level (on $name) (exstate=$exstate)"
-            return 1
-        fi
-        ;;
-      sendasadmin)
-        if isLoopback "$addr" || { isLocal "$name" && [ "$type" != "service" ]; } ; then
-            reportDebug "Attempting to send data locally at admin-level (on $name)"
-            reportError "Sending of typeset files with elevated privileges not implemented yet"
-            return 1
-        elif [ "$exstate" = "active" -a "$type" != "service" ]; then
-            reportDebug "Attempting to send data remotely at admin-level (on $name)"
-            viaScript "$(${sshsend}SendCommandWriter "$addr" "$admin" "$source" "$target")"
-            return $?
-        else
-            reportError "Failed to send data at admin-level (on $name) (exstate=$exstate)"
-            return 1
-        fi
-        ;;
-      sendasservice)
-        if isLoopback "$addr" || { isLocal "$name" && [ "$type" = "service" ]; } ; then
-            reportDebug "Attempting to send data locally at service-level (on $host)"
-            reportError "Sending of typeset files with changed privileges not implemented yet"
-            return 1
-        elif [ "$exstate" = "active" -a "$type" = "service" ]; then
-            reportDebug "Attempting to send data remotely at service-level (on $host)"
-            tokenReader setVars "$host" "addr" || return 1
-            viaScript "$(${sshsend}SendCommandWriter "$addr" "$user" "$source" "$target")"
-            return $?
-        else
-            reportError "Failed to send data at service-level (on $host) (exstate=$exstate)"
-            return 1
-        fi
-        ;;
-    esac
-
-    if [ "$platform" = "linux" -o "$platform" = "bsd" ]; then
-        # If gnome-keyring-daemon is running, check to see if a prompt has started, wait for it to close.
-        waitForDialog "gnome-keyring-daemon" "gnome-keyring-prompt"
-    elif [ "$platform" = "macosx" ]; then
-        # If Keychain is running, check to see if a prompt has started, wait for it to close.
-        waitForDialog "securityd" "SecurityAgent"
-    elif [ "$platform" = "windows" ]; then
-        reportDebug "No need to wait for dialog on Windows"
+  case "$1" in
+  state)
+    result="$(printPortState "$addr" "$port")"
+    if [ "$result" = "open" ]; then
+      exstate="active"
+    elif [ "$result" = "closed" ]; then
+      exstate="inactive"
     else
-        reportError "Unknown platform specified: $platform"
-        return 1
+      exstate="$result"
     fi
+    ;;
+  runasuser)
+    if isLoopback "$addr" || { isLocal "$name" && [ "$type" != "service" ]; }; then
+      reportDebug "Attempting to execute user-level command locally (on $name)"
+      viaScript "$(localTellCommandWriter "$command")"
+      return $?
+    elif [ "$exstate" = "active" -a "$type" != "service" ]; then
+      reportDebug "Attempting to execute user-level command remotely (on $name)"
+      viaScript "$(${sshtell}TellCommandWriter "$addr" "$user" "$command")"
+      return $?
+    else
+      reportError "Failed to execute user-level command (on $name) (exstate=$exstate)"
+      return 1
+    fi
+    ;;
+  runasadmin)
+    if isLoopback "$addr" || { isLocal "$name" && [ "$type" != "service" ]; }; then
+      reportDebug "Attempting to execute admin-level command locally (on $name)"
+      viaScript "$(localTellCommandWriter "$privesc $command")"
+      return $?
+    elif [ "$exstate" = "active" -a "$type" != "service" ]; then
+      reportDebug "Attempting to execute admin-level command remotely (on $name)"
+      viaScript "$(${sshtell}TellCommandWriter "$addr" "$admin" "$command")"
+      return $?
+    else
+      reportError "Failed to execute admin-level command (on $name) (exstate=$exstate)"
+      return 1
+    fi
+    ;;
+  runasservice)
+    if isLoopback "$addr" || { isLocal "$name" && [ "$type" = "service" ]; }; then
+      reportDebug "Attempting to execute service-level command locally (on $host)"
+      viaScript "$(localTellCommandWriter "$privesc $command")"
+      return $?
+    elif [ "$exstate" = "active" -a "$type" = "service" ]; then
+      reportDebug "Attempting to execute service-level command remotely (on $host)"
+      tokenReader setVars "$host" "addr" || return 1
+      viaScript "$(${sshtell}TellCommandWriter "$addr" "$user" "$command")"
+      return $?
+    else
+      reportError "Failed to execute service-level command (on $host) (exstate=$exstate)"
+      return 1
+    fi
+    ;;
+  sendasuser)
+    if isLoopback "$addr" || { isLocal "$name" && [ "$type" != "service" ]; }; then
+      reportDebug "Attempting to send data locally at user-level (on $name)"
+      viaScript "$(localSendCommandWriter "$source" "$target")"
+      return $?
+    elif [ "$exstate" = "active" -a "$type" != "service" ]; then
+      reportDebug "Attempting to send data remotely at user-level (on $name)"
+      viaScript "$(${sshsend}SendCommandWriter "$addr" "$user" "$source" "$target")"
+      return $?
+    else
+      reportError "Failed to send data at user-level (on $name) (exstate=$exstate)"
+      return 1
+    fi
+    ;;
+  sendasadmin)
+    if isLoopback "$addr" || { isLocal "$name" && [ "$type" != "service" ]; }; then
+      reportDebug "Attempting to send data locally at admin-level (on $name)"
+      reportError "Sending of typeset files with elevated privileges not implemented yet"
+      return 1
+    elif [ "$exstate" = "active" -a "$type" != "service" ]; then
+      reportDebug "Attempting to send data remotely at admin-level (on $name)"
+      viaScript "$(${sshsend}SendCommandWriter "$addr" "$admin" "$source" "$target")"
+      return $?
+    else
+      reportError "Failed to send data at admin-level (on $name) (exstate=$exstate)"
+      return 1
+    fi
+    ;;
+  sendasservice)
+    if isLoopback "$addr" || { isLocal "$name" && [ "$type" = "service" ]; }; then
+      reportDebug "Attempting to send data locally at service-level (on $host)"
+      reportError "Sending of typeset files with changed privileges not implemented yet"
+      return 1
+    elif [ "$exstate" = "active" -a "$type" = "service" ]; then
+      reportDebug "Attempting to send data remotely at service-level (on $host)"
+      tokenReader setVars "$host" "addr" || return 1
+      viaScript "$(${sshsend}SendCommandWriter "$addr" "$user" "$source" "$target")"
+      return $?
+    else
+      reportError "Failed to send data at service-level (on $host) (exstate=$exstate)"
+      return 1
+    fi
+    ;;
+  esac
 
-    return 0
+  if [ "$platform" = "linux" -o "$platform" = "bsd" ]; then
+    # If gnome-keyring-daemon is running, check to see if a prompt has started, wait for it to close.
+    waitForDialog "gnome-keyring-daemon" "gnome-keyring-prompt"
+  elif [ "$platform" = "macosx" ]; then
+    # If Keychain is running, check to see if a prompt has started, wait for it to close.
+    waitForDialog "securityd" "SecurityAgent"
+  elif [ "$platform" = "windows" ]; then
+    reportDebug "No need to wait for dialog on Windows"
+  else
+    reportError "Unknown platform specified: $platform"
+    return 1
+  fi
+
+  return 0
 }
 
 # vmnExecHandler(state|runasuser|runasadmin|runasservice|sendasuser|sendasadmin|sendasservice)
@@ -4781,23 +5188,23 @@ function sshExecHandler {
 # Handle execute commands for guests using the native execution method of the hypervisor or container host.
 #
 function vmnExecHandler {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    case "$1" in
-      state)
-        ${vrmt}VirtHandler state
-        exstate="$vmstate"
-        ;;
-      runasuser|runasadmin|runasservice)
-        ${vrmt}VirtHandler exec
-        ;;
-      sendasuser|sendasadmin|sendasservice)
-        reportError "Sending not implemented yet."
-        return 1
-        ;;
-    esac
+  case "$1" in
+  state)
+    ${vrmt}VirtHandler state
+    exstate="$vmstate"
+    ;;
+  runasuser | runasadmin | runasservice)
+    ${vrmt}VirtHandler exec
+    ;;
+  sendasuser | sendasadmin | sendasservice)
+    reportError "Sending not implemented yet."
+    return 1
+    ;;
+  esac
 
-    return 0
+  return 0
 }
 
 # adbExecHandler(state|runasuser|runasadmin|runasservice|sendasuser|sendasadmin|sendasservice)
@@ -4807,51 +5214,51 @@ function vmnExecHandler {
 # Admin commands go to su on stdin, which needs a rooted device.
 #
 function adbExecHandler {
-    reportDebugFuncEntry "$*" "name exstate command source target"
+  reportDebugFuncEntry "$*" "name exstate command source target"
 
-    typeset serial="$(adbSerial)"
+  typeset serial="$(adbSerial)"
 
-    case "$1" in
-      state)
-        exstate="$(printAdbState)"
-        ;;
-      runasuser|runasservice)
-        if [ "$exstate" = "active" ]; then
-            reportDebug "Attempting to execute user-level command (on $name)"
-            viaScript "adb -s $serial shell '$command'"
-            return $?
-        else
-            reportError "Failed to execute user-level command (on $name) (exstate=$exstate)"
-            return 1
-        fi
-        ;;
-      runasadmin)
-        if [ "$exstate" = "active" ]; then
-            reportDebug "Attempting to execute admin-level command (on $name)"
-            viaScript "printf '%s' '$command' | adb -s $serial shell su"
-            return $?
-        else
-            reportError "Failed to execute admin-level command (on $name) (exstate=$exstate)"
-            return 1
-        fi
-        ;;
-      sendasuser|sendasservice)
-        if [ "$exstate" = "active" ]; then
-            reportDebug "Attempting to send data at user-level (on $name)"
-            viaScript "adb -s $serial push '$source' '$target'"
-            return $?
-        else
-            reportError "Failed to send data at user-level (on $name) (exstate=$exstate)"
-            return 1
-        fi
-        ;;
-      sendasadmin)
-        reportError "Sending with elevated privileges not implemented yet"
-        return 1
-        ;;
-    esac
+  case "$1" in
+  state)
+    exstate="$(printAdbState)"
+    ;;
+  runasuser | runasservice)
+    if [ "$exstate" = "active" ]; then
+      reportDebug "Attempting to execute user-level command (on $name)"
+      viaScript "adb -s $serial shell '$command'"
+      return $?
+    else
+      reportError "Failed to execute user-level command (on $name) (exstate=$exstate)"
+      return 1
+    fi
+    ;;
+  runasadmin)
+    if [ "$exstate" = "active" ]; then
+      reportDebug "Attempting to execute admin-level command (on $name)"
+      viaScript "printf '%s' '$command' | adb -s $serial shell su"
+      return $?
+    else
+      reportError "Failed to execute admin-level command (on $name) (exstate=$exstate)"
+      return 1
+    fi
+    ;;
+  sendasuser | sendasservice)
+    if [ "$exstate" = "active" ]; then
+      reportDebug "Attempting to send data at user-level (on $name)"
+      viaScript "adb -s $serial push '$source' '$target'"
+      return $?
+    else
+      reportError "Failed to send data at user-level (on $name) (exstate=$exstate)"
+      return 1
+    fi
+    ;;
+  sendasadmin)
+    reportError "Sending with elevated privileges not implemented yet"
+    return 1
+    ;;
+  esac
 
-    return 0
+  return 0
 }
 
 # sshCredHandler(ashost|asguest|asservice)
@@ -4860,26 +5267,26 @@ function adbExecHandler {
 # Handle calling sshSendKey with correct username.
 #
 function sshCredHandler {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    case "$1" in
-      ashost|asguest)
-        if [ "$user" != "none" ]; then
-            reportInfo "Sending ssh key for defined user ($user) to $name"
-            sshSendKey "$user"
-        fi
-        if [ "$admin" != "none" -a "$admin" != "$user" ]; then
-            reportInfo "Sending ssh key for defined admin ($admin) to $name"
-            sshSendKey "$admin"
-        fi
-        ;;
-      asservice)
-        if [ "$user" != "none" ]; then
-            reportInfo "Sending ssh key for defined service user ($user) to $host"
-            sshSendKey "$user"
-        fi
-        ;;
-    esac
+  case "$1" in
+  ashost | asguest)
+    if [ "$user" != "none" ]; then
+      reportInfo "Sending ssh key for defined user ($user) to $name"
+      sshSendKey "$user"
+    fi
+    if [ "$admin" != "none" -a "$admin" != "$user" ]; then
+      reportInfo "Sending ssh key for defined admin ($admin) to $name"
+      sshSendKey "$admin"
+    fi
+    ;;
+  asservice)
+    if [ "$user" != "none" ]; then
+      reportInfo "Sending ssh key for defined service user ($user) to $host"
+      sshSendKey "$user"
+    fi
+    ;;
+  esac
 }
 
 # winCredHandler(ashost|asguest|asservice)
@@ -4888,28 +5295,27 @@ function sshCredHandler {
 # Handle calling winStoreCreds with correct username.
 #
 function winCredHandler {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    case "$1" in
-      ashost|asguest)
-        if [ "$user" != "none" ]; then
-            reportInfo "Storing credentials for defined user ($user) on $name"
-            winStoreCreds user "$user"
-        fi
-        if [ "$admin" != "none" -a "$admin" != "$user" ]; then
-            reportInfo "Storing credentials for defined admin ($admin) on $name"
-            winStoreCreds admin "$admin"
-        fi
-        ;;
-      asservice)
-        if [ "$user" != "none" ]; then
-            reportInfo "Storing credentials for defined service user ($user) on $host"
-            winStoreCreds user "$user"
-        fi
-        ;;
-    esac
+  case "$1" in
+  ashost | asguest)
+    if [ "$user" != "none" ]; then
+      reportInfo "Storing credentials for defined user ($user) on $name"
+      winStoreCreds user "$user"
+    fi
+    if [ "$admin" != "none" -a "$admin" != "$user" ]; then
+      reportInfo "Storing credentials for defined admin ($admin) on $name"
+      winStoreCreds admin "$admin"
+    fi
+    ;;
+  asservice)
+    if [ "$user" != "none" ]; then
+      reportInfo "Storing credentials for defined service user ($user) on $host"
+      winStoreCreds user "$user"
+    fi
+    ;;
+  esac
 }
-
 
 # doFunction(<function>)
 # Calls functions, returns exit code.
@@ -4917,12 +5323,16 @@ function winCredHandler {
 # Call <function>
 #
 function doFunction {
-    typeset runnable="$1"
-    typeset retval
-    shift
-    typeset IFS=" "
-    $runnable "$@" || { retval="$?" ; reportDebug "Function $runnable returned status $retval" ; return $retval ; }
-    return 0
+  typeset runnable="$1"
+  typeset retval
+  shift
+  typeset IFS=" "
+  $runnable "$@" || {
+    retval="$?"
+    reportDebug "Function $runnable returned status $retval"
+    return $retval
+  }
+  return 0
 }
 
 # dynamicHandler(<name>)
@@ -4931,34 +5341,34 @@ function doFunction {
 # Checks if a given name is dynamic, creates a group object if so. Passes along if not.
 #
 function dynamicHandler {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    typeset entity="$1"
-    typeset dynamicGroups="all,host,hosts,guest,guests,service,services,group,groups"
+  typeset entity="$1"
+  typeset dynamicGroups="all,host,hosts,guest,guests,service,services,group,groups"
 
-    # Sed statements in the member variables remove any whitespace around commas, then
-    # continue to remove a leading comma, and then finish with removal of trailing comma.
+  # Sed statements in the member variables remove any whitespace around commas, then
+  # continue to remove a leading comma, and then finish with removal of trailing comma.
 
-    if [[ "$entity" =~ "," ]]; then
-        reportDebug "Dynamic group: comma detected on entity specification ($entity), initializing"
-        type="group"
-        name="comma-detected-dynamic-group"
-        members=$(echo $entity | sed -e 's/[[:space:]]*,[[:space:]]*/,/g' -e "s|^,||g" -e "s|,$||g")
-    elif [[ "$dynamicGroups" =~ "$entity" ]]; then
-        reportDebug "Dynamic group: entity matched dynamic group name ($entity), initializing"
-        type="group"
-        name="$entity"
-        members=$(for item in $(listHelper $name); do printf "$item", ; done | sed -e "s|^,||g" -e "s|,$||g")
-    else
-        reportDebug "Not a dynamic group: $entity, passing to parseEntry"
-        parseEntry "$entity"
-    fi
+  if [[ "$entity" =~ "," ]]; then
+    reportDebug "Dynamic group: comma detected on entity specification ($entity), initializing"
+    type="group"
+    name="comma-detected-dynamic-group"
+    members=$(echo $entity | sed -e 's/[[:space:]]*,[[:space:]]*/,/g' -e "s|^,||g" -e "s|,$||g")
+  elif [[ "$dynamicGroups" =~ "$entity" ]]; then
+    reportDebug "Dynamic group: entity matched dynamic group name ($entity), initializing"
+    type="group"
+    name="$entity"
+    members=$(for item in $(listHelper $name); do printf "$item",; done | sed -e "s|^,||g" -e "s|,$||g")
+  else
+    reportDebug "Not a dynamic group: $entity, passing to parseEntry"
+    parseEntry "$entity"
+  fi
 
-    # If parent is set, return a dynamic group with the parent host(s) as members.
-    if [ "$parent" = "true" ]; then
-        reportDebug "Dynamic group: parent(s) requested, creating dynamic group of parents"
-        parentHandler "$entity"
-    fi
+  # If parent is set, return a dynamic group with the parent host(s) as members.
+  if [ "$parent" = "true" ]; then
+    reportDebug "Dynamic group: parent(s) requested, creating dynamic group of parents"
+    parentHandler "$entity"
+  fi
 }
 
 # parentHandler(<name>)
@@ -4968,61 +5378,61 @@ function dynamicHandler {
 # for a given entity.
 #
 function parentHandler {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    # Avoid entering the loop twice (called from dynamicHandler).
-    unset parent
+  # Avoid entering the loop twice (called from dynamicHandler).
+  unset parent
 
-    typeset entity="$1"
-    typeset parents
-    typeset memberType
+  typeset entity="$1"
+  typeset parents
+  typeset memberType
 
-    if [ "$type" = "group" ]; then
-        # We're talking about a group, need to discover members and make a unique list of parents.
+  if [ "$type" = "group" ]; then
+    # We're talking about a group, need to discover members and make a unique list of parents.
 
-        typeset IFS=","
-        for member in $members; do
-            memberType=$(tokenReader printVals "$member" "type")
-            if [ "$memberType" = "group" ]; then
-                # Tell the user we do not support nested groups for parent lookup.
-                reportError "Type of group member \"$member\" is \"group\"."
-                reportError "Group recursion for parents not supported yet."
-            elif [ "$memberType" = "host" ]; then
-                # Tell the user we encountered a host which by definition has no parent.
-                reportError "Type of group member \"$member\" is \"host\" so has no parent."
-            elif [ "$memberType" = "guest" -o "$memberType" = "service" ]; then
-                # We encountered a guest or service which has a parent.
-                parent=$(tokenReader printVals "$member" "host")
-            fi
+    typeset IFS=","
+    for member in $members; do
+      memberType=$(tokenReader printVals "$member" "type")
+      if [ "$memberType" = "group" ]; then
+        # Tell the user we do not support nested groups for parent lookup.
+        reportError "Type of group member \"$member\" is \"group\"."
+        reportError "Group recursion for parents not supported yet."
+      elif [ "$memberType" = "host" ]; then
+        # Tell the user we encountered a host which by definition has no parent.
+        reportError "Type of group member \"$member\" is \"host\" so has no parent."
+      elif [ "$memberType" = "guest" -o "$memberType" = "service" ]; then
+        # We encountered a guest or service which has a parent.
+        parent=$(tokenReader printVals "$member" "host")
+      fi
 
-            if [[ ! "$parents" =~ "$parent" ]]; then
-                # Uniquely prepend the parent to the parents list.
-                parents="$parent,$parents"
-            fi
-        done
+      if [[ ! "$parents" =~ "$parent" ]]; then
+        # Uniquely prepend the parent to the parents list.
+        parents="$parent,$parents"
+      fi
+    done
 
-        # The parents list becomes the new members list, set a name for this dynamic group.
-        name="parent-dynamic-group"
-        members=$(echo "$parents" | sed -e "s|^,||g" -e "s|,$||g")
-        if [ -z "$members" ]; then
-            reportError "No parents found for \"$entity\"."
-            return 1
-        fi
-
-    elif [ "$type" = "host" ]; then
-        # We're talking about a host, which has no parent. Error.
-        reportError "Type of  \"$entity\" is \"host\" so has no parent."
-    elif [ "$type" = "guest" -o "$type" = "service" ]; then
-        # We're talking about a guest or a service, lookup the parent.
-        type="group"
-        name="parent-dynamic-group"
-        members=$(tokenReader printVals "$entity" "host")
-    else
-        # Something weird happened, tell us about it.
-        reportError "Type not set or unknown: \"$type\""
-        reportError "This indicates we were called outside of dynamicHandler or parseEntry."
-        return 1
+    # The parents list becomes the new members list, set a name for this dynamic group.
+    name="parent-dynamic-group"
+    members=$(echo "$parents" | sed -e "s|^,||g" -e "s|,$||g")
+    if [ -z "$members" ]; then
+      reportError "No parents found for \"$entity\"."
+      return 1
     fi
+
+  elif [ "$type" = "host" ]; then
+    # We're talking about a host, which has no parent. Error.
+    reportError "Type of  \"$entity\" is \"host\" so has no parent."
+  elif [ "$type" = "guest" -o "$type" = "service" ]; then
+    # We're talking about a guest or a service, lookup the parent.
+    type="group"
+    name="parent-dynamic-group"
+    members=$(tokenReader printVals "$entity" "host")
+  else
+    # Something weird happened, tell us about it.
+    reportError "Type not set or unknown: \"$type\""
+    reportError "This indicates we were called outside of dynamicHandler or parseEntry."
+    return 1
+  fi
 }
 
 # mapEntity(<entity> <comma_separated_list_of_functions>)
@@ -5031,46 +5441,49 @@ function parentHandler {
 # Execute the members of the <comma_separated_list_of_functions> sequentially passing <entity> to each one.
 #
 function mapEntity {
-    reportDebugFuncEntry "$*" "mode"
+  reportDebugFuncEntry "$*" "mode"
 
-    typeset entity="$1"
-    typeset functions="$2"
-    typeset targetState
-    typeset currentState
-    typeset -i retval
+  typeset entity="$1"
+  typeset functions="$2"
+  typeset targetState
+  typeset currentState
+  typeset -i retval
 
-    # Set the targetState (for using stateful mode).
-    if [[ "$functions" =~ "stop" ]]; then targetState="off" ; else targetState="on" ; fi
-    reportDebug "Target state is: $targetState"
+  # Set the targetState (for using stateful mode).
+  if [[ "$functions" =~ "stop" ]]; then targetState="off"; else targetState="on"; fi
+  reportDebug "Target state is: $targetState"
 
-    # Execute all requested functions.
-    typeset IFS=","
-    for runnable in $functions ; do
-        reportDebug "Running function: $runnable"
-        doFunction "$runnable" "$entity"
+  # Execute all requested functions.
+  typeset IFS=","
+  for runnable in $functions; do
+    reportDebug "Running function: $runnable"
+    doFunction "$runnable" "$entity"
+    retval="$?"
+  done
+
+  # If mode is stateful, wait for targetState to be reached.
+  if [ "$mode" = "stateful" ]; then
+    reportDebug "Mode is stateful, initializing current state as: unknown"
+    currentState="unknown"
+    while [ "$currentState" != "$targetState" ]; do
+      currentState="$(
+        IFS=" "
+        checkState
+        printf "$state\n"
+      )"
+      if [ "$currentState" != "$targetState" ]; then
+        report "$entity: waiting to go $targetState (currently $currentState)"
+        sleep 1
+      else
+        state="$currentState"
+        printState "$entity"
         retval="$?"
+      fi
     done
+  fi
 
-    # If mode is stateful, wait for targetState to be reached.
-    if [ "$mode" = "stateful" ]; then
-        reportDebug "Mode is stateful, initializing current state as: unknown"
-        currentState="unknown"
-        while [ "$currentState" != "$targetState" ]; do
-            currentState="$(IFS=" " ; checkState ; printf "$state\n")"
-            if [ "$currentState" != "$targetState" ]; then
-                report "$entity: waiting to go $targetState (currently $currentState)"
-                sleep 1
-            else
-                state="$currentState"
-                printState "$entity"
-                retval="$?"
-            fi
-        done
-    fi
-
-    return "$retval"
+  return "$retval"
 }
-
 
 # mapGroup(<members> <comma_separated_list_of_functions>)
 # Calls functions.
@@ -5078,53 +5491,53 @@ function mapEntity {
 # Iterate over members and pass back to mapEntryPoint.
 #
 function mapGroup {
-    reportDebugFuncEntry "$*" "mode"
+  reportDebugFuncEntry "$*" "mode"
 
-    typeset members="$1"
-    typeset functions="$2"
-    typeset targetState
-    typeset item
-    typeset groupType
-    typeset groupName
-    typeset groupList
-    typeset -i retval
+  typeset members="$1"
+  typeset functions="$2"
+  typeset targetState
+  typeset item
+  typeset groupType
+  typeset groupName
+  typeset groupList
+  typeset -i retval
 
-    # Save group's type and name.
-    groupType="$type"
-    groupName="$name"
+  # Save group's type and name.
+  groupType="$type"
+  groupName="$name"
 
-    # If stop functions are in the function list, reverse order.
-    # Set the targetState (for using stateful mode), reverse order.
-    typeset IFS=","
-    if [[ "$functions" =~ "stop" ]]; then
-        targetState="off"
-        groupList=""
-        for member in $members ; do
-            groupList="$member${groupList:+,$groupList}"
-        done
-        reportDebug "Function list contains stop functions, reversing group list."
-    else
-        targetState="on"
-        groupList="$members"
-    fi
-    reportDebug "Group list is: $groupList"
-    reportDebug "Target state is: $targetState"
-
-    # Return value is the bitwise OR of all function return values
-    retval=0
-
-    IFS=","
-    for item in $groupList ; do
-        reportDebug "Recursing $item to mapEntryPoint"
-        mapEntryPoint "$item" "$functions"
-        let retval=$((retval|$?))
+  # If stop functions are in the function list, reverse order.
+  # Set the targetState (for using stateful mode), reverse order.
+  typeset IFS=","
+  if [[ "$functions" =~ "stop" ]]; then
+    targetState="off"
+    groupList=""
+    for member in $members; do
+      groupList="$member${groupList:+,$groupList}"
     done
+    reportDebug "Function list contains stop functions, reversing group list."
+  else
+    targetState="on"
+    groupList="$members"
+  fi
+  reportDebug "Group list is: $groupList"
+  reportDebug "Target state is: $targetState"
 
-    # Restore group's type and name (which might have been overwritten by previous mapEntryPoint).
-    type="$groupType"
-    name="$groupName"
+  # Return value is the bitwise OR of all function return values
+  retval=0
 
-    return "$retval"
+  IFS=","
+  for item in $groupList; do
+    reportDebug "Recursing $item to mapEntryPoint"
+    mapEntryPoint "$item" "$functions"
+    let retval=$((retval | $?))
+  done
+
+  # Restore group's type and name (which might have been overwritten by previous mapEntryPoint).
+  type="$groupType"
+  name="$groupName"
+
+  return "$retval"
 }
 
 # mapEntryPoint(<entity> <space_separated_list_of_functions>)
@@ -5134,52 +5547,52 @@ function mapGroup {
 # If an entity is a group, pass to mapGroup, if it's a host/guest/service pass to mapEntity
 #
 function mapEntryPoint {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    typeset entity="$1"
-    typeset functions="$2"
-    typeset -i retval
+  typeset entity="$1"
+  typeset functions="$2"
+  typeset -i retval
 
-    # See if entityOrigin was set, set only when mapEntryPoint runs for the first time.
-    if [ ! "$entityOrigin" ]; then entityOrigin="$entity"; fi
+  # See if entityOrigin was set, set only when mapEntryPoint runs for the first time.
+  if [ ! "$entityOrigin" ]; then entityOrigin="$entity"; fi
 
-    # Reading in the entity entry is done via dynamicHandler. Here entity globals are set!
-    dynamicHandler "$entity"
+  # Reading in the entity entry is done via dynamicHandler. Here entity globals are set!
+  dynamicHandler "$entity"
 
-    # If a group, call mapGroup (which will recurse back to us). Call mapEntity otherwise.
-    if [ "$type" = "group" ]; then
-        reportDebug "Received a group, passing on to mapGroup"
-        mapGroup "$members" "$functions"
-        retval="$?"
-    else
-        reportDebug "Received an entity , passing to mapEntity"
-        mapEntity "$entity" "$functions"
-        retval="$?"
+  # If a group, call mapGroup (which will recurse back to us). Call mapEntity otherwise.
+  if [ "$type" = "group" ]; then
+    reportDebug "Received a group, passing on to mapGroup"
+    mapGroup "$members" "$functions"
+    retval="$?"
+  else
+    reportDebug "Received an entity , passing to mapEntity"
+    mapEntity "$entity" "$functions"
+    retval="$?"
+  fi
+
+  # Do certain access related things when mapEntryPoint loop exits.
+  if [[ "$functions" =~ "accessEntity" ]]; then
+
+    # Set endLoop to true if we're at the end of the loop.
+    [ "$entity" = "$entityOrigin" ] && endLoop="true" || endLoop="false"
+
+    reportDebug "Function list contains access functions, calling terminal exit hooks"
+    # Don't do anything for rdp sessions.
+    if [ "$acmt" != "ssh" -a "$endLoop" = "false" ]; then
+      reportDebug "Not an ssh style access method ($acmt), not executing any terminal exit hooks"
+    # Reconnect to a previously generated screen session.
+    elif [ "$terminal" = "screen" -a "$TERM" != "screen" -a "$endLoop" = "true" ]; then
+      reportDebug "Terminal exit hook for screen: resuming created screen session"
+      sleep 1
+      screen -r
+    # Attach to a previously generated tmux session.
+    elif [ "$terminal" = "tmux" -a ! "$TMUX" -a "$endLoop" = "true" ]; then
+      reportDebug "Terminal exit hook for tmux: attaching created tmux session"
+      tmux attach-session -t "session-$hostname-$localUserDblBacksl"
     fi
+  fi
 
-    # Do certain access related things when mapEntryPoint loop exits.
-    if [[ "$functions" =~ "accessEntity" ]]; then
-
-        # Set endLoop to true if we're at the end of the loop.
-        [ "$entity" = "$entityOrigin" ] && endLoop="true" || endLoop="false"
-
-        reportDebug "Function list contains access functions, calling terminal exit hooks"
-        # Don't do anything for rdp sessions.
-        if [ "$acmt" != "ssh" -a "$endLoop" = "false" ]; then
-            reportDebug "Not an ssh style access method ($acmt), not executing any terminal exit hooks"
-        # Reconnect to a previously generated screen session.
-        elif [ "$terminal" = "screen" -a "$TERM" != "screen" -a "$endLoop" = "true" ]; then
-            reportDebug "Terminal exit hook for screen: resuming created screen session"
-            sleep 1
-            screen -r
-        # Attach to a previously generated tmux session.
-        elif [ "$terminal" = "tmux" -a ! "$TMUX" -a "$endLoop" = "true" ]; then
-            reportDebug "Terminal exit hook for tmux: attaching created tmux session"
-            tmux attach-session -t "session-$hostname-$localUserDblBacksl"
-        fi
-    fi
-
-    return "$retval"
+  return "$retval"
 }
 
 # printUsageText()
@@ -5188,9 +5601,9 @@ function mapEntryPoint {
 # Prints the standard help message for session.
 #
 function printUsageText {
-    reportDebugFuncEntry "$*"
+  reportDebugFuncEntry "$*"
 
-    printf "%s\n" "\
+  printf "%s\n" "\
     Usage: $0 command {group, guest, host or special argument}
 
     Commands:
@@ -5309,8 +5722,8 @@ function printUsageText {
 # Prints the version of session.
 #
 function printVersion {
-    reportDebugFuncEntry "$*"
-    echo "RELEASE.STRING.VERSION
+  reportDebugFuncEntry "$*"
+  echo "RELEASE.STRING.VERSION
     RELEASE.STRING.COPYRIGHT
     RELEASE.STRING.RELDATE
     RELEASE.STRING.BUILT
